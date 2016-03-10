@@ -1,0 +1,2 @@
+const int nTimePermitTests = @MPIN_TIME_PERMIT_TESTS@;
+const int nRandomTests = @MPIN_RANDOM_TESTS@;
