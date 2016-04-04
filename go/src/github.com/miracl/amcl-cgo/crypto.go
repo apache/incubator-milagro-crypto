@@ -647,3 +647,131 @@ func MPIN_printBinary(array []byte) {
 	}
 	fmt.Printf("\n")
 }
+
+/* Outputs H(CID) and H(T|H(CID)) for time permits. If no time permits set HID=HTID */
+func MPIN_SERVER_1_WRAP(date int, ID []byte) (HID, HTID []byte) {
+	// Form Octets
+	IDStr := string(ID)
+	IDOct := GetOctet(IDStr)
+	defer OCT_free(&IDOct)
+
+	HIDOct := GetOctetZero(G1S)
+	defer OCT_free(&HIDOct)
+	HTIDOct := GetOctetZero(G1S)
+	defer OCT_free(&HTIDOct)
+
+	C.MPIN_SERVER_1(C.int(date), &IDOct, &HIDOct, &HTIDOct)
+
+	// Convert octet to bytes
+	HID = OCT_toBytes(&HIDOct)
+	HTID = OCT_toBytes(&HTIDOct)
+
+	return
+}
+
+/* Implement step 2 of MPin protocol on server side */
+func MPIN_SERVER_2_WRAP(date int, HID []byte, HTID []byte, Y []byte, SS []byte, U []byte, UT []byte, V []byte) (errorCode int, E, F []byte) {
+	// Form Octets
+	HIDStr := string(HID)
+	HIDOct := GetOctet(HIDStr)
+	defer OCT_free(&HIDOct)
+	HTIDStr := string(HTID)
+	HTIDOct := GetOctet(HTIDStr)
+	defer OCT_free(&HTIDOct)
+	YStr := string(Y)
+	YOct := GetOctet(YStr)
+	defer OCT_free(&YOct)
+	SSStr := string(SS)
+	SSOct := GetOctet(SSStr)
+	defer OCT_free(&SSOct)
+	UStr := string(U)
+	UOct := GetOctet(UStr)
+	defer OCT_free(&UOct)
+	UTStr := string(UT)
+	UTOct := GetOctet(UTStr)
+	defer OCT_free(&UTOct)
+	VStr := string(V)
+	VOct := GetOctet(VStr)
+	defer OCT_free(&VOct)
+
+	EOct := GetOctetZero(GTS)
+	defer OCT_free(&EOct)
+	FOct := GetOctetZero(GTS)
+	defer OCT_free(&FOct)
+	rtn := C.MPIN_SERVER_2(C.int(date), &HIDOct, &HTIDOct, &YOct, &SSOct, &UOct, &UTOct, &VOct, &EOct, &FOct)
+
+	errorCode = int(rtn)
+	E = OCT_toBytes(&EOct)
+	F = OCT_toBytes(&FOct)
+
+	return
+}
+
+/* Implement step 1 on client side of MPin protocol. Use GO code to generate random X */
+func MPIN_CLIENT_1_WRAP(date int, ID []byte, RNG *amcl.RAND, X []byte, PIN int, TOKEN []byte, TP []byte) (errorCode int, XOut, SEC, U, UT []byte) {
+	amcl.MPIN_RANDOM_GENERATE(RNG, X[:])
+	errorCode, XOut, SEC, U, UT = MPIN_CLIENT_1_C(date, ID[:], nil, X[:], PIN, TOKEN[:], TP[:])
+	return
+}
+
+/* Implement step 1 on client side of MPin protocol
+   When rng=nil the X value is externally generated
+*/
+func MPIN_CLIENT_1_C(date int, ID []byte, rng *C.csprng, X []byte, PIN int, TOKEN []byte, TP []byte) (errorCode int, XOut, SEC, U, UT []byte) {
+	// Form Octets
+	IDStr := string(ID)
+	IDOct := GetOctet(IDStr)
+	defer OCT_free(&IDOct)
+
+	XStr := string(X)
+	XOct := GetOctet(XStr)
+	defer OCT_free(&XOct)
+
+	TOKENStr := string(TOKEN)
+	TOKENOct := GetOctet(TOKENStr)
+	defer OCT_free(&TOKENOct)
+
+	TPStr := string(TP)
+	TPOct := GetOctet(TPStr)
+	defer OCT_free(&TPOct)
+
+	SECOct := GetOctetZero(G1S)
+	defer OCT_free(&SECOct)
+	UOct := GetOctetZero(G1S)
+	defer OCT_free(&UOct)
+	UTOct := GetOctetZero(G1S)
+	defer OCT_free(&UTOct)
+
+	rtn := C.MPIN_CLIENT_1(C.int(date), &IDOct, rng, &XOct, C.int(PIN), &TOKENOct, &SECOct, &UOct, &UTOct, &TPOct)
+
+	errorCode = int(rtn)
+	// Convert octet to bytes
+	XOut = OCT_toBytes(&XOct)
+	SEC = OCT_toBytes(&SECOct)
+	U = OCT_toBytes(&UOct)
+	UT = OCT_toBytes(&UTOct)
+
+	return
+}
+
+/* Implement step 2 on client side of MPin protocol */
+func MPIN_CLIENT_2_WRAP(X []byte, Y []byte, SEC []byte) (errorCode int, V []byte) {
+	// Form Octets
+	XStr := string(X)
+	XOct := GetOctet(XStr)
+	defer OCT_free(&XOct)
+	YStr := string(Y)
+	YOct := GetOctet(YStr)
+	defer OCT_free(&YOct)
+	SECStr := string(SEC)
+	SECOct := GetOctet(SECStr)
+	defer OCT_free(&SECOct)
+
+	rtn := C.MPIN_CLIENT_2(&XOct, &YOct, &SECOct)
+
+	errorCode = int(rtn)
+	// Convert octet to bytes
+	V = OCT_toBytes(&SECOct)
+
+	return
+}

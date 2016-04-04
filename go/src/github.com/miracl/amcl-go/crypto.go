@@ -189,3 +189,34 @@ func XORBytes(a, b, c []byte) ([]byte, int) {
 	}
 	return dst[:], 0
 }
+
+/* Outputs H(CID) and H(T|H(CID)) for time permits. If no time permits set HID=HTID */
+func MPIN_SERVER_1_WRAP(date int, ID []byte) ([]byte, []byte) {
+	var HID [G1S]byte
+	var HTID [G1S]byte
+	MPIN_SERVER_1(date, ID, HID[:], HTID[:])
+	return HID[:], HTID[:]
+}
+
+/* Implement step 2 of MPin protocol on server side */
+func MPIN_SERVER_2_WRAP(date int, HID []byte, HTID []byte, Y []byte, SS []byte, U []byte, UT []byte, V []byte) (int, []byte, []byte) {
+	var E [12 * EFS]byte
+	var F [12 * EFS]byte
+	errorCode := MPIN_SERVER_2(date, HID[:], HTID[:], Y[:], SS[:], U[:], UT[:], V[:], E[:], F[:])
+	return errorCode, E[:], F[:]
+}
+
+/* Implement step 1 on client side of MPin protocol */
+func MPIN_CLIENT_1_WRAP(date int, ID []byte, rng *RAND, X []byte, PIN int, TOKEN []byte, TP []byte) (int, []byte, []byte, []byte, []byte) {
+	var SEC [G1S]byte
+	var U [G1S]byte
+	var UT [G1S]byte
+	errorCode := MPIN_CLIENT_1(date, ID[:], rng, X[:], PIN, TOKEN[:], SEC[:], U[:], UT[:], TP[:])
+	return errorCode, X[:], SEC[:], U[:], UT[:]
+}
+
+/* Implement step 2 on client side of MPin protocol */
+func MPIN_CLIENT_2_WRAP(X []byte, Y []byte, SEC []byte) (int, []byte) {
+	errorCode := MPIN_CLIENT_2(X[:], Y[:], SEC[:])
+	return errorCode, SEC[:]
+}

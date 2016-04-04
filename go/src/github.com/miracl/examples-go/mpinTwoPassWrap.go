@@ -58,34 +58,23 @@ func main() {
 	const G2S = 4 * EFS   /* Group 2 Size */
 	const EAS = amcl.MPIN_PAS
 
-	var MS1 [EGS]byte
-	var SS1 [G2S]byte
-	var CS1 [G1S]byte
-	var TP1 [G1S]byte
-	var MS2 [EGS]byte
-	var SS2 [G2S]byte
-	var CS2 [G1S]byte
-	var TP2 [G1S]byte
-	var SS [G2S]byte
-	var TP [G1S]byte
-	var TOKEN [G1S]byte
-	var SEC [G1S]byte
-	var U [G1S]byte
-	var UT [G1S]byte
 	var X [EGS]byte
-	var Y [EGS]byte
-	var E [12 * EFS]byte
-	var F [12 * EFS]byte
-	var HID [G1S]byte
-	var HTID [G1S]byte
 
 	// Generate Master Secret Share 1
-	amcl.MPIN_RANDOM_GENERATE(rng, MS1[:])
+	rtn, MS1 := amcl.MPIN_RANDOM_GENERATE_WRAP(rng)
+	if rtn != 0 {
+		fmt.Println("MPIN_RANDOM_GENERATE Error:", rtn)
+		return
+	}
 	fmt.Printf("MS1: 0x")
 	amcl.MPIN_printBinary(MS1[:])
 
 	// Generate Master Secret Share 2
-	amcl.MPIN_RANDOM_GENERATE(rng, MS2[:])
+	rtn, MS2 := amcl.MPIN_RANDOM_GENERATE_WRAP(rng)
+	if rtn != 0 {
+		fmt.Println("MPIN_RANDOM_GENERATE Error:", rtn)
+		return
+	}
 	fmt.Printf("MS2: 0x")
 	amcl.MPIN_printBinary(MS2[:])
 
@@ -93,55 +82,81 @@ func main() {
 	HCID := amcl.MPIN_HASH_ID(ID)
 
 	// Generate server secret share 1
-	amcl.MPIN_GET_SERVER_SECRET(MS1[:], SS1[:])
+	rtn, SS1 := amcl.MPIN_GET_SERVER_SECRET_WRAP(MS1[:])
+	if rtn != 0 {
+		fmt.Println("MPIN_GET_SERVER_SECRET Error:", rtn)
+		return
+	}
 	fmt.Printf("SS1: 0x")
 	amcl.MPIN_printBinary(SS1[:])
 
 	// Generate server secret share 2
-	amcl.MPIN_GET_SERVER_SECRET(MS2[:], SS2[:])
+	rtn, SS2 := amcl.MPIN_GET_SERVER_SECRET_WRAP(MS2[:])
+	if rtn != 0 {
+		fmt.Println("MPIN_GET_SERVER_SECRET Error:", rtn)
+		return
+	}
 	fmt.Printf("SS2: 0x")
 	amcl.MPIN_printBinary(SS2[:])
 
 	// Combine server secret shares
-	rtn := amcl.MPIN_RECOMBINE_G2(SS1[:], SS2[:], SS[:])
+	rtn, SS := amcl.MPIN_RECOMBINE_G2_WRAP(SS1[:], SS2[:])
 	if rtn != 0 {
-		fmt.Println("MPIN_RECOMBINE_G2(SS1, SS2, SS) Error:", rtn)
+		fmt.Println("MPIN_RECOMBINE_G2(SS1, SS2) Error:", rtn)
 		return
 	}
 	fmt.Printf("SS: 0x")
 	amcl.MPIN_printBinary(SS[:])
 
 	// Generate client secret share 1
-	amcl.MPIN_GET_CLIENT_SECRET(MS1[:], HCID, CS1[:])
+	rtn, CS1 := amcl.MPIN_GET_CLIENT_SECRET_WRAP(MS1[:], HCID)
+	if rtn != 0 {
+		fmt.Println("MPIN_GET_CLIENT_SECRET Error:", rtn)
+		return
+	}
 	fmt.Printf("Client Secret CS: 0x")
 	amcl.MPIN_printBinary(CS1[:])
 
 	// Generate client secret share 2
-	amcl.MPIN_GET_CLIENT_SECRET(MS2[:], HCID, CS2[:])
+	rtn, CS2 := amcl.MPIN_GET_CLIENT_SECRET_WRAP(MS2[:], HCID)
+	if rtn != 0 {
+		fmt.Println("MPIN_GET_CLIENT_SECRET Error:", rtn)
+		return
+	}
 	fmt.Printf("Client Secret CS: 0x")
 	amcl.MPIN_printBinary(CS2[:])
 
-	// Combine client secret shares : TOKEN is the full client secret
-	rtn = amcl.MPIN_RECOMBINE_G1(CS1[:], CS2[:], TOKEN[:])
+	// Combine client secret shares
+	rtn, CS := amcl.MPIN_RECOMBINE_G1_WRAP(CS1[:], CS2[:])
 	if rtn != 0 {
-		fmt.Println("MPIN_RECOMBINE_G1(CS1, CS2, TOKEN) Error:", rtn)
+		fmt.Println("MPIN_RECOMBINE_G1 Error:", rtn)
 		return
 	}
+	fmt.Printf("Client Secret CS: 0x")
+	amcl.MPIN_printBinary(CS[:])
 
 	// Generate time permit share 1
-	amcl.MPIN_GET_CLIENT_PERMIT(date, MS1[:], HCID, TP1[:])
+	rtn, TP1 := amcl.MPIN_GET_CLIENT_PERMIT_WRAP(date, MS1[:], HCID)
+	if rtn != 0 {
+		fmt.Println("MPIN_GET_CLIENT_PERMIT Error:", rtn)
+		return
+	}
 	fmt.Printf("TP1: 0x")
 	amcl.MPIN_printBinary(TP1[:])
 
 	// Generate time permit share 2
-	amcl.MPIN_GET_CLIENT_PERMIT(date, MS2[:], HCID, TP2[:])
+	rtn, TP2 := amcl.MPIN_GET_CLIENT_PERMIT_WRAP(date, MS2[:], HCID)
+	if rtn != 0 {
+		fmt.Println("MPIN_GET_CLIENT_PERMIT Error:", rtn)
+		return
+	}
 	fmt.Printf("TP2: 0x")
 	amcl.MPIN_printBinary(TP2[:])
 
 	// Combine time permit shares
-	rtn = amcl.MPIN_RECOMBINE_G1(TP1[:], TP2[:], TP[:])
+	rtn, TP := amcl.MPIN_RECOMBINE_G1_WRAP(TP1[:], TP2[:])
 	if rtn != 0 {
-		fmt.Println("MPIN_RECOMBINE_G1(TP1, TP2, TP) Error:", rtn)
+		fmt.Println("MPIN_RECOMBINE_G1(TP1, TP2) Error:", rtn)
 		return
 	}
 
@@ -151,7 +166,7 @@ func main() {
 		fmt.Scan(&PIN1)
 	}
 
-	rtn = amcl.MPIN_EXTRACT_PIN(ID, PIN1, TOKEN[:])
+	rtn, TOKEN := amcl.MPIN_EXTRACT_PIN_WRAP(ID[:], PIN1, CS[:])
 	if rtn != 0 {
 		fmt.Printf("FAILURE: EXTRACT_PIN rtn: %d\n", rtn)
 		return
@@ -165,27 +180,37 @@ func main() {
 	}
 
 	/* Clients first pass. Calculate U and UT */
-	rtn = amcl.MPIN_CLIENT_1(date, ID, rng, X[:], PIN2, TOKEN[:], SEC[:], U[:], UT[:], TP[:])
+	fmt.Printf("X: 0x")
+	amcl.MPIN_printBinary(X[:])
+	rtn, Xout, SEC, U, UT := amcl.MPIN_CLIENT_1_WRAP(date, ID, rng, X[:], PIN2, TOKEN[:], TP[:])
 	if rtn != 0 {
 		fmt.Printf("FAILURE: CLIENT rtn: %d\n", rtn)
 		return
 	}
+	fmt.Printf("Xout: 0x")
+	amcl.MPIN_printBinary(Xout[:])
 
 	/* Server first pass. Calculate H(ID) and H(T|H(ID)) (if time permits enabled), and maps them to points on the curve HID and HTID resp. */
-	amcl.MPIN_SERVER_1(date, ID, HID[:], HTID[:])
+	HID, HTID := amcl.MPIN_SERVER_1_WRAP(date, ID)
 
 	/* Server generates Random number Y and sends it to Client */
-	amcl.MPIN_RANDOM_GENERATE(rng, Y[:])
+	rtn, Y := amcl.MPIN_RANDOM_GENERATE_WRAP(rng)
+	if rtn != 0 {
+		fmt.Println("MPIN_RANDOM_GENERATE Error:", rtn)
+		return
+	}
+	fmt.Printf("Y: 0x")
+	amcl.MPIN_printBinary(Y[:])
 
 	/* Client Second Pass: Inputs Client secret SEC, x and y. Outputs -(x+y)*SEC */
-	rtn = amcl.MPIN_CLIENT_2(X[:], Y[:], SEC[:])
+	rtn, V := amcl.MPIN_CLIENT_2_WRAP(X[:], Y[:], SEC[:])
 	if rtn != 0 {
 		fmt.Printf("FAILURE: CLIENT_2 rtn: %d\n", rtn)
 	}
 
 	/* Server Second pass. Inputs hashed client id, random Y, -(x+y)*SEC, xID and xCID and Server secret SST. E and F help kangaroos to find error. */
 	/* If PIN error not required, set E and F = null */
-	rtn = amcl.MPIN_SERVER_2(date, HID[:], HTID[:], Y[:], SS[:], U[:], UT[:], SEC[:], E[:], F[:])
+	rtn, _, _ = amcl.MPIN_SERVER_2_WRAP(date, HID[:], HTID[:], Y[:], SS[:], U[:], UT[:], V[:])
 	if rtn != 0 {
 		fmt.Printf("FAILURE: MPIN_SERVER_2 rtn: %d\n", rtn)
 	}
@@ -196,10 +221,6 @@ func main() {
 
 	if rtn == amcl.MPIN_BAD_PIN {
 		fmt.Printf("Authentication failed Error Code %d\n", rtn)
-		err := amcl.MPIN_KANGAROO(E[:], F[:])
-		if err != 0 {
-			fmt.Printf("PIN Error %d\n", err)
-		}
 		return
 	} else {
 		fmt.Printf("Authenticated ID: %s \n", IDstr)
