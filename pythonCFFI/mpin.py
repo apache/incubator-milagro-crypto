@@ -79,12 +79,12 @@ extern int MPIN_KANGAROO(octet *,octet *);
 extern int MPIN_ENCODING(csprng *,octet *);
 extern int MPIN_DECODING(octet *);
 
-extern unsigned int today(void);
-extern void CREATE_CSPRNG(csprng *,octet *);
-extern void KILL_CSPRNG(csprng *);
+extern unsigned int MPIN_today(void);
+extern void MPIN_CREATE_CSPRNG(csprng *,octet *);
+extern void MPIN_KILL_CSPRNG(csprng *);
 extern int MPIN_PRECOMPUTE(octet *,octet *,octet *,octet *);
-extern int MPIN_SERVER_KEY(octet *,octet *,octet *,octet *,octet *,octet *);
-extern int MPIN_CLIENT_KEY(octet *,octet *,int ,octet *,octet *,octet *,octet *);
+extern int MPIN_SERVER_KEY(octet *Z,octet *SS,octet *w,octet *p,octet *I,octet *U,octet *UT,octet *K);
+extern int MPIN_CLIENT_KEY(octet *g1,octet *g2,int pin,octet *r,octet *x,octet *p,octet *T,octet *K);
 extern int MPIN_GET_G1_MULTIPLE(csprng *,int,octet *,octet *,octet *);
 extern int MPIN_GET_CLIENT_SECRET(octet *,octet *,octet *);
 extern int MPIN_GET_CLIENT_PERMIT(int,octet *,octet *,octet *);
@@ -93,8 +93,9 @@ extern int MPIN_TEST_PAIRING(octet *,octet *);
 extern void hex2bytes(char *hex, char *bin);
 extern void generateRandom(csprng*, octet*);
 extern int generateOTP(csprng*);
-extern void AES_GCM_ENCRYPT(octet *K,octet *IV,octet *H,octet *P,octet *C,octet *T);
-extern void AES_GCM_DECRYPT(octet *K,octet *IV,octet *H,octet *C,octet *P,octet *T);
+extern void MPIN_AES_GCM_ENCRYPT(octet *K,octet *IV,octet *H,octet *P,octet *C,octet *T);
+extern void MPIN_AES_GCM_DECRYPT(octet *K,octet *IV,octet *H,octet *C,octet *P,octet *T);
+extern void MPIN_HASH_ALL(octet *I,octet *U,octet *CU,octet *V,octet *Y,octet *R,octet *W,octet *H);
 
 """)
 
@@ -137,9 +138,10 @@ if __name__ == "__main__":
     TIME_PERMITS = True
     MPIN_FULL = False
     PIN_ERROR = True
+    USE_ANONYMOUS = False
 
     if TIME_PERMITS:
-        date = libmpin.today()
+        date = libmpin.MPIN_today()
     else:
         date = 0
 
@@ -338,10 +340,16 @@ if __name__ == "__main__":
     CK[0].max = PAS
     CK[0].len = PAS
 
+    # Hash value of transmission
+    HM = ffi.new("octet*")
+    HMval = ffi.new("char []",  HASH_BYTES)
+    HM[0].val = HMval
+    HM[0].max = HASH_BYTES
+    HM[0].len = HASH_BYTES
+
     if date:
         prHID = HTID
         if not PIN_ERROR:
-            HID = ffi.NULL
             U = ffi.NULL
     else:
         HTID = ffi.NULL
@@ -364,7 +372,7 @@ if __name__ == "__main__":
 
     # random number generator
     RNG = ffi.new("csprng*")
-    libmpin.CREATE_CSPRNG(RNG, RAW)
+    libmpin.MPIN_CREATE_CSPRNG(RNG, RAW)
 
     # Hash MPIN_ID
     libmpin.MPIN_HASH_ID(MPIN_ID, HASH_MPIN_ID)
@@ -372,6 +380,11 @@ if __name__ == "__main__":
         print "MPIN_ID: %s" % toHex(MPIN_ID)
         print "HASH_MPIN_ID: %s" % toHex(HASH_MPIN_ID)
 
+    if USE_ANONYMOUS:
+        pID = HASH_MPIN_ID
+    else:
+        pID = MPIN_ID
+        
     # Generate master secret for MIRACL and Customer
     rtn = libmpin.MPIN_RANDOM_GENERATE(RNG, MS1)
     if rtn != 0:
@@ -468,7 +481,7 @@ if __name__ == "__main__":
             libmpin.MPIN_GET_G1_MULTIPLE(RNG, 1, R, HASH_MPIN_ID, Z)
 
         # Server MPIN
-        rtn = libmpin.MPIN_SERVER(date, HID, HTID, Y, SERVER_SECRET, U, UT, SEC, E, F, MPIN_ID, ffi.NULL, TimeValue)
+        rtn = libmpin.MPIN_SERVER(date, HID, HTID, Y, SERVER_SECRET, U, UT, SEC, E, F, pID, ffi.NULL, TimeValue)
         if rtn != 0:
             print "ERROR: Single Pass %s is not authenticated" % identity
             if PIN_ERROR:
@@ -483,11 +496,13 @@ if __name__ == "__main__":
             print "T: %s" % toHex(T)
 
         if MPIN_FULL:
-            libmpin.MPIN_CLIENT_KEY(TATE1, TATE2, PIN, R, X, T, CK)
-            print "Client Key: %s" % toHex(CK)
+            libmpin.MPIN_HASH_ALL(prHID,U,UT,SEC,Y,Z,T,HM);
+            
+            libmpin.MPIN_CLIENT_KEY(TATE1, TATE2, PIN, R, X, HM, T, CK)
+            print "Client AES Key: %s" % toHex(CK)
 
-            libmpin.MPIN_SERVER_KEY(Z, SERVER_SECRET, W, U, UT, SK)
-            print "Server Key: %s" % toHex(SK)
+            libmpin.MPIN_SERVER_KEY(Z, SERVER_SECRET, W, HM, HID, U, UT, SK)
+            print "Server AES Key: %s" % toHex(SK)
 
     else:
         print "M-Pin Multi Pass"
@@ -506,7 +521,7 @@ if __name__ == "__main__":
 
         # Server calculates H(ID) and H(T|H(ID)) (if time permits enabled),
         # and maps them to points on the curve HID and HTID resp.
-        libmpin.MPIN_SERVER_1(date, MPIN_ID, HID, HTID)
+        libmpin.MPIN_SERVER_1(date, pID, HID, HTID)
 
         # Server generates Random number Y and sends it to Client
         rtn = libmpin.MPIN_RANDOM_GENERATE(RNG, Y)
@@ -544,12 +559,14 @@ if __name__ == "__main__":
             if rtn != 0:
                 print "ERROR: Generating T %s" % rtn
 
-            rtn = libmpin.MPIN_CLIENT_KEY(TATE1, TATE2, PIN, R, X, T, CK)
+            libmpin.MPIN_HASH_ALL(HASH_MPIN_ID,U,UT,SEC,Y,Z,T,HM);                
+
+            rtn = libmpin.MPIN_CLIENT_KEY(TATE1, TATE2, PIN, R, X, HM, T, CK)
             if rtn != 0:
                 print "ERROR: Generating CK %s" % rtn
-            print "Client Key: %s" % toHex(CK)
+            print "Client AES Key: %s" % toHex(CK)
 
-            rtn = libmpin.MPIN_SERVER_KEY(Z, SERVER_SECRET, W, U, UT, SK)
+            rtn = libmpin.MPIN_SERVER_KEY(Z, SERVER_SECRET, W, HM, HID, U, UT, SK)
             if rtn != 0:
                 print "ERROR: Generating SK %s" % rtn
-            print "Server Key: %s" % toHex(SK)
+            print "Server AES Key: %s" % toHex(SK)

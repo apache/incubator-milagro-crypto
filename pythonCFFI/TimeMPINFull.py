@@ -49,7 +49,7 @@ if __name__ == "__main__":
     TIME_PERMITS = True
 
     if TIME_PERMITS:
-        date = libmpin.today()
+        date = libmpin.MPIN_today()
     else:
         date = 0
 
@@ -259,7 +259,7 @@ if __name__ == "__main__":
 
     # random number generator
     RNG = ffi.new("csprng*")
-    libmpin.CREATE_CSPRNG(RNG, RAW)
+    libmpin.MPIN_CREATE_CSPRNG(RNG, RAW)
 
     # Hash MPIN_ID
     libmpin.MPIN_HASH_ID(MPIN_ID,  HASH_MPIN_ID)

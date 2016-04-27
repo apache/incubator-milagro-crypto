@@ -20,8 +20,8 @@ under the License.
 package amcl
 
 /*
-#cgo CFLAGS:  -std=c99 -O3 -I/usr/local/include/amcl
-#cgo LDFLAGS: -L/usr/local/lib -lmpin  -lamcl -lm
+#cgo CFLAGS:  -std=c99 -O3 -I/opt/amcl/include
+#cgo LDFLAGS: -L/opt/amcl/lib -lmpin  -lamcl -lm
 #include <stdio.h>
 #include <stdlib.h>
 #include "amcl.h"
@@ -122,7 +122,7 @@ func OCT_toHex(valOctet *C.octet) string {
 
 /* return time in slots since epoch */
 func MPIN_today() int {
-	date := C.today()
+	date := C.MPIN_today()
 	return int(date)
 }
 
@@ -132,12 +132,12 @@ func MPIN_GET_TIME() int {
 	return int(timeValue)
 }
 
-func CREATE_CSPRNG(RNG *C.csprng, SEED []byte) {
+func MPIN_CREATE_CSPRNG(RNG *C.csprng, SEED []byte) {
 	// Form Octet
 	SEEDStr := string(SEED)
 	SEEDOct := GetOctet(SEEDStr)
 	defer OCT_free(&SEEDOct)
-	C.CREATE_CSPRNG(RNG, &SEEDOct)
+	C.MPIN_CREATE_CSPRNG(RNG, &SEEDOct)
 }
 
 func MPIN_HASH_ID(ID []byte) (HASHID []byte) {
@@ -476,7 +476,7 @@ func MPIN_KANGAROO(E []byte, F []byte) (PINError int) {
 
 /* calculate common key on server side */
 /* Z=r.A - no time permits involved */
-func MPIN_SERVER_KEY_WRAP(Z, SS, W, U, UT []byte) (errorCode int, SK []byte) {
+func MPIN_SERVER_KEY_WRAP(Z, SS, W, P, I, U, UT []byte) (errorCode int, SK []byte) {
 	ZStr := string(Z)
 	ZOct := GetOctet(ZStr)
 	defer OCT_free(&ZOct)
@@ -486,6 +486,12 @@ func MPIN_SERVER_KEY_WRAP(Z, SS, W, U, UT []byte) (errorCode int, SK []byte) {
 	WStr := string(W)
 	WOct := GetOctet(WStr)
 	defer OCT_free(&WOct)
+	PStr := string(P)
+	POct := GetOctet(PStr)
+	defer OCT_free(&POct)
+	IStr := string(I)
+	IOct := GetOctet(IStr)
+	defer OCT_free(&IOct)
 	UStr := string(U)
 	UOct := GetOctet(UStr)
 	defer OCT_free(&UOct)
@@ -496,7 +502,7 @@ func MPIN_SERVER_KEY_WRAP(Z, SS, W, U, UT []byte) (errorCode int, SK []byte) {
 	SKOct := GetOctetZero(EAS)
 	defer OCT_free(&SKOct)
 
-	rtn := C.MPIN_SERVER_KEY(&ZOct, &SSOct, &WOct, &UOct, &UTOct, &SKOct)
+	rtn := C.MPIN_SERVER_KEY(&ZOct, &SSOct, &WOct, &POct, &IOct, &UOct, &UTOct, &SKOct)
 	errorCode = int(rtn)
 
 	// Convert octet to bytes
@@ -507,7 +513,7 @@ func MPIN_SERVER_KEY_WRAP(Z, SS, W, U, UT []byte) (errorCode int, SK []byte) {
 
 /* calculate common key on client side */
 /* wCID = w.(A+AT) */
-func MPIN_CLIENT_KEY_WRAP(PIN int, GT1, GT2, R, X, T []byte) (errorCode int, CK []byte) {
+func MPIN_CLIENT_KEY_WRAP(PIN int, GT1, GT2, R, X, P, T []byte) (errorCode int, CK []byte) {
 	GT1Str := string(GT1)
 	GT1Oct := GetOctet(GT1Str)
 	defer OCT_free(&GT1Oct)
@@ -520,6 +526,9 @@ func MPIN_CLIENT_KEY_WRAP(PIN int, GT1, GT2, R, X, T []byte) (errorCode int, CK 
 	XStr := string(X)
 	XOct := GetOctet(XStr)
 	defer OCT_free(&XOct)
+	PStr := string(P)
+	POct := GetOctet(PStr)
+	defer OCT_free(&POct)
 	TStr := string(T)
 	TOct := GetOctet(TStr)
 	defer OCT_free(&TOct)
@@ -527,7 +536,7 @@ func MPIN_CLIENT_KEY_WRAP(PIN int, GT1, GT2, R, X, T []byte) (errorCode int, CK 
 	CKOct := GetOctetZero(EAS)
 	defer OCT_free(&CKOct)
 
-	rtn := C.MPIN_CLIENT_KEY(&GT1Oct, &GT2Oct, C.int(PIN), &ROct, &XOct, &TOct, &CKOct)
+	rtn := C.MPIN_CLIENT_KEY(&GT1Oct, &GT2Oct, C.int(PIN), &ROct, &XOct, &POct, &TOct, &CKOct)
 	errorCode = int(rtn)
 
 	// Convert octet to bytes
@@ -558,7 +567,7 @@ func GENERATE_OTP_C(RNG *C.csprng) int {
 /* AES-GCM Encryption:
    K is key, H is header, IV is initialization vector and P is plaintext.
    Returns cipthertext and tag (MAC) */
-func AES_GCM_ENCRYPT(K, IV, H, P []byte) ([]byte, []byte) {
+func MPIN_AES_GCM_ENCRYPT(K, IV, H, P []byte) ([]byte, []byte) {
 	KStr := string(K)
 	KOct := GetOctet(KStr)
 	defer OCT_free(&KOct)
@@ -578,7 +587,7 @@ func AES_GCM_ENCRYPT(K, IV, H, P []byte) ([]byte, []byte) {
 	COct := GetOctetZero(lenC)
 	defer OCT_free(&COct)
 
-	C.AES_GCM_ENCRYPT(&KOct, &IVOct, &HOct, &POct, &COct, &TOct)
+	C.MPIN_AES_GCM_ENCRYPT(&KOct, &IVOct, &HOct, &POct, &COct, &TOct)
 
 	// Convert octet to bytes
 	C := OCT_toBytes(&COct)
@@ -590,7 +599,7 @@ func AES_GCM_ENCRYPT(K, IV, H, P []byte) ([]byte, []byte) {
 /* AES-GCM Deryption:
    K is key, H is header, IV is initialization vector and P is plaintext.
    Returns cipthertext and tag (MAC) */
-func AES_GCM_DECRYPT(K, IV, H, C []byte) ([]byte, []byte) {
+func MPIN_AES_GCM_DECRYPT(K, IV, H, C []byte) ([]byte, []byte) {
 	KStr := string(K)
 	KOct := GetOctet(KStr)
 	defer OCT_free(&KOct)
@@ -610,7 +619,7 @@ func AES_GCM_DECRYPT(K, IV, H, C []byte) ([]byte, []byte) {
 	POct := GetOctetZero(lenP)
 	defer OCT_free(&POct)
 
-	C.AES_GCM_DECRYPT(&KOct, &IVOct, &HOct, &COct, &POct, &TOct)
+	C.MPIN_AES_GCM_DECRYPT(&KOct, &IVOct, &HOct, &COct, &POct, &TOct)
 
 	// Convert octet to bytes
 	P := OCT_toBytes(&POct)
@@ -622,7 +631,7 @@ func AES_GCM_DECRYPT(K, IV, H, C []byte) ([]byte, []byte) {
 /* Password based Key Derivation Function */
 /* Input password p, salt s, and repeat count */
 /* Output key of length olen */
-func PBKDF2(Pass, Salt []byte, rep, olen int) (Key []byte) {
+func MPIN_PBKDF2(Pass, Salt []byte, rep, olen int) (Key []byte) {
 	PassStr := string(Pass)
 	PassOct := GetOctet(PassStr)
 	defer OCT_free(&PassOct)
@@ -633,7 +642,7 @@ func PBKDF2(Pass, Salt []byte, rep, olen int) (Key []byte) {
 	KeyOct := GetOctetZero(olen)
 	defer OCT_free(&KeyOct)
 
-	C.PBKDF2(&PassOct, &SaltOct, C.int(rep), C.int(olen), &KeyOct)
+	C.MPIN_PBKDF2(&PassOct, &SaltOct, C.int(rep), C.int(olen), &KeyOct)
 
 	// Convert octet to bytes
 	Key = OCT_toBytes(&KeyOct)
@@ -772,6 +781,48 @@ func MPIN_CLIENT_2_WRAP(X []byte, Y []byte, SEC []byte) (errorCode int, V []byte
 	errorCode = int(rtn)
 	// Convert octet to bytes
 	V = OCT_toBytes(&SECOct)
+
+	return
+}
+
+func MPIN_HASH_ALL_WRAP(I, U, UT, Y, V, R, W []byte) (HM []byte) {
+	// Form Octets
+	IStr := string(I)
+	IOct := GetOctet(IStr)
+	defer OCT_free(&IOct)
+
+	UStr := string(U)
+	UOct := GetOctet(UStr)
+	defer OCT_free(&UOct)
+
+	UTStr := string(UT)
+	UTOct := GetOctet(UTStr)
+	defer OCT_free(&UTOct)
+
+	YStr := string(Y)
+	YOct := GetOctet(YStr)
+	defer OCT_free(&YOct)
+
+	VStr := string(V)
+	VOct := GetOctet(VStr)
+	defer OCT_free(&VOct)
+
+	RStr := string(R)
+	ROct := GetOctet(RStr)
+	defer OCT_free(&ROct)
+
+	WStr := string(W)
+	WOct := GetOctet(WStr)
+	defer OCT_free(&WOct)
+
+	HMOct := GetOctetZero(HASH_BYTES)
+	defer OCT_free(&HMOct)
+
+	// Hash values
+	C.MPIN_HASH_ALL(&IOct, &UOct, &UTOct, &YOct, &VOct, &ROct, &WOct, &HMOct)
+
+	// Convert octet to bytes
+	HM = OCT_toBytes(&HMOct)
 
 	return
 }

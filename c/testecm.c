@@ -59,7 +59,7 @@ int main()
     RAW.val[3]=ran>>24;
     for (i=4;i<100;i++) RAW.val[i]=i;
 
-    CREATE_CSPRNG(&RNG,&RAW);   /* initialise strong RNG */
+    ECP_CREATE_CSPRNG(&RNG,&RAW);   /* initialise strong RNG */
 
 //for (j=0;j<1000;j++)
 //{
@@ -73,7 +73,7 @@ int main()
 
 /* private key S0 of size EGS bytes derived from Password and Salt */
 
-	PBKDF2(&PW,&SALT,1000,EGS,&S0);
+	ECP_PBKDF2(&PW,&SALT,1000,EGS,&S0);
 	printf("Alices private key= 0x"); OCT_output(&S0);
 
 /* Generate Key pair S/W */
@@ -103,16 +103,16 @@ int main()
 
 /* Calculate common key using DH - IEEE 1363 method */
 
-    ECPSVDP_DH(&S0,&W1,&Z0);
-    ECPSVDP_DH(&S1,&W0,&Z1);
+    ECP_SVDP_DH(&S0,&W1,&Z0);
+    ECP_SVDP_DH(&S1,&W0,&Z1);
 
 	if (!OCT_comp(&Z0,&Z1))
     {
-        printf("*** ECPSVDP-DH Failed\n");
+        printf("*** ECP_SVDP-DH Failed\n");
         return 0;
     }
 
-	KDF2(&Z0,NULL,EAS,&KEY);
+	ECP_KDF2(&Z0,NULL,EAS,&KEY);
 
 	printf("Alice's DH Key=  0x"); OCT_output(&KEY);
 	printf("Servers DH Key=  0x"); OCT_output(&KEY);

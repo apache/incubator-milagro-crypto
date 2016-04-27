@@ -51,6 +51,7 @@ under the License.
 #define AMCL_VERSION_PATCH @AMCL_VERSION_PATCH@
 #define OS "@OS@"
 #cmakedefine USE_PATENTS
+#cmakedefine USE_ANONYMOUS
 
 /* Support for C99?  Note for GCC need to explicitly include -std=c99 in command line */
 

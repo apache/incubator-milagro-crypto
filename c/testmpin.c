@@ -23,7 +23,7 @@ under the License.
 
 /* Build executible after installation:
 
-  gcc -std=c99 -O3 ./testmpin.c  -I/usr/local/include/amcl -L/usr/local/lib -lmpin -lamcl -o testmpin
+  gcc -std=c99 -g ./testmpin.c -I/opt/amcl/include -L/opt/amcl/lib -lamcl -lmpin -o testmpin
 
 */
 
@@ -42,13 +42,13 @@ int main()
 {
   int i,pin,rtn,err,timeValue;
 #ifdef PERMITS
-  int date=today();
+  int date=MPIN_today();
 #else
   int date=0;
 #endif
   unsigned long ran;
   char x[PGS],s[PGS],y[PGS],client_id[100],raw[100],sst[4*PFS],token[2*PFS+1],sec[2*PFS+1],permit[2*PFS+1],xcid[2*PFS+1],xid[2*PFS+1],e[12*PFS],f[12*PFS];
-  char hcid[HASH_BYTES],hid[2*PFS+1],htid[2*PFS+1];
+  char hcid[HASH_BYTES],hsid[HASH_BYTES],hid[2*PFS+1],htid[2*PFS+1],h[PGS];
 #ifdef FULL
   char r[PGS],z[2*PFS+1],w[PGS],t[2*PFS+1];
   char g1[12*PFS],g2[12*PFS];
@@ -57,6 +57,7 @@ int main()
   octet S={0,sizeof(s),s};
   octet X={0,sizeof(x),x};
   octet Y={0,sizeof(y),y};
+  octet H={0,sizeof(h),h};
   octet RAW={0,sizeof(raw),raw};
   octet CLIENT_ID={0,sizeof(client_id),client_id};
   octet SST={0,sizeof(sst),sst};
@@ -66,6 +67,7 @@ int main()
   octet xCID={0,sizeof(xcid),xcid};
   octet xID={0,sizeof(xid),xid};
   octet HCID={0,sizeof(hcid),hcid};
+  octet HSID={0,sizeof(hsid),hsid};
   octet HID={0,sizeof(hid),hid};
   octet HTID={0,sizeof(htid),htid};
   octet E={0,sizeof(e),e};
@@ -94,7 +96,7 @@ int main()
   for (i=4;i<100;i++) RAW.val[i]=i+1;
 
   /* initialise strong RNG */
-  CREATE_CSPRNG(&RNG,&RAW);
+  MPIN_CREATE_CSPRNG(&RNG,&RAW);
 
   /* Trusted Authority set-up */
   MPIN_RANDOM_GENERATE(&RNG,&S);
@@ -104,6 +106,14 @@ int main()
   OCT_jstring(&CLIENT_ID,"testUser@miracl.com");
   MPIN_HASH_ID(&CLIENT_ID,&HCID);  /* Either Client or TA calculates Hash(ID) - you decide! */
   printf("Client ID= "); OCT_output_string(&CLIENT_ID); printf("\n");
+
+  /* When set only send hashed IDs to server */
+  octet *pID;
+#ifdef USE_ANONYMOUS
+  pID = &HCID;
+#else
+  pID = &CLIENT_ID;
+#endif
 
   /* Client and Server are issued secrets by DTA */
   MPIN_GET_SERVER_SECRET(&S,&SST);
@@ -150,6 +160,9 @@ int main()
   If PERMITS are is use, then date!=0 and PERMIT is added to secret and xCID = x.(H(CLIENT_ID)+H(date|H(CLIENT_ID)))
   Random value x is supplied externally if RNG=NULL, otherwise generated and passed out by RNG
 
+  HSID - hashed client ID as calculated by the server
+  HCID - hashed client ID as calculated by the client
+
   IMPORTANT: To save space and time..
   If Time Permits OFF set xCID = NULL, HTID=NULL and use xID and HID only
   If Time permits are ON, AND pin error detection is required then all of xID, xCID, HID and HTID are required
@@ -169,7 +182,7 @@ int main()
   prHID=pHTID;
 #ifndef PINERROR
    pxID=NULL;
-   pHID=NULL;
+   // pHID=NULL;
 #endif
 #else
    prHID=pHID;
@@ -193,10 +206,8 @@ int main()
   }
 
 #ifdef FULL
-  MPIN_HASH_ID(&CLIENT_ID,&HCID);
   MPIN_GET_G1_MULTIPLE(&RNG,1,&R,&HCID,&Z);  /* Also Send Z=r.ID to Server, remember random r */
 #endif
-
 
   rtn=MPIN_SERVER(date,pHID,pHTID,&Y,&SST,pxID,pxCID,&SEC,pE,pF,&CLIENT_ID,NULL,timeValue);
   if (rtn != 0)
@@ -204,13 +215,13 @@ int main()
     printf("MPIN_SERVER ERROR %d\n", rtn);
   }
 
-
 #ifdef FULL
   MPIN_GET_G1_MULTIPLE(&RNG,0,&W,prHID,&T);  /* Also send T=w.ID to client, remember random w  */
 #endif
 
 #else // SINGLE_PASS
   printf("MPIN Multi Pass\n");
+
   if (MPIN_CLIENT_1(date,&CLIENT_ID,&RNG,&X,pin,&TOKEN,&SEC,pxID,pxCID,pPERMIT)!=0)
   {
     printf("Error from Client side - First Pass\n");
@@ -220,12 +231,11 @@ int main()
   /* Send U=x.ID to server, and recreate secret from token and pin */
 
 #ifdef FULL
-  MPIN_HASH_ID(&CLIENT_ID,&HCID);
   MPIN_GET_G1_MULTIPLE(&RNG,1,&R,&HCID,&Z);  /* Also Send Z=r.ID to Server, remember random r */
 #endif
 
   /* Server calculates H(ID) and H(ID)+H(T|H(ID)) (if time permits enabled), and maps them to points on the curve HID and HTID resp. */
-  MPIN_SERVER_1(date,&CLIENT_ID,pHID,pHTID);
+  MPIN_SERVER_1(date,pID,pHID,pHTID);
 
   /* Server generates Random number Y and sends it to Client */
   MPIN_RANDOM_GENERATE(&RNG,&Y);
@@ -248,7 +258,7 @@ int main()
 
   if (rtn!=0)
     {
-      printf("Server says - Bad Pin. I don't know you. Feck off.\n");
+      printf("Server says - Bad Pin. \n");
 #ifdef PINERROR
 
       err=MPIN_KANGAROO(&E,&F);
@@ -259,15 +269,22 @@ int main()
     }
   else
     {
-      printf("Server says - PIN is good! You really are "); OCT_output_string(&CLIENT_ID); printf(".\n");
+      printf("Server says - PIN is good! ID: "); 
+      OCT_output_string(&CLIENT_ID); 
+      printf(".\n");
     }
 
 #ifdef FULL
-  MPIN_CLIENT_KEY(&G1,&G2,pin,&R,&X,&T,&CK);
-  printf("Client Key = "); OCT_output(&CK);
+  MPIN_HASH_ALL(&HCID,pxID,pxCID,&SEC,&Y,&Z,&T,&H);  
+  MPIN_CLIENT_KEY(&G1,&G2,pin,&R,&X,&H,&T,&CK);      
+  printf("Client Key = "); OCT_output(&CK); 
 
-  MPIN_SERVER_KEY(&Z,&SST,&W,pxID,pxCID,&SK);
-  printf("Server Key = "); OCT_output(&SK);
+  /* Server will use the hashed ID if anonymous connection required.
+     MPIN_HASH_ID(&CLIENT_ID,&HSID);
+     MPIN_HASH_ALL(&HSID,pxID,pxCID,&SEC,&Y,&Z,&T,&H);
+  */
+  MPIN_SERVER_KEY(&Z,&SST,&W,&H,pHID,pxID,pxCID,&SK);
+  printf("Server Key = "); OCT_output(&SK); 
 #endif
   return 0;
 }

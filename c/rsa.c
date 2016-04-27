@@ -57,12 +57,12 @@ static void hashit(octet *p,int n,octet *w)
 
 /* Initialise a Cryptographically Strong Random Number Generator from
    an octet of raw random data */
-void CREATE_CSPRNG(csprng *RNG,octet *RAW)
+void RSA_CREATE_CSPRNG(csprng *RNG,octet *RAW)
 {
     RAND_seed(RNG,RAW->len,RAW->val);
 }
 
-void KILL_CSPRNG(csprng *RNG)
+void RSA_KILL_CSPRNG(csprng *RNG)
 {
     RAND_clean(RNG);
 }
@@ -150,7 +150,7 @@ void MGF1(octet *z,int olen,octet *mask)
 
 /* OAEP Message Encoding for Encryption */
 
-int OAEP_ENCODE(octet *m,csprng *RNG,octet *p,octet *f)
+int RSA_OAEP_ENCODE(octet *m,csprng *RNG,octet *p,octet *f)
 {
     int i,slen,olen=RFS-1;
     int mlen=m->len;
@@ -191,7 +191,7 @@ int OAEP_ENCODE(octet *m,csprng *RNG,octet *p,octet *f)
 
 /* OAEP Message Decoding for Decryption */
 
-int OAEP_DECODE(octet *p,octet *f)
+int RSA_OAEP_DECODE(octet *p,octet *f)
 {
     int comp,x,t;
     int i,k,olen=RFS-1;

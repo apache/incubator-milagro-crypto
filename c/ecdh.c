@@ -60,25 +60,25 @@ static void hashit(octet *p,int n,octet *x,octet *y,octet *w)
 }
 
 /* Hash octet p to octet w */
-void HASH(octet *p,octet *w)
+void ECP_HASH(octet *p,octet *w)
 {
 	hashit(p,-1,NULL,NULL,w);
 }
 
 /* Initialise a Cryptographically Strong Random Number Generator from
    an octet of raw random data */
-void CREATE_CSPRNG(csprng *RNG,octet *RAW)
+void ECP_CREATE_CSPRNG(csprng *RNG,octet *RAW)
 {
     RAND_seed(RNG,RAW->len,RAW->val);
 }
 
-void KILL_CSPRNG(csprng *RNG)
+void ECP_KILL_CSPRNG(csprng *RNG)
 {
     RAND_clean(RNG);
 }
 
 /* Calculate HMAC of m using key k. HMAC is tag of length olen */
-int HMAC(octet *m,octet *k,int olen,octet *tag)
+int ECP_HMAC(octet *m,octet *k,int olen,octet *tag)
 {
 /* Input is from an octet m        *
  * olen is requested output length in bytes. k is the key  *
@@ -132,7 +132,7 @@ void KDF1(octet *z,int olen,octet *key)
     }
 }
 */
-void KDF2(octet *z,octet *p,int olen,octet *key)
+void ECP_KDF2(octet *z,octet *p,int olen,octet *key)
 {
 /* NOTE: the parameter olen is the length of the output k in bytes */
     char h[32];
@@ -155,7 +155,7 @@ void KDF2(octet *z,octet *p,int olen,octet *key)
 /* Password based Key Derivation Function */
 /* Input password p, salt s, and repeat count */
 /* Output key of length olen */
-void PBKDF2(octet *p,octet *s,int rep,int olen,octet *key)
+void ECP_PBKDF2(octet *p,octet *s,int rep,int olen,octet *key)
 {
 	int i,j,len,d=ROUNDUP(olen,32);
 	char f[EFS],u[EFS];
@@ -167,12 +167,12 @@ void PBKDF2(octet *p,octet *s,int rep,int olen,octet *key)
 	{
 		len=s->len;
 		OCT_jint(s,i,4);
-		HMAC(s,p,EFS,&F);
+		ECP_HMAC(s,p,EFS,&F);
 		s->len=len;
 		OCT_copy(&U,&F);
 		for (j=2;j<=rep;j++)
 		{
-			HMAC(&U,p,EFS,&U);
+			ECP_HMAC(&U,p,EFS,&U);
 			OCT_xor(&F,&U);
 		}
 
@@ -182,7 +182,7 @@ void PBKDF2(octet *p,octet *s,int rep,int olen,octet *key)
 }
 
 /* AES encryption/decryption. Encrypt byte array M using key K and returns ciphertext */
-void AES_CBC_IV0_ENCRYPT(octet *k,octet *m,octet *c)
+void ECP_AES_CBC_IV0_ENCRYPT(octet *k,octet *m,octet *c)
 { /* AES CBC encryption, with Null IV and key k */
   /* Input is from an octet string m, output is to an octet string c */
   /* Input is padded as necessary to make up a full final block */
@@ -223,7 +223,7 @@ void AES_CBC_IV0_ENCRYPT(octet *k,octet *m,octet *c)
 }
 
 /* decrypts and returns TRUE if all consistent, else returns FALSE */
-int AES_CBC_IV0_DECRYPT(octet *k,octet *c,octet *m)
+int ECP_AES_CBC_IV0_DECRYPT(octet *k,octet *c,octet *m)
 { /* padding is removed */
     aes a;
     int i,ipt,opt,ch;
@@ -354,7 +354,7 @@ int ECP_PUBLIC_KEY_VALIDATE(int full,octet *W)
 }
 
 /* IEEE-1363 Diffie-Hellman online calculation Z=S.WD */
-int ECPSVDP_DH(octet *S,octet *WD,octet *Z)
+int ECP_SVDP_DH(octet *S,octet *WD,octet *Z)
 {
     BIG r,s,wx,wy;
     int valid;
@@ -395,7 +395,7 @@ int ECPSVDP_DH(octet *S,octet *WD,octet *Z)
 #if CURVETYPE!=MONTGOMERY
 
 /* IEEE ECDSA Signature, C and D are signature on F using private key S */
-int ECPSP_DSA(csprng *RNG,octet *S,octet *F,octet *C,octet *D)
+int ECP_SP_DSA(csprng *RNG,octet *S,octet *F,octet *C,octet *D)
 {
 	char h[32];
 	octet H={0,sizeof(h),h};
@@ -443,7 +443,7 @@ int ECPSP_DSA(csprng *RNG,octet *S,octet *F,octet *C,octet *D)
 }
 
 /* IEEE1363 ECDSA Signature Verification. Signature C and D on F is verified using public key W */
-int ECPVP_DSA(octet *W,octet *F, octet *C,octet *D)
+int ECP_VP_DSA(octet *W,octet *F, octet *C,octet *D)
 {
 	char h[32];
 	octet H={0,sizeof(h),h};
@@ -512,25 +512,25 @@ void ECP_ECIES_ENCRYPT(octet *P1,octet *P2,csprng *RNG,octet *W,octet *M,int tle
 	octet U={0,sizeof(u),u};
 
     if (ECP_KEY_PAIR_GENERATE(RNG,&U,V)!=0) return;
-    if (ECPSVDP_DH(&U,W,&Z)!=0) return;
+    if (ECP_SVDP_DH(&U,W,&Z)!=0) return;
 
     OCT_copy(&VZ,V);
     OCT_joctet(&VZ,&Z);
 
-	KDF2(&VZ,P1,EFS,&K);
+    ECP_KDF2(&VZ,P1,EFS,&K);
 
-	K1.len=K2.len=16;
+    K1.len=K2.len=16;
     for (i=0;i<16;i++) {K1.val[i]=K.val[i]; K2.val[i]=K.val[16+i];}
 
-	AES_CBC_IV0_ENCRYPT(&K1,M,C);
+    ECP_AES_CBC_IV0_ENCRYPT(&K1,M,C);
 
-	OCT_jint(&L2,P2->len,8);
+    OCT_jint(&L2,P2->len,8);
 
-	len=C->len;
-	OCT_joctet(C,P2);
+    len=C->len;
+    OCT_joctet(C,P2);
     OCT_joctet(C,&L2);
-	HMAC(C,&K2,tlen,T);
-	C->len=len;
+    ECP_HMAC(C,&K2,tlen,T);
+    C->len=len;
 }
 
 /* IEEE1363 ECIES decryption. Decryption of ciphertext V,C,T using private key U outputs plaintext M */
@@ -547,24 +547,24 @@ int ECP_ECIES_DECRYPT(octet *P1,octet *P2,octet *V,octet *C,octet *T,octet *U,oc
 	octet L2={0,sizeof(l2),l2};
 	octet TAG={0,sizeof(tag),tag};
 
-	if (ECPSVDP_DH(U,V,&Z)!=0) return 0;
+	if (ECP_SVDP_DH(U,V,&Z)!=0) return 0;
 
     OCT_copy(&VZ,V);
     OCT_joctet(&VZ,&Z);
 
-	KDF2(&VZ,P1,EFS,&K);
+	ECP_KDF2(&VZ,P1,EFS,&K);
 
 	K1.len=K2.len=16;
     for (i=0;i<16;i++) {K1.val[i]=K.val[i]; K2.val[i]=K.val[16+i];}
 
-	if (!AES_CBC_IV0_DECRYPT(&K1,C,M)) return 0;
+	if (!ECP_AES_CBC_IV0_DECRYPT(&K1,C,M)) return 0;
 
 	OCT_jint(&L2,P2->len,8);
 
 	len=C->len;
 	OCT_joctet(C,P2);
     OCT_joctet(C,&L2);
-	HMAC(C,&K2,T->len,&TAG);
+	ECP_HMAC(C,&K2,T->len,&TAG);
 	C->len=len;
 
 	if (!OCT_comp(T,&TAG)) return 0;

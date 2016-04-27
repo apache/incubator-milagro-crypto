@@ -47,7 +47,19 @@ if(BUILD_MPIN)
   target_link_libraries (testmpin mpin) 
 endif(BUILD_MPIN)
 
-  
+# Build libwcc
+if(BUILD_WCC)
+  message(STATUS "Build WCC")
+  add_library(wcc ${LIB_TYPE} pair.c wcc.c utils.c)
+  target_link_libraries (wcc amcl) 
+  add_executable (testwcc testwcc.c)
+  add_executable (testwcc_tp testwcc_tp.c)
+  add_executable (testwcc_dta testwcc_dta.c)
+  target_link_libraries (testwcc wcc) 
+  target_link_libraries (testwcc_tp wcc) 
+  target_link_libraries (testwcc_dta wcc) 
+endif(BUILD_WCC)
+
 # Copy built libs to c/tests which allows testing without
 # having to install the libs.
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -64,7 +76,15 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
                   POST_BUILD
                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/libmpin.dll" "${PROJECT_BINARY_DIR}/c/tests/")
     endif(BUILD_MPIN)
-  
+
+    if(BUILD_WCC)
+      message(STATUS "Copy libwcc.dll to c/tests for testing")
+      add_custom_command(
+                  TARGET wcc
+                  POST_BUILD
+                  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/libwcc.dll" "${PROJECT_BINARY_DIR}/c/tests/")
+    endif(BUILD_WCC)
+
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 # Copy built libs to pythonCFFI which allows testing without
@@ -80,6 +100,14 @@ if (BUILD_PYTHON AND BUILD_SHARED_LIBS)
                   POST_BUILD
                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/libmpin.so" "${PROJECT_BINARY_DIR}/pythonCFFI/")
     endif(BUILD_MPIN)
+
+    if(BUILD_WCC)
+      message(STATUS "Copy libwcc.so to pythonCFFI for testing")
+      add_custom_command(
+                  TARGET wcc
+                  POST_BUILD
+                  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/libwcc.so" "${PROJECT_BINARY_DIR}/pythonCFFI/")
+    endif(BUILD_WCC)  
 
   endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
@@ -97,6 +125,14 @@ if (BUILD_PYTHON AND BUILD_SHARED_LIBS)
                   POST_BUILD
                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/libmpin.dll" "${PROJECT_BINARY_DIR}/pythonCFFI/")
     endif(BUILD_MPIN)
+
+    if(BUILD_WCC)
+      message(STATUS "Copy libwcc.dll to pythonCFFI for testing")
+      add_custom_command(
+                  TARGET wcc
+                  POST_BUILD
+                  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/libwcc.dll" "${PROJECT_BINARY_DIR}/pythonCFFI/")
+    endif(BUILD_WCC)
 
   endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
@@ -116,6 +152,15 @@ if (BUILD_PYTHON AND BUILD_SHARED_LIBS)
                   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/libmpin.dylib" "${PROJECT_BINARY_DIR}/pythonCFFI/")
     endif(BUILD_MPIN)
 
+    if(BUILD_WCC)
+      message(STATUS "Copy libwcc.dylib to pythonCFFI for testing")
+      add_custom_command(
+                  TARGET wcc
+                  POST_BUILD
+                  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/libwcc.dylib" "${PROJECT_BINARY_DIR}/pythonCFFI/")
+    endif(BUILD_WCC)  
+
+
   endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
@@ -133,7 +178,7 @@ add_subdirectory (tests)
 
 # Install libs and headers
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  install(DIRECTORY DESTINATION include/amcl DIRECTORY_PERMISSIONS
+  install(DIRECTORY DESTINATION include DIRECTORY_PERMISSIONS
           OWNER_WRITE OWNER_READ OWNER_EXECUTE
           GROUP_WRITE GROUP_READ
           WORLD_WRITE WORLD_READ WORLD_EXECUTE)
@@ -141,15 +186,15 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
           OWNER_WRITE OWNER_READ OWNER_EXECUTE
           GROUP_READ GROUP_EXECUTE
           WORLD_READ WORLD_EXECUTE)
-  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/amcl.h DESTINATION include/amcl PERMISSIONS
+  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/amcl.h DESTINATION include PERMISSIONS
           OWNER_WRITE OWNER_READ OWNER_EXECUTE
           GROUP_READ GROUP_EXECUTE
           WORLD_READ WORLD_EXECUTE)
-  install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/utils.h DESTINATION include/amcl PERMISSIONS
+  install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/utils.h DESTINATION include PERMISSIONS
           OWNER_WRITE OWNER_READ OWNER_EXECUTE
           GROUP_READ GROUP_EXECUTE
           WORLD_READ WORLD_EXECUTE)
-  install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/DLLDefines.h DESTINATION include/amcl PERMISSIONS
+  install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/DLLDefines.h DESTINATION include PERMISSIONS
           OWNER_WRITE OWNER_READ OWNER_EXECUTE
           GROUP_READ GROUP_EXECUTE
           WORLD_READ WORLD_EXECUTE)
@@ -159,12 +204,23 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             OWNER_WRITE OWNER_READ OWNER_EXECUTE
             GROUP_READ GROUP_EXECUTE
             WORLD_READ WORLD_EXECUTE)
-    install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/mpin.h DESTINATION include/amcl PERMISSIONS
+    install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/mpin.h DESTINATION include PERMISSIONS
             OWNER_WRITE OWNER_READ OWNER_EXECUTE
             GROUP_READ GROUP_EXECUTE
             WORLD_READ WORLD_EXECUTE)
   endif(BUILD_MPIN)
   
+  if(BUILD_WCC)
+    install (TARGETS wcc DESTINATION lib PERMISSIONS
+            OWNER_WRITE OWNER_READ OWNER_EXECUTE
+            GROUP_READ GROUP_EXECUTE
+            WORLD_READ WORLD_EXECUTE)
+    install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/wcc.h DESTINATION include PERMISSIONS
+            OWNER_WRITE OWNER_READ OWNER_EXECUTE
+            GROUP_READ GROUP_EXECUTE
+            WORLD_READ WORLD_EXECUTE)
+  endif(BUILD_WCC)
+
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -179,11 +235,16 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/mpin.h DESTINATION lib)
   endif(BUILD_MPIN)
   
+  if(BUILD_WCC)
+    install (TARGETS wcc DESTINATION lib)
+    install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/wcc.h DESTINATION lib)
+  endif(BUILD_WCC)
+
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   # Mac OS X specific code
-  install(DIRECTORY DESTINATION include/amcl DIRECTORY_PERMISSIONS
+  install(DIRECTORY DESTINATION include DIRECTORY_PERMISSIONS
           OWNER_WRITE OWNER_READ OWNER_EXECUTE
           GROUP_WRITE GROUP_READ
           WORLD_WRITE WORLD_READ WORLD_EXECUTE)
@@ -191,15 +252,15 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
           OWNER_WRITE OWNER_READ OWNER_EXECUTE
           GROUP_READ GROUP_EXECUTE
           WORLD_READ WORLD_EXECUTE)
-  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/amcl.h DESTINATION include/amcl PERMISSIONS
+  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/amcl.h DESTINATION include PERMISSIONS
           OWNER_WRITE OWNER_READ OWNER_EXECUTE
           GROUP_READ GROUP_EXECUTE
           WORLD_READ WORLD_EXECUTE)
-  install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/utils.h DESTINATION include/amcl PERMISSIONS
+  install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/utils.h DESTINATION include PERMISSIONS
           OWNER_WRITE OWNER_READ OWNER_EXECUTE
           GROUP_READ GROUP_EXECUTE
           WORLD_READ WORLD_EXECUTE)
-  install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/DLLDefines.h DESTINATION include/amcl PERMISSIONS
+  install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/DLLDefines.h DESTINATION include PERMISSIONS
           OWNER_WRITE OWNER_READ OWNER_EXECUTE
           GROUP_READ GROUP_EXECUTE
           WORLD_READ WORLD_EXECUTE)
@@ -209,10 +270,22 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
             OWNER_WRITE OWNER_READ OWNER_EXECUTE
             GROUP_READ GROUP_EXECUTE
             WORLD_READ WORLD_EXECUTE)
-    install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/mpin.h DESTINATION include/amcl PERMISSIONS
+    install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/mpin.h DESTINATION include PERMISSIONS
             OWNER_WRITE OWNER_READ OWNER_EXECUTE
             GROUP_READ GROUP_EXECUTE
             WORLD_READ WORLD_EXECUTE)
   endif(BUILD_MPIN)
+
+  if(BUILD_WCC)
+    install (TARGETS wcc DESTINATION lib PERMISSIONS
+            OWNER_WRITE OWNER_READ OWNER_EXECUTE
+            GROUP_READ GROUP_EXECUTE
+            WORLD_READ WORLD_EXECUTE)
+    install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/wcc.h DESTINATION include PERMISSIONS
+            OWNER_WRITE OWNER_READ OWNER_EXECUTE
+            GROUP_READ GROUP_EXECUTE
+            WORLD_READ WORLD_EXECUTE)
+  endif(BUILD_WCC)
+
 
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

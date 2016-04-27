@@ -67,7 +67,7 @@ int main()
     RAW.val[3]=ran>>24;
     for (i=0;i<100;i++) RAW.val[i]=i;
 
-    CREATE_CSPRNG(&RNG,&RAW);   /* initialise strong RNG */
+    ECP_CREATE_CSPRNG(&RNG,&RAW);   /* initialise strong RNG */
 
 //for (j=0;j<100;j++)
 //{
@@ -81,7 +81,7 @@ int main()
 
 /* private key S0 of size EGS bytes derived from Password and Salt */
 
-	PBKDF2(&PW,&SALT,1000,EGS,&S0);
+	ECP_PBKDF2(&PW,&SALT,1000,EGS,&S0);
 	printf("Alices private key= 0x"); OCT_output(&S0);
 
 /* Generate Key pair S/W */
@@ -110,8 +110,8 @@ int main()
 
 /* Calculate common key using DH - IEEE 1363 method */
 
-    ECPSVDP_DH(&S0,&W1,&Z0);
-    ECPSVDP_DH(&S1,&W0,&Z1);
+    ECP_SVDP_DH(&S0,&W1,&Z0);
+    ECP_SVDP_DH(&S1,&W0,&Z1);
 
 	if (!OCT_comp(&Z0,&Z1))
     {
@@ -119,7 +119,7 @@ int main()
         return 0;
     }
 
-	KDF2(&Z0,NULL,EAS,&KEY);
+	ECP_KDF2(&Z0,NULL,EAS,&KEY);
 
 	printf("Alice's DH Key=  0x"); OCT_output(&KEY);
 	printf("Servers DH Key=  0x"); OCT_output(&KEY);
@@ -151,7 +151,7 @@ int main()
 
 	printf("Testing ECDSA\n");
 
-	if (ECPSP_DSA(&RNG,&S0,&M,&CS,&DS)!=0)
+	if (ECP_SP_DSA(&RNG,&S0,&M,&CS,&DS)!=0)
 	{
 		printf("***ECDSA Signature Failed\n");
 		return 0;
@@ -160,7 +160,7 @@ int main()
 	printf("Signature C = 0x"); OCT_output(&CS);
 	printf("Signature D = 0x"); OCT_output(&DS);
 
-	if (ECPVP_DSA(&W0,&M,&CS,&DS)!=0)
+	if (ECP_VP_DSA(&W0,&M,&CS,&DS)!=0)
 	{
 		printf("***ECDSA Verification Failed\n");
 		return 0;
@@ -168,7 +168,7 @@ int main()
 	else printf("ECDSA Signature/Verification succeeded %d\n",j);
 //}
 //printf("Test Completed Successfully\n");
-	KILL_CSPRNG(&RNG);
+	ECP_KILL_CSPRNG(&RNG);
 
     return 0;
 }

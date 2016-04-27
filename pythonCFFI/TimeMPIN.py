@@ -183,7 +183,7 @@ if __name__ == "__main__":
     E = ffi.NULL
     F = ffi.NULL
 
-    date = libmpin.today()
+    date = libmpin.MPIN_today()
     if date:
         HID = ffi.NULL
         U = ffi.NULL
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 
     # random number generator
     RNG = ffi.new("csprng*")
-    libmpin.CREATE_CSPRNG(RNG, RAW)
+    libmpin.MPIN_CREATE_CSPRNG(RNG, RAW)
 
     # Hash MPIN_ID
     libmpin.MPIN_HASH_ID(MPIN_ID, HASH_MPIN_ID)

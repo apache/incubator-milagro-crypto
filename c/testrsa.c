@@ -48,7 +48,7 @@ int main()
     RAW.val[3]=ran>>24;
     for (i=4;i<100;i++) RAW.val[i]=i;
 
-    CREATE_CSPRNG(&RNG,&RAW);   /* initialise strong RNG */
+    RSA_CREATE_CSPRNG(&RNG,&RAW);   /* initialise strong RNG */
 //for (i=0;i<10;i++)
 //{
 
@@ -57,7 +57,7 @@ int main()
 
 	printf("Encrypting test string\n");
 	OCT_jstring(&M,(char *)"Hello World\n");
-	OAEP_ENCODE(&M,&RNG,NULL,&E); /* OAEP encode message m to e  */
+	RSA_OAEP_ENCODE(&M,&RNG,NULL,&E); /* OAEP encode message m to e  */
 
 	RSA_ENCRYPT(&pub,&E,&C);     /* encrypt encoded message */
 	printf("Ciphertext= "); OCT_output(&C);
@@ -65,13 +65,13 @@ int main()
 	printf("Decrypting test string\n");
     RSA_DECRYPT(&priv,&C,&ML);   /* ... and then decrypt it */
 
-    OAEP_DECODE(NULL,&ML);    /* decode it */
+    RSA_OAEP_DECODE(NULL,&ML);    /* decode it */
 	OCT_output_string(&ML);
 
     OCT_clear(&M); OCT_clear(&ML);   /* clean up afterwards */
     OCT_clear(&C); OCT_clear(&RAW); OCT_clear(&E);
 //}
-	KILL_CSPRNG(&RNG);
+	RSA_KILL_CSPRNG(&RNG);
 
 	RSA_PRIVATE_KEY_KILL(&priv);
 

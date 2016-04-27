@@ -248,7 +248,7 @@ class TestMPIN(unittest.TestCase):
         self.assertEqual(rtn, 0)
 
         # Server calculates H(ID) and H(T|H(ID))
-        libmpin.MPIN_SERVER_1(self.date, self.MPIN_ID, HID, HTID)
+        libmpin.MPIN_SERVER_1(self.date, self.HASH_MPIN_ID, HID, HTID)
 
         # Server generates Random number Y and sends it to Client
         rtn = libmpin.MPIN_RANDOM_GENERATE(RNG, Y)
@@ -317,7 +317,7 @@ class TestMPIN(unittest.TestCase):
         self.assertEqual(rtn, 0)
 
         # Server calculates H(ID) and H(T|H(ID))
-        libmpin.MPIN_SERVER_1(self.date, self.MPIN_ID, HID, HTID)
+        libmpin.MPIN_SERVER_1(self.date, self.HASH_MPIN_ID, HID, HTID)
 
         # Server generates Random number Y and sends it to Client
         rtn = libmpin.MPIN_RANDOM_GENERATE(RNG, Y)
@@ -386,7 +386,7 @@ class TestMPIN(unittest.TestCase):
         self.assertEqual(rtn, 0)
 
         # Server calculates H(ID) and H(T|H(ID))
-        libmpin.MPIN_SERVER_1(self.date, self.MPIN_ID, HID, HTID)
+        libmpin.MPIN_SERVER_1(self.date, self.HASH_MPIN_ID, HID, HTID)
 
         # Server generates Random number Y and sends it to Client
         rtn = libmpin.MPIN_RANDOM_GENERATE(RNG, Y)

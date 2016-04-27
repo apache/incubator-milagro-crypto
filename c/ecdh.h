@@ -53,19 +53,19 @@ under the License.
 	@param R is a pointer to a cryptographically secure random number generator
 	@param S is an input truly random seed value
  */
-extern void CREATE_CSPRNG(csprng *R,octet *S);
+extern void ECP_CREATE_CSPRNG(csprng *R,octet *S);
 /**	@brief Kill a random number generator
  *
 	Deletes all internal state
 	@param R is a pointer to a cryptographically secure random number generator
  */
-extern void KILL_CSPRNG(csprng *R);
+extern void ECP_KILL_CSPRNG(csprng *R);
 /**	@brief hash an octet into another octet
  *
 	@param I input octet
 	@param O output octet - H(I)
  */
-extern void HASH(octet *I,octet *O);
+extern void ECP_HASH(octet *I,octet *O);
 /**	@brief HMAC of message M using key K to create tag of length len in octet tag
  *
 	IEEE-1363 MAC1 function. Uses SHA256 internally.
@@ -75,7 +75,7 @@ extern void HASH(octet *I,octet *O);
 	@param tag is the output HMAC
 	@return 0 for bad parameters, else 1
  */
-extern int HMAC(octet *M,octet *K,int len,octet *tag);
+extern int ECP_HMAC(octet *M,octet *K,int len,octet *tag);
 
 /*extern void KDF1(octet *,int,octet *);*/
 
@@ -87,7 +87,7 @@ extern int HMAC(octet *M,octet *K,int len,octet *tag);
 	@param len is output desired length of key
 	@param K is the derived key
  */
-extern void KDF2(octet *Z,octet *P,int len,octet *K);
+extern void ECP_KDF2(octet *Z,octet *P,int len,octet *K);
 /**	@brief Password Based Key Derivation Function - generates key K from password, salt and repeat counter
  *
 	PBKDF2 Password Based Key Derivation Function. Uses SHA256 internally.
@@ -97,7 +97,7 @@ extern void KDF2(octet *Z,octet *P,int len,octet *K);
 	@param len is output desired length of key
 	@param K is the derived key
  */
-extern void PBKDF2(octet *P,octet *S,int rep,int len,octet *K);
+extern void ECP_PBKDF2(octet *P,octet *S,int rep,int len,octet *K);
 /**	@brief AES encrypts a plaintext to a ciphtertext
  *
 	IEEE-1363 AES_CBC_IV0_ENCRYPT function. Encrypts in CBC mode with a zero IV, padding as necessary to create a full final block.
@@ -105,7 +105,7 @@ extern void PBKDF2(octet *P,octet *S,int rep,int len,octet *K);
 	@param P input plaintext octet
 	@param C output ciphertext octet
  */
-extern void AES_CBC_IV0_ENCRYPT(octet *K,octet *P,octet *C);
+extern void ECP_AES_CBC_IV0_ENCRYPT(octet *K,octet *P,octet *C);
 /**	@brief AES encrypts a plaintext to a ciphtertext
  *
 	IEEE-1363 AES_CBC_IV0_DECRYPT function. Decrypts in CBC mode with a zero IV.
@@ -114,7 +114,7 @@ extern void AES_CBC_IV0_ENCRYPT(octet *K,octet *P,octet *C);
 	@param P output plaintext octet
 	@return 0 if bad input, else 1
  */
-extern int AES_CBC_IV0_DECRYPT(octet *K,octet *C,octet *P);
+extern int ECP_AES_CBC_IV0_DECRYPT(octet *K,octet *C,octet *P);
 
 /* ECDH primitives - support functions */
 /**	@brief Generate an ECC public/private key pair
@@ -143,7 +143,7 @@ extern int  ECP_PUBLIC_KEY_VALIDATE(int f,octet *W);
 	@param K the output shared key, in fact the x-coordinate of s.W
 	@return 0 or an error code
  */
-extern int ECPSVDP_DH(octet *s,octet *W,octet *K);
+extern int ECP_SVDP_DH(octet *s,octet *W,octet *K);
 /*extern int ECPSVDP_DHC(octet *,octet *,int,octet *);*/
 
 /*#if CURVETYPE!=MONTGOMERY */
@@ -187,7 +187,7 @@ extern int ECP_ECIES_DECRYPT(octet *P1,octet *P2,octet *V,octet *C,octet *T,octe
 	@param d component of the output signature
 
  */
-extern int ECPSP_DSA(csprng *R,octet *s,octet *M,octet *c,octet *d);
+extern int ECP_SP_DSA(csprng *R,octet *s,octet *M,octet *c,octet *d);
 /**	@brief ECDSA Signature Verification
  *
 	IEEE-1363 ECDSA Signature Verification
@@ -197,7 +197,7 @@ extern int ECPSP_DSA(csprng *R,octet *s,octet *M,octet *c,octet *d);
 	@param d component of the input signature
 	@return 0 or an error code
  */
-extern int ECPVP_DSA(octet *W,octet *M,octet *c,octet *d);
+extern int ECP_VP_DSA(octet *W,octet *M,octet *c,octet *d);
 /*#endif*/
 
 #endif

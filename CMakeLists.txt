@@ -3,7 +3,7 @@ project (AMCL)
 enable_testing()
 
 set(AMCL_VERSION_MAJOR "1")
-set(AMCL_VERSION_MINOR "0")
+set(AMCL_VERSION_MINOR "1")
 set(AMCL_VERSION_PATCH "0")
 set(PROJECT_VERSION "${AMCL_VERSION_MAJOR}.${AMCL_VERSION_MINOR}.${AMCL_VERSION_PATCH}")
 message(STATUS "PROJECT_VERSION='${PROJECT_VERSION}'")
@@ -13,8 +13,10 @@ message(STATUS "Generator - ${CMAKE_GENERATOR}")
 option (BUILD_SHARED_LIBS "Build Shared Libraries" ON)
 option (BUILD_PYTHON "Build Python" ON) 
 option (BUILD_MPIN "Build MPIN" ON) 
+option (BUILD_WCC "Build WCC" OFF) 
 option (BUILD_DOXYGEN "Build Doxygen" ON) 
 option (USE_PATENTS "Use alleged patents" ON)
+option (USE_ANONYMOUS "Anonymous authenticaion for M-Pin Full" OFF)
 
 # Allow the developer to select if Dynamic or Static libraries are built
 # Set the default LIB_TYPE variable to STATIC
@@ -71,10 +73,11 @@ configure_file (
 if(NOT(FIELD_CHOICE MATCHES "BN"))
   message(STATUS "Field choice prevents MPIN being built")
   set(BUILD_MPIN OFF)
+  set(BUILD_WSS OFF)
 endif(NOT(FIELD_CHOICE MATCHES "BN"))
 
 # test configuration
-if(BUILD_MPIN)
+if(BUILD_MPIN OR BUILD_WCC)
   set(MPIN_TIME_PERMIT_TESTS 10 CACHE STRING "Number of days in the future to test M-PIN time permits")
   set(MPIN_RANDOM_TESTS 10 CACHE STRING "Number of random M-PIN tests")
   message(STATUS "MPIN_TIME_PERMIT_TESTS=${MPIN_TIME_PERMIT_TESTS}")
@@ -84,7 +87,7 @@ if(BUILD_MPIN)
     "${PROJECT_SOURCE_DIR}/c/tests/config.h.in"
     "${PROJECT_BINARY_DIR}/c/tests/config.h"
   )
-endif(BUILD_MPIN)
+endif(BUILD_MPIN OR BUILD_WCC)
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -123,6 +126,8 @@ if (BUILD_DOXYGEN)
     message(STATUS "Doxygen not found. Documentation will not be built.")
   endif(DOXYGEN_FOUND)
 endif (BUILD_DOXYGEN)
+
+message(STATUS "Install ${CMAKE_INSTALL_PREFIX}")
 
 # uninstall target
 configure_file(

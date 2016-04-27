@@ -298,7 +298,7 @@ class TestMPIN(unittest.TestCase):
             self.assertEqual(vector['SEC'], toHex(SEC))
 
             # Server calculates H(ID) and H(T|H(ID))
-            libmpin.MPIN_SERVER_1(date, MPIN_ID, HID, HTID)
+            libmpin.MPIN_SERVER_1(date, HASH_MPIN_ID, HID, HTID)
 
             # Server generates Random number Y and sends it to Client
             # rtn = libmpin.MPIN_RANDOM_GENERATE(RNG,Y)

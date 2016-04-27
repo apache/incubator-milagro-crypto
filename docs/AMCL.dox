@@ -109,7 +109,7 @@ In order to build the documentation <a href="http://www.stack.nl/~dimitri/doxyge
 <p>The build can be configured using by setting flags on the command line i.e.</p>
 
 <ol type="disc">
-  <li>cmake -DWORD_LENGTH=64 ..</li>
+  <li>cmake  -D CMAKE_INSTALL_PREFIX=/opt/amcl -D WORD_LENGTH=64 ..</li>
 </ol>
 
 <h2>Uninstall software</h2>
