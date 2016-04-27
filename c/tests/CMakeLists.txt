@@ -52,20 +52,6 @@ if(BUILD_MPIN)
   do_test (test_mpinfullSingle "SUCCESS")
   do_test (test_mpinfull_random "Iteration ${MPIN_RANDOM_TESTS} SUCCESS")
 endif(BUILD_MPIN)
-  
-if(BUILD_SOK)
-  add_executable (test_sok_gcm test_sok_gcm.c)
-  add_executable (test_sok test_sok.c)
-  add_executable (test_sok_tp test_sok_tp.c config.h)
-  # Link the executable to the libraries
-  target_link_libraries (test_sok_gcm sok) 
-  target_link_libraries (test_sok sok) 
-  target_link_libraries (test_sok_tp sok) 
-  # tests  
-  do_test (test_sok_gcm "SUCCESS")
-  do_test (test_sok "SUCCESS")
-  do_test (test_sok_tp "Iteration ${MPIN_RANDOM_TESTS} SUCCESS")
-endif(BUILD_SOK)  
 
 if(BUILD_WCC)
   add_executable (test_wcc_gcm test_wcc_gcm.c)
