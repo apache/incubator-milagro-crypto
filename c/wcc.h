@@ -17,8 +17,15 @@ specific language governing permissions and limitations
 under the License.
 */
 
-/*
- *  AMCL Wang / Chow Choo (WCC)  header file
+/**
+ * @file wcc.h
+ * @author Mike Scott and Kealan McCusker
+ * @date 28th April 2016
+ * @brief Wang / Chow Choo (WCC)  header file
+ *
+ * defines structures
+ * declares functions
+ *
  */
 
 #ifndef WCC_H

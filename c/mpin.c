@@ -19,8 +19,6 @@ under the License.
 
 /* MPIN Functions */
 
-/* Version 3.0 - supports Time Permits */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

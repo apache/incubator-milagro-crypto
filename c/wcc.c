@@ -17,9 +17,14 @@ specific language governing permissions and limitations
 under the License.
 */
 
-/* Wang Functions */
-
-/* Version 3.0 - supports Time Permits */
+/**
+ * @file wcc.c
+ * @author Mike Scott and Kealan McCusker
+ * @date 28th April 2016
+ * @brief Wang / Chow Choo (WCC) definitions
+ *
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>

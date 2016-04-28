@@ -657,6 +657,7 @@ WARN_LOGFILE           =
 
 INPUT                  =  @CMAKE_CURRENT_SOURCE_DIR@/../c/ecdh.h \
                           @CMAKE_CURRENT_SOURCE_DIR@/../c/mpin.h \
+                          @CMAKE_CURRENT_SOURCE_DIR@/../c/wcc.c \
                           @CMAKE_CURRENT_SOURCE_DIR@/../c/rsa.h \
                           @CMAKE_CURRENT_SOURCE_DIR@/AMCL.dox
 
