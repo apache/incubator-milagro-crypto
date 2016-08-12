@@ -23,7 +23,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	amcl "github.com/miracl/amcl-go"
+	"git.apache.org/incubator-milagro-crypto.git/go/amcl-go"
 )
 
 func main() {
@@ -59,49 +59,21 @@ func main() {
 	var MESSAGE []byte
 	// MESSAGE := []byte("test sign message")
 
-	const EGS = amcl.MPIN_EGS
-	const EFS = amcl.MPIN_EFS
-	const G1S = 2*EFS + 1 /* Group 1 Size */
-	const G2S = 4 * EFS   /* Group 2 Size */
-	const EAS = amcl.MPIN_PAS
-
-	var MS1 [EGS]byte
-	var SS1 [G2S]byte
-	var CS1 [G1S]byte
-	var TP1 [G1S]byte
-	var MS2 [EGS]byte
-	var SS2 [G2S]byte
-	var CS2 [G1S]byte
-	var TP2 [G1S]byte
-	var SS [G2S]byte
-	var TP [G1S]byte
-	var TOKEN [G1S]byte
-	var SEC [G1S]byte
-	var U [G1S]byte
-	var UT [G1S]byte
-	var X [EGS]byte
-	var Y [EGS]byte
-	var E [12 * EFS]byte
-	var F [12 * EFS]byte
-	var HID [G1S]byte
-	var HTID [G1S]byte
-
-	var G1 [12 * EFS]byte
-	var G2 [12 * EFS]byte
-	var R [EGS]byte
-	var Z [G1S]byte
-	var W [EGS]byte
-	var T [G1S]byte
-	var AES_KEY_CLIENT [EAS]byte
-	var AES_KEY_SERVER [EAS]byte
-
 	// Generate Master Secret Share 1
-	amcl.MPIN_RANDOM_GENERATE(rng, MS1[:])
+	rtn, MS1 := amcl.MPIN_RANDOM_GENERATE_WRAP(rng)
+	if rtn != 0 {
+		fmt.Println("MPIN_RANDOM_GENERATE Error:", rtn)
+		return
+	}
 	fmt.Printf("MS1: 0x")
 	amcl.MPIN_printBinary(MS1[:])
 
 	// Generate Master Secret Share 2
-	amcl.MPIN_RANDOM_GENERATE(rng, MS2[:])
+	rtn, MS2 := amcl.MPIN_RANDOM_GENERATE_WRAP(rng)
+	if rtn != 0 {
+		fmt.Println("MPIN_RANDOM_GENERATE Error:", rtn)
+		return
+	}
 	fmt.Printf("MS2: 0x")
 	amcl.MPIN_printBinary(MS2[:])
 
@@ -109,55 +81,82 @@ func main() {
 	HCID := amcl.MPIN_HASH_ID(ID)
 
 	// Generate server secret share 1
-	amcl.MPIN_GET_SERVER_SECRET(MS1[:], SS1[:])
+	rtn, SS1 := amcl.MPIN_GET_SERVER_SECRET_WRAP(MS1[:])
+	if rtn != 0 {
+		fmt.Println("MPIN_GET_SERVER_SECRET Error:", rtn)
+		return
+	}
 	fmt.Printf("SS1: 0x")
 	amcl.MPIN_printBinary(SS1[:])
 
 	// Generate server secret share 2
-	amcl.MPIN_GET_SERVER_SECRET(MS2[:], SS2[:])
+	rtn, SS2 := amcl.MPIN_GET_SERVER_SECRET_WRAP(MS2[:])
+	if rtn != 0 {
+		fmt.Println("MPIN_GET_SERVER_SECRET Error:", rtn)
+		return
+	}
 	fmt.Printf("SS2: 0x")
 	amcl.MPIN_printBinary(SS2[:])
 
 	// Combine server secret shares
-	rtn := amcl.MPIN_RECOMBINE_G2(SS1[:], SS2[:], SS[:])
+	rtn, SS := amcl.MPIN_RECOMBINE_G2_WRAP(SS1[:], SS2[:])
 	if rtn != 0 {
-		fmt.Println("MPIN_RECOMBINE_G2(SS1, SS2, SS) Error:", rtn)
+		fmt.Println("MPIN_RECOMBINE_G2(SS1, SS2) Error:", rtn)
 		return
 	}
 	fmt.Printf("SS: 0x")
 	amcl.MPIN_printBinary(SS[:])
 
 	// Generate client secret share 1
-	amcl.MPIN_GET_CLIENT_SECRET(MS1[:], HCID, CS1[:])
-	fmt.Printf("Client Secret CS: 0x")
+	rtn, CS1 := amcl.MPIN_GET_CLIENT_SECRET_WRAP(MS1[:], HCID)
+	if rtn != 0 {
+		fmt.Println("MPIN_GET_CLIENT_SECRET Error:", rtn)
+		return
+	}
+	fmt.Printf("Client Secret Share CS1: 0x")
 	amcl.MPIN_printBinary(CS1[:])
 
 	// Generate client secret share 2
-	amcl.MPIN_GET_CLIENT_SECRET(MS2[:], HCID, CS2[:])
-	fmt.Printf("Client Secret CS: 0x")
-	amcl.MPIN_printBinary(CS2[:])
-
-	// Combine client secret shares : TOKEN is the full client secret
-	rtn = amcl.MPIN_RECOMBINE_G1(CS1[:], CS2[:], TOKEN[:])
+	rtn, CS2 := amcl.MPIN_GET_CLIENT_SECRET_WRAP(MS2[:], HCID)
 	if rtn != 0 {
-		fmt.Println("MPIN_RECOMBINE_G1(CS1, CS2, TOKEN) Error:", rtn)
+		fmt.Println("MPIN_GET_CLIENT_SECRET Error:", rtn)
 		return
 	}
+	fmt.Printf("Client Secret Share CS2: 0x")
+	amcl.MPIN_printBinary(CS2[:])
+
+	// Combine client secret shares
+	CS := make([]byte, amcl.G1S)
+	rtn, CS = amcl.MPIN_RECOMBINE_G1_WRAP(CS1[:], CS2[:])
+	if rtn != 0 {
+		fmt.Println("MPIN_RECOMBINE_G1 Error:", rtn)
+		return
+	}
+	fmt.Printf("Client Secret CS: 0x")
+	amcl.MPIN_printBinary(CS[:])
 
 	// Generate time permit share 1
-	amcl.MPIN_GET_CLIENT_PERMIT(date, MS1[:], HCID, TP1[:])
+	rtn, TP1 := amcl.MPIN_GET_CLIENT_PERMIT_WRAP(date, MS1[:], HCID)
+	if rtn != 0 {
+		fmt.Println("MPIN_GET_CLIENT_PERMIT Error:", rtn)
+		return
+	}
 	fmt.Printf("TP1: 0x")
 	amcl.MPIN_printBinary(TP1[:])
 
 	// Generate time permit share 2
-	amcl.MPIN_GET_CLIENT_PERMIT(date, MS2[:], HCID, TP2[:])
+	rtn, TP2 := amcl.MPIN_GET_CLIENT_PERMIT_WRAP(date, MS2[:], HCID)
+	if rtn != 0 {
+		fmt.Println("MPIN_GET_CLIENT_PERMIT Error:", rtn)
+		return
+	}
 	fmt.Printf("TP2: 0x")
 	amcl.MPIN_printBinary(TP2[:])
 
 	// Combine time permit shares
-	rtn = amcl.MPIN_RECOMBINE_G1(TP1[:], TP2[:], TP[:])
+	rtn, TP := amcl.MPIN_RECOMBINE_G1_WRAP(TP1[:], TP2[:])
 	if rtn != 0 {
-		fmt.Println("MPIN_RECOMBINE_G1(TP1, TP2, TP) Error:", rtn)
+		fmt.Println("MPIN_RECOMBINE_G1(TP1, TP2) Error:", rtn)
 		return
 	}
 
@@ -167,7 +166,11 @@ func main() {
 		fmt.Scan(&PIN1)
 	}
 
-	rtn = amcl.MPIN_EXTRACT_PIN(ID, PIN1, TOKEN[:])
+	fmt.Printf("ID: 0x")
+	amcl.MPIN_printBinary(ID[:])
+	fmt.Printf("CS: 0x")
+	amcl.MPIN_printBinary(CS[:])
+	rtn, TOKEN := amcl.MPIN_EXTRACT_PIN_WRAP(ID[:], PIN1, CS[:])
 	if rtn != 0 {
 		fmt.Printf("FAILURE: EXTRACT_PIN rtn: %d\n", rtn)
 		return
@@ -177,8 +180,12 @@ func main() {
 
 	//////   Client   //////
 
-	// precomputation
-	amcl.MPIN_PRECOMPUTE(TOKEN[:], HCID, G1[:], G2[:])
+	// Precomputation
+	rtn, G1, G2 := amcl.MPIN_PRECOMPUTE_WRAP(TOKEN[:], HCID)
+	if rtn != 0 {
+		fmt.Println("MPIN_PRECOMPUTE(TOKEN[:], HCID) Error:", rtn)
+		return
+	}
 
 	for PIN2 < 0 {
 		fmt.Printf("Please enter PIN to authenticate: ")
@@ -186,26 +193,40 @@ func main() {
 	}
 
 	// Send U, UT, V, timeValue and Message to server
-	rtn = amcl.MPIN_CLIENT(date, ID, rng, X[:], PIN2, TOKEN[:], SEC[:], U[:], UT[:], TP[:], MESSAGE, timeValue, Y[:])
+	var X [amcl.EGS]byte
+	fmt.Printf("X: 0x")
+	amcl.MPIN_printBinary(X[:])
+	rtn, XOut, Y1, SEC, U, UT := amcl.MPIN_CLIENT_WRAP(date, timeValue, PIN2, rng,  ID[:], X[:], TOKEN[:], TP[:], MESSAGE[:])
 	if rtn != 0 {
 		fmt.Printf("FAILURE: CLIENT rtn: %d\n", rtn)
 		return
 	}
+	fmt.Printf("Y1: 0x")
+	amcl.MPIN_printBinary(Y1[:])
+	fmt.Printf("XOut: 0x")
+	amcl.MPIN_printBinary(XOut[:])
 
 	// Send Z=r.ID to Server
-	amcl.MPIN_GET_G1_MULTIPLE(rng, 1, R[:], HCID, Z[:])
+	var R [amcl.EGS]byte
+	fmt.Printf("R: 0x")
+	amcl.MPIN_printBinary(R[:])
+	rtn, ROut, Z := amcl.MPIN_GET_G1_MULTIPLE_WRAP(rng, 1, R[:], HCID[:])
+	fmt.Printf("ROut: 0x")
+	amcl.MPIN_printBinary(ROut[:])
 
 	//////   Server   //////
-	rtn = amcl.MPIN_SERVER(date, HID[:], HTID[:], Y[:], SS[:], U[:], UT[:], SEC[:], E[:], F[:], ID, MESSAGE, timeValue)
+	rtn, HID, HTID, Y2, E, F := amcl.MPIN_SERVER_WRAP(date, timeValue, SS[:], U[:], UT[:], SEC[:], ID[:], MESSAGE[:])
 	if rtn != 0 {
 		fmt.Printf("FAILURE: SERVER rtn: %d\n", rtn)
 	}
+	fmt.Printf("Y2: 0x")
+	amcl.MPIN_printBinary(Y2[:])
 	fmt.Printf("HID: 0x")
 	amcl.MPIN_printBinary(HID[:])
 	fmt.Printf("HTID: 0x")
 	amcl.MPIN_printBinary(HTID[:])
 
-	if rtn == amcl.MPIN_BAD_PIN {
+	if rtn != 0 {
 		fmt.Printf("Authentication failed Error Code %d\n", rtn)
 		err := amcl.MPIN_KANGAROO(E[:], F[:])
 		if err != 0 {
@@ -217,17 +238,20 @@ func main() {
 	}
 
 	// send T=w.ID to client
-	amcl.MPIN_GET_G1_MULTIPLE(rng, 0, W[:], HTID[:], T[:])
+	var W [amcl.EGS]byte
 	fmt.Printf("W: 0x")
 	amcl.MPIN_printBinary(W[:])
+	rtn, WOut, T := amcl.MPIN_GET_G1_MULTIPLE_WRAP(rng, 0, W[:], HTID[:])
+	fmt.Printf("WOut: 0x")
+	amcl.MPIN_printBinary(WOut[:])
 	fmt.Printf("T: 0x")
 	amcl.MPIN_printBinary(T[:])
 
-	amcl.MPIN_SERVER_KEY(Z[:], SS[:], W[:], U[:], UT[:], AES_KEY_SERVER[:])
+	rtn, AES_KEY_SERVER := amcl.MPIN_SERVER_KEY_WRAP(Z[:], SS[:], WOut[:], U[:], UT[:])
 	fmt.Printf("Server Key =  0x")
 	amcl.MPIN_printBinary(AES_KEY_SERVER[:])
 
-	amcl.MPIN_CLIENT_KEY(G1[:], G2[:], PIN2, R[:], X[:], T[:], AES_KEY_CLIENT[:])
+	rtn, AES_KEY_CLIENT := amcl.MPIN_CLIENT_KEY_WRAP(PIN2, G1[:], G2[:], ROut[:], XOut[:], T[:])
 	fmt.Printf("Client Key =  0x")
 	amcl.MPIN_printBinary(AES_KEY_CLIENT[:])
 
@@ -260,10 +284,10 @@ func main() {
 	// Send IV, HEADER, CIPHERTEXT and TAG1 to client
 
 	// AES-GCM Decryption
-	PLAINTEXT2, TAG1 := amcl.AES_GCM_DECRYPT(AES_KEY_SERVER[:], IV[:], HEADER[:], CIPHERTEXT[:])
+	PLAINTEXT2, TAG2 := amcl.AES_GCM_DECRYPT(AES_KEY_CLIENT[:], IV[:], HEADER[:], CIPHERTEXT[:])
 	fmt.Printf("PLAINTEXT2:  0x")
 	amcl.MPIN_printBinary(PLAINTEXT2[:])
-	fmt.Printf("TAG1:  0x")
-	amcl.MPIN_printBinary(TAG1[:])
+	fmt.Printf("TAG2:  0x")
+	amcl.MPIN_printBinary(TAG2[:])
 	fmt.Printf("Decrypted string: %s \n", string(PLAINTEXT2))
 }

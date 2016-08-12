@@ -22,7 +22,7 @@ package main
 import (
 	"fmt"
 
-	amcl "github.com/miracl/amcl-go"
+	amcl "git.apache.org/incubator-milagro-crypto.git/go/amcl-go"
 )
 
 /* Configure mode of operation */
