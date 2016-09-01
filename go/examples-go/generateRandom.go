@@ -25,7 +25,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	amcl "github.com/miracl/amcl-go"
+	amcl "git.apache.org/incubator-milagro-crypto.git/go/amcl-go"
 )
 
 func main() {
@@ -39,10 +39,10 @@ func main() {
 	rng := amcl.NewRAND()
 	rng.Seed(len(seed), seed)
 
-	// Generate the one time passwords
+	// Generate random byte values
 	for i := 0; i < 10; i++ {
-		otp := amcl.GENERATE_OTP(rng)
-		fmt.Printf("One Time Passord %d\n", otp)
+		val := amcl.GENERATE_RANDOM(rng, 12)
+		fmt.Printf("Random byte array %s\n", hex.EncodeToString(val))
 	}
 
 }

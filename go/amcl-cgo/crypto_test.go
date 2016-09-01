@@ -28,7 +28,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	amclgo "github.com/miracl/amcl-go"
+	amclgo "git.apache.org/incubator-milagro-crypto.git/go/amcl-go"
 )
 
 const nIter int = 100

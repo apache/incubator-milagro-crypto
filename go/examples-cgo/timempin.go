@@ -27,7 +27,7 @@ import (
 	"runtime/pprof"
 	"time"
 
-	amclcgo "github.com/miracl/amcl-cgo"
+	amclcgo "git.apache.org/incubator-milagro-crypto.git/go/amcl-cgo"
 )
 
 // Number of iterations to time functions

@@ -16,13 +16,13 @@ For a quick jumpstart:-
 
 export GOPATH=$PWD
 
-go run ./src/github.com/miracl/examples-go/mpin.go
+go run ./examples-go/mpin.go
 
 or 
 
-go run ./src/github.com/miracl/examples-go/ecdh.go
+go run ./examples-go/ecdh.go
 
 or
 
-go run ./src/github.com/miracl/examples-go/rsa.go
+go run ./examples-go/rsa.go
 

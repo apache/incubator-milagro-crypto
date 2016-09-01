@@ -17,16 +17,14 @@ specific language governing permissions and limitations
 under the License.
 */
 
-// Use MPIN with only hashed IDs to the server
-
 package main
 
 import (
 	"encoding/hex"
 	"fmt"
 
-	amclcgo "github.com/miracl/amcl-cgo"
-	amclgo "github.com/miracl/amcl-go"
+	amclcgo "git.apache.org/incubator-milagro-crypto.git/go/amcl-cgo"
+	amclgo "git.apache.org/incubator-milagro-crypto.git/go/amcl-go"
 )
 
 func main() {
@@ -214,7 +212,7 @@ func main() {
 	amclcgo.MPIN_printBinary(ROut[:])
 
 	//////   Server   //////
-	rtn, HID, HTID, Y2, E, F := amclcgo.MPIN_SERVER_WRAP(date, timeValue, SS[:], U[:], UT[:], V[:], HCID[:], MESSAGE[:])
+	rtn, HID, HTID, Y2, E, F := amclcgo.MPIN_SERVER_WRAP(date, timeValue, SS[:], U[:], UT[:], V[:], ID[:], MESSAGE[:])
 	if rtn != 0 {
 		fmt.Printf("FAILURE: SERVER rtn: %d\n", rtn)
 	}
@@ -246,14 +244,14 @@ func main() {
 	fmt.Printf("T: 0x")
 	amclcgo.MPIN_printBinary(T[:])
 
-	// Hash all values
-	HM := amclcgo.MPIN_HASH_ALL_WRAP(HCID[:], U[:], UT[:], Y2[:], V[:], Z[:], T[:])
+        // Hash all values
+        HM := amclcgo.MPIN_HASH_ALL_WRAP(ID[:],U[:],UT[:],Y2[:],V[:],Z[:],T[:])
 
-	rtn, AES_KEY_SERVER := amclcgo.MPIN_SERVER_KEY_WRAP(Z[:], SS[:], WOut[:], HM[:], HID[:], U[:], UT[:])
+	rtn, AES_KEY_SERVER := amclcgo.MPIN_SERVER_KEY_WRAP(Z[:], SS[:], WOut[:], HM[:],HID[:],U[:], UT[:])
 	fmt.Printf("Server Key =  0x")
 	amclcgo.MPIN_printBinary(AES_KEY_SERVER[:])
 
-	rtn, AES_KEY_CLIENT := amclcgo.MPIN_CLIENT_KEY_WRAP(PIN2, G1[:], G2[:], ROut[:], XOut[:], HM[:], T[:])
+	rtn, AES_KEY_CLIENT := amclcgo.MPIN_CLIENT_KEY_WRAP(PIN2, G1[:], G2[:], ROut[:], XOut[:], HM[:],T[:])
 	fmt.Printf("Client Key =  0x")
 	amclcgo.MPIN_printBinary(AES_KEY_CLIENT[:])
 

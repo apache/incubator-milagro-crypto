@@ -17,14 +17,16 @@ specific language governing permissions and limitations
 under the License.
 */
 
+// Use MPIN with only hashed IDs to the server
+
 package main
 
 import (
 	"encoding/hex"
 	"fmt"
 
-	amclcgo "github.com/miracl/amcl-cgo"
-	amclgo "github.com/miracl/amcl-go"
+	amclcgo "git.apache.org/incubator-milagro-crypto.git/go/amcl-cgo"
+	amclgo "git.apache.org/incubator-milagro-crypto.git/go/amcl-go"
 )
 
 func main() {
@@ -37,6 +39,9 @@ func main() {
 
 	// Epoch time in days
 	date := amclcgo.MPIN_today()
+
+	// Epoch time in seconds
+	timeValue := amclcgo.MPIN_GET_TIME()
 
 	// PIN variable to create token
 	PIN1 := -1
@@ -52,6 +57,10 @@ func main() {
 	}
 	rng := amclgo.NewRAND()
 	rng.Seed(len(seed), seed)
+
+	// Message to sign
+	var MESSAGE []byte
+	// MESSAGE := []byte("test sign message")
 
 	// Generate Master Secret Share 1
 	rtn, MS1 := amclcgo.MPIN_RANDOM_GENERATE_WRAP(rng)
@@ -170,49 +179,47 @@ func main() {
 
 	//////   Client   //////
 
+	// Precomputation
+	rtn, G1, G2 := amclcgo.MPIN_PRECOMPUTE_WRAP(TOKEN[:], HCID)
+	if rtn != 0 {
+		fmt.Println("MPIN_PRECOMPUTE(TOKEN[:], HCID) Error:", rtn)
+		return
+	}
+
 	for PIN2 < 0 {
 		fmt.Printf("Please enter PIN to authenticate: ")
 		fmt.Scan(&PIN2)
 	}
 
-	////// Client Pass 1 //////
-	// Send U and UT to server
+	// Send U, UT, V, timeValue and Message to server
 	var X [amclcgo.EGS]byte
 	fmt.Printf("X: 0x")
 	amclcgo.MPIN_printBinary(X[:])
-	rtn, XOut, SEC, U, UT := amclcgo.MPIN_CLIENT_1_WRAP(date, ID, rng, X[:], PIN2, TOKEN[:], TP[:])
+	rtn, XOut, Y1, V, U, UT := amclcgo.MPIN_CLIENT_WRAP(date, timeValue, PIN2, rng, ID[:], X[:], TOKEN[:], TP[:], MESSAGE[:])
 	if rtn != 0 {
 		fmt.Printf("FAILURE: CLIENT rtn: %d\n", rtn)
 		return
 	}
+	fmt.Printf("Y1: 0x")
+	amclcgo.MPIN_printBinary(Y1[:])
 	fmt.Printf("XOut: 0x")
 	amclcgo.MPIN_printBinary(XOut[:])
 
-	//////   Server Pass 1  //////
-	/* Calculate H(ID) and H(T|H(ID)) (if time permits enabled), and maps them to points on the curve HID and HTID resp. */
-	HID, HTID := amclcgo.MPIN_SERVER_1_WRAP(date, ID)
+	// Send Z=r.ID to Server
+	var R [amclcgo.EGS]byte
+	fmt.Printf("R: 0x")
+	amclcgo.MPIN_printBinary(R[:])
+	rtn, ROut, Z := amclcgo.MPIN_GET_G1_MULTIPLE_WRAP(rng, 1, R[:], HCID[:])
+	fmt.Printf("ROut: 0x")
+	amclcgo.MPIN_printBinary(ROut[:])
 
-	/* Send Y to Client */
-	rtn, Y := amclcgo.MPIN_RANDOM_GENERATE_WRAP(rng)
+	//////   Server   //////
+	rtn, HID, HTID, Y2, E, F := amclcgo.MPIN_SERVER_WRAP(date, timeValue, SS[:], U[:], UT[:], V[:], HCID[:], MESSAGE[:])
 	if rtn != 0 {
-		fmt.Println("MPIN_RANDOM_GENERATE Error:", rtn)
-		return
+		fmt.Printf("FAILURE: SERVER rtn: %d\n", rtn)
 	}
-	fmt.Printf("Y: 0x")
-	amclcgo.MPIN_printBinary(Y[:])
-
-	/* Client Second Pass: Inputs Client secret SEC, x and y. Outputs -(x+y)*SEC */
-	rtn, V := amclcgo.MPIN_CLIENT_2_WRAP(X[:], Y[:], SEC[:])
-	if rtn != 0 {
-		fmt.Printf("FAILURE: CLIENT_2 rtn: %d\n", rtn)
-	}
-
-	/* Server Second pass. Inputs hashed client id, random Y, -(x+y)*SEC, xID and xCID and Server secret SST. E and F help kangaroos to find error. */
-	/* If PIN error not required, set E and F = null */
-	rtn, _, _ = amclcgo.MPIN_SERVER_2_WRAP(date, HID[:], HTID[:], Y[:], SS[:], U[:], UT[:], V[:])
-	if rtn != 0 {
-		fmt.Printf("FAILURE: MPIN_SERVER_2 rtn: %d\n", rtn)
-	}
+	fmt.Printf("Y2: 0x")
+	amclcgo.MPIN_printBinary(Y2[:])
 	fmt.Printf("HID: 0x")
 	amclcgo.MPIN_printBinary(HID[:])
 	fmt.Printf("HTID: 0x")
@@ -220,8 +227,69 @@ func main() {
 
 	if rtn != 0 {
 		fmt.Printf("Authentication failed Error Code %d\n", rtn)
+		err := amclcgo.MPIN_KANGAROO(E[:], F[:])
+		if err != 0 {
+			fmt.Printf("PIN Error %d\n", err)
+		}
 		return
 	} else {
 		fmt.Printf("Authenticated ID: %s \n", IDstr)
 	}
+
+	// send T=w.ID to client
+	var W [amclcgo.EGS]byte
+	fmt.Printf("W: 0x")
+	amclcgo.MPIN_printBinary(W[:])
+	rtn, WOut, T := amclcgo.MPIN_GET_G1_MULTIPLE_WRAP(rng, 0, W[:], HTID[:])
+	fmt.Printf("WOut: 0x")
+	amclcgo.MPIN_printBinary(WOut[:])
+	fmt.Printf("T: 0x")
+	amclcgo.MPIN_printBinary(T[:])
+
+	// Hash all values
+	HM := amclcgo.MPIN_HASH_ALL_WRAP(HCID[:], U[:], UT[:], Y2[:], V[:], Z[:], T[:])
+
+	rtn, AES_KEY_SERVER := amclcgo.MPIN_SERVER_KEY_WRAP(Z[:], SS[:], WOut[:], HM[:], HID[:], U[:], UT[:])
+	fmt.Printf("Server Key =  0x")
+	amclcgo.MPIN_printBinary(AES_KEY_SERVER[:])
+
+	rtn, AES_KEY_CLIENT := amclcgo.MPIN_CLIENT_KEY_WRAP(PIN2, G1[:], G2[:], ROut[:], XOut[:], HM[:], T[:])
+	fmt.Printf("Client Key =  0x")
+	amclcgo.MPIN_printBinary(AES_KEY_CLIENT[:])
+
+	//////   Server   //////
+
+	// Initialization vector
+	IV := amclgo.GENERATE_RANDOM(rng, 12)
+	fmt.Printf("IV: 0x")
+	amclcgo.MPIN_printBinary(IV[:])
+
+	// header
+	HEADER := amclgo.GENERATE_RANDOM(rng, 16)
+	fmt.Printf("HEADER: 0x")
+	amclcgo.MPIN_printBinary(HEADER[:])
+
+	// Input plaintext
+	plaintextStr := "A test message"
+	PLAINTEXT1 := []byte(plaintextStr)
+	fmt.Printf("String to encrypt: %s \n", plaintextStr)
+	fmt.Printf("PLAINTEXT1: 0x")
+	amclcgo.MPIN_printBinary(PLAINTEXT1[:])
+
+	// AES-GCM Encryption
+	CIPHERTEXT, TAG1 := amclcgo.MPIN_AES_GCM_ENCRYPT(AES_KEY_SERVER[:], IV[:], HEADER[:], PLAINTEXT1[:])
+	fmt.Printf("CIPHERTEXT:  0x")
+	amclcgo.MPIN_printBinary(CIPHERTEXT[:])
+	fmt.Printf("TAG1:  0x")
+	amclcgo.MPIN_printBinary(TAG1[:])
+
+	// Send IV, HEADER, CIPHERTEXT and TAG1 to client
+
+	// AES-GCM Decryption
+	PLAINTEXT2, TAG2 := amclcgo.MPIN_AES_GCM_DECRYPT(AES_KEY_CLIENT[:], IV[:], HEADER[:], CIPHERTEXT[:])
+	fmt.Printf("PLAINTEXT2:  0x")
+	amclcgo.MPIN_printBinary(PLAINTEXT2[:])
+	fmt.Printf("TAG2:  0x")
+	amclcgo.MPIN_printBinary(TAG2[:])
+	fmt.Printf("Decrypted string: %s \n", string(PLAINTEXT2))
 }
