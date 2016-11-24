@@ -18,9 +18,7 @@ under the License.
 */
 
 console.log("Testing randomX");
-var WebSocket = require('ws');
 var assert = require('assert');
-var http = require('http');
 var fs = require('fs');
 var crypto = require('crypto');
 

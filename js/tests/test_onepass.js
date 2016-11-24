@@ -18,11 +18,8 @@ under the License.
 */
 
 console.log("Testing client request generation");
-var WebSocket = require('ws');
 var assert = require('assert');
-var http = require('http');
 var fs = require('fs');
-var crypto = require('crypto');
 
 // Javascript files from the PIN pad  are included here:
 eval(fs.readFileSync('../DBIG.js')+'');
@@ -81,7 +78,7 @@ for(var vector in vectors)
     if (DEBUG){console.dir("passSingle "+passSingle);}
     try
       {
-        assert.equal(passSingle.U, vectors[vector].U, "U generation failed");
+        if (!vectors[vector].DATE){assert.equal(passSingle.U, vectors[vector].U, "U generation failed");}
         assert.equal(passSingle.UT, vectors[vector].UT, "UT generation failed");
         assert.equal(passSingle.V, vectors[vector].SEC, "V generation failed");
       }

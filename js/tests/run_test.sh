@@ -2,33 +2,19 @@
 # javascript tests 
 #
 # This script runs tests that compares the js
-# with the expected output from the c code which
-# is interfaced through the python wrapper.
+# with the expected output from the c code
 #
-# usage: ./run_js_tests.sh [success authentication] [failed authentication] [epoch days test]
+# usage: ./run_js_tests.sh
 
-output_file="test_log_js.txt"
+output_file="log.txt"
+rm $output_file
 
-# Generate vectors.
-# ./genVectors.py $1 $2 $3
+ln -s BNCX.json testVectors.json
+ln -s BNCXOnePass.json testVectorsOnePass.json
 
-file="testVectors.json"
-if [ -f "$file" ]
-then
-  echo "$file found."
-else
-  echo "$file not found."
-  exit 1
-fi
-
-file="testVectorsOnePass.json"
-if [ -f "$file" ]
-then
-  echo "$file found."
-else
-  echo "$file not found."
-  exit 1
-fi
+echo "cp ../MPIN.js ."
+cp ../MPIN.js .
+sed -i 's/var MPIN/MPIN/' MPIN.js
 
 echo "TEST 1: node test_add_shares.js"
 echo "TEST 1: node test_add_shares.js" > $output_file 
@@ -60,10 +46,18 @@ echo "TEST 7: node test_onepass.js" >> $output_file
 node test_onepass.js >> $output_file 2>&1
 
 failed=$(grep FAILED "${output_file}" )
-if [ -n "$failed" ]; then
+if [[ -n "$failed" ]]; then
    echo "A TEST HAS FAILED. Please review ${output_file}"
    echo "A TEST HAS FAILED. Please review ${output_file}" >> $output_file 
 else
    echo "ALL TESTS PASSED"
    echo "ALL TESTS PASSED" >> $output_file 
 fi
+
+error=$(grep -i error "${output_file}" )
+if [[ -n "$error" ]]; then
+   echo "ERROR. Please review ${output_file}"
+fi
+
+rm testVectors.json
+rm testVectorsOnePass.json

@@ -633,12 +633,18 @@ var MPIN = {
 	SERVER: function(date,HID,HTID,Y,SST,xID,xCID,mSEC,E,F,CID,TimeValue)
         {
                 var rtn=0;
+                var pID;
+                if (date == 0) {
+                  pID = xID;
+		} else {
+                  pID = xCID;
+		}
 
                 this.SERVER_1(date,CID,HID,HTID);
 
-                this.GET_Y(TimeValue,xCID,Y);
+                this.GET_Y(TimeValue,pID,Y);
 
-                rtn = this.SERVER_2(date,HID,HTID,Y,SST,xID,xCID,SEC,E,F);
+                rtn = this.SERVER_2(date,HID,HTID,Y,SST,xID,xCID,mSEC,E,F);
                 if (rtn != 0)
                   return rtn;
 
