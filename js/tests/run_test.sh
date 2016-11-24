@@ -4,10 +4,14 @@
 # This script runs tests that compares the js
 # with the expected output from the c code
 #
-# usage: ./run_js_tests.sh
+# usage: ./run_test.sh
 
 output_file="log.txt"
-rm $output_file
+if [[ -f "$output_file" ]]
+then
+  echo "rm $output_file"
+  rm $output_file
+fi
 
 ln -s BNCX.json testVectors.json
 ln -s BNCXOnePass.json testVectorsOnePass.json
@@ -45,6 +49,12 @@ echo "TEST 7: node test_onepass.js"
 echo "TEST 7: node test_onepass.js" >> $output_file 
 node test_onepass.js >> $output_file 2>&1
 
+error=$(grep -i error "${output_file}" )
+if [[ -n "$error" ]]; then
+   echo "ERROR. Please review ${output_file}"
+   exit 1
+fi
+
 failed=$(grep FAILED "${output_file}" )
 if [[ -n "$failed" ]]; then
    echo "A TEST HAS FAILED. Please review ${output_file}"
@@ -52,11 +62,6 @@ if [[ -n "$failed" ]]; then
 else
    echo "ALL TESTS PASSED"
    echo "ALL TESTS PASSED" >> $output_file 
-fi
-
-error=$(grep -i error "${output_file}" )
-if [[ -n "$error" ]]; then
-   echo "ERROR. Please review ${output_file}"
 fi
 
 rm testVectors.json
