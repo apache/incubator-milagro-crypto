@@ -291,7 +291,6 @@ MPINAuth.pass1Request = function (mpin_id_hex, token_hex, timePermit_hex, PIN, e
     token_bytes = MPINAuth.hextobytes(token_hex);
     timePermit_bytes = MPINAuth.hextobytes(timePermit_hex);
 
-    if (MPINAuth.DEBUG) {console.log("MPINAuth.pass1Request date: " + date); }
     error_code = MPIN.CLIENT_1(epoch_days, mpin_id_bytes, MPINAuth.rng, MPINAuth.X, PIN, token_bytes, MPINAuth.SEC, U, UT, timePermit_bytes);
     if (error_code !== 0) {
         console.log("MPINAuth.pass1Request error_code: " + error_code);

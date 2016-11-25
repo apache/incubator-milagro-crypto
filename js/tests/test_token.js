@@ -18,11 +18,8 @@ under the License.
 */
 
 console.log("Testing token generation");
-var WebSocket = require('ws');
 var assert = require('assert');
-var http = require('http');
 var fs = require('fs');
-var crypto = require('crypto');
 
 // Javascript files from the PIN pad  are included here:
 eval(fs.readFileSync('../DBIG.js')+'');
