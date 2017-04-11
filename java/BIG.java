@@ -77,7 +77,7 @@ public class BIG {
 /* calculate Field Excess */
 	public static int EXCESS(BIG a)
 	{
-		return ((a.w[ROM.NLEN-1]&ROM.OMASK)>>(ROM.MODBITS%ROM.BASEBITS));
+		return ((a.w[ROM.NLEN-1]&ROM.OMASK)>>(ROM.CURVE.getModBits()%ROM.BASEBITS));
 	}
 
 /* test for zero */
@@ -591,7 +591,7 @@ public class BIG {
 	{
 		DBIG d=new DBIG(0);
 		int i,b,j=0,r=0;
-		for (i=0;i<2*ROM.MODBITS;i++)
+		for (i=0;i<2*ROM.CURVE.getModBits();i++)
 		{
 			if (j==0) r=rng.getByte();
 			else r>>=1;
@@ -712,7 +712,7 @@ nbs is number of bits processed, and nzs is number of trailing 0s detected */
 		if (ROM.MODTYPE==ROM.PSEUDO_MERSENNE)
 		{
 			int v,tw;
-			BIG t=d.split(ROM.MODBITS);
+			BIG t=d.split(ROM.CURVE.getModBits());
 			b=new BIG(d);
 
 			v=t.pmul(ROM.MConst);

@@ -1,3 +1,6 @@
+import rom.BNCurve;
+import rom.Curve;
+
 /*
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
@@ -31,31 +34,9 @@ public class ROM
 /* ...to here */
 
 /*** Enter Some Field details here  ***/
-// BN Curve
-	public static final int MODBITS=254; /* Number of bits in Modulus */
-	public static final int MOD8=3;  /* Modulus mod 8 */
-// Curve 25519
-//	public static final int MODBITS=255;
-//	public static final int MOD8=5;
-// NIST256 or Brainpool
-//	public static final int MODBITS=256;
-//	public static final int MOD8=7;
-// MF254
-//	public static final int MODBITS=254;
-//	public static final int MOD8=7;
-// MS255
-//public static final int MODBITS= 255;
-//public static final int MOD8= 3;
-// MF256
-//	public static final int MODBITS=256;
-//	public static final int MOD8=7;
-// MS256
-//public static final int MODBITS= 256;
-//public static final int MOD8= 3;
-// ANSSI
-// public static final int MODBITS= 256;
-// public static final int MOD8= 3;
 
+	public static final Curve CURVE = new BNCurve();
+	
 /* Don't Modify from here... */
 	public static final int NLEN=9;
 	public static final int CHUNK=32;
@@ -64,9 +45,9 @@ public class ROM
 	public static final int MASK=(((int)1<<BASEBITS)-1);
 	public static final int MODBYTES=32;
 	public static final int NEXCESS =((int)1<<(CHUNK-BASEBITS-1));
-	public static final int FEXCESS =((int)1<<(BASEBITS*NLEN-MODBITS));
-	public static final int OMASK=(int)(-1)<<(MODBITS%BASEBITS);
-	public static final int TBITS=MODBITS%BASEBITS; // Number of active bits in top word
+	public static final int FEXCESS =((int)1<<(BASEBITS*NLEN-CURVE.getModBits()));
+	public static final int OMASK=(int)(-1)<<(CURVE.getModBits()%BASEBITS);
+	public static final int TBITS=CURVE.getModBits()%BASEBITS; // Number of active bits in top word
 	public static final int TMASK=((int)1<<TBITS)-1;
 /* ...to here */
 

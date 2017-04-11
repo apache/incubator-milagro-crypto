@@ -274,7 +274,7 @@ public final class FP {
 	{
 		reduce();
 		BIG b=new BIG(p);
-		if (ROM.MOD8==5)
+		if (ROM.CURVE.getMod8()==5)
 		{
 			b.dec(5); b.norm(); b.shr(3);
 			FP i=new FP(this); i.x.shl(1);
