@@ -34,7 +34,6 @@ public class TestECDH
 	public static void main(String[] args)
 	{
 		int i,j=0,res;
-		int result;
 		String pp=new String("M0ng00se");
 
 		int EGS=ECDH.EGS;

@@ -22,7 +22,7 @@ under the License.
 
 public final class FP {
 	private final BIG x;
-	private static BIG p=new BIG(ROM.Modulus);
+	private static BIG p=new BIG(ROM.FIELD_DETAILS.getModulus());
 
 /* Constructors */
 	public FP(int a)
@@ -63,7 +63,7 @@ public final class FP {
 /* convert to Montgomery n-residue form */
 	public void nres()
 	{
-		if (ROM.MODTYPE!=ROM.PSEUDO_MERSENNE)
+		if (!ROM.FIELD_DETAILS.isPseudoMersenne())
 		{
 			DBIG d=new DBIG(x);
 			d.shl(ROM.NLEN*ROM.BASEBITS);
@@ -74,7 +74,7 @@ public final class FP {
 /* convert back to regular form */
 	public BIG redc()
 	{
-		if (ROM.MODTYPE!=ROM.PSEUDO_MERSENNE)
+		if (!ROM.FIELD_DETAILS.isPseudoMersenne())
 		{
 			DBIG d=new DBIG(x);
 			return BIG.mod(d);
@@ -274,7 +274,7 @@ public final class FP {
 	{
 		reduce();
 		BIG b=new BIG(p);
-		if (ROM.CURVE.getMod8()==5)
+		if (ROM.MOD_CURVE.getMod8()==5)
 		{
 			b.dec(5); b.norm(); b.shr(3);
 			FP i=new FP(this); i.x.shl(1);

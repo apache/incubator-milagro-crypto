@@ -19,7 +19,6 @@ under the License.
 
 /* test driver and function exerciser for MPIN API Functions */
 
-import java.util.Date;
 import java.util.Scanner;
 
 public class TestMPIN

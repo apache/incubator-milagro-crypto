@@ -83,8 +83,8 @@ public final class PAIR {
 /* Optimal R-ate pairing */
 	public static FP12 ate(ECP2 P,ECP Q)
 	{
-		FP2 f=new FP2(new BIG(ROM.CURVE_Fra),new BIG(ROM.CURVE_Frb));
-		BIG x=new BIG(ROM.CURVE_Bnx);
+		FP2 f=new FP2(new BIG(ROM.CURVE_DETAILS.getCurveFra()),new BIG(ROM.CURVE_DETAILS.getCurveFrb()));
+		BIG x=new BIG(ROM.CURVE_DETAILS.getCurveBnx());
 		BIG n=new BIG(x);
 		ECP2 K=new ECP2();
 		FP12 lv;
@@ -137,8 +137,8 @@ public final class PAIR {
 /* Optimal R-ate double pairing e(P,Q).e(R,S) */
 	public static FP12 ate2(ECP2 P,ECP Q,ECP2 R,ECP S)
 	{
-		FP2 f=new FP2(new BIG(ROM.CURVE_Fra),new BIG(ROM.CURVE_Frb));
-		BIG x=new BIG(ROM.CURVE_Bnx);
+		FP2 f=new FP2(new BIG(ROM.CURVE_DETAILS.getCurveFra()),new BIG(ROM.CURVE_DETAILS.getCurveFrb()));
+		BIG x=new BIG(ROM.CURVE_DETAILS.getCurveBnx());
 		BIG n=new BIG(x);
 		ECP2 K=new ECP2();
 		FP12 lv;
@@ -213,8 +213,8 @@ public final class PAIR {
 /* final exponentiation - keep separate for multi-pairings and to avoid thrashing stack */
 	public static FP12 fexp(FP12 m)
 	{
-		FP2 f=new FP2(new BIG(ROM.CURVE_Fra),new BIG(ROM.CURVE_Frb));
-		BIG x=new BIG(ROM.CURVE_Bnx);
+		FP2 f=new FP2(new BIG(ROM.CURVE_DETAILS.getCurveFra()),new BIG(ROM.CURVE_DETAILS.getCurveFrb()));
+		BIG x=new BIG(ROM.CURVE_DETAILS.getCurveBnx());
 		FP12 r=new FP12(m);
 		FP12 x0,x1,x2,x3,x4,x5;
 
@@ -282,12 +282,12 @@ public final class PAIR {
 	{
 		int i,j;
 		BIG t=new BIG(0);
-		BIG q=new BIG(ROM.CURVE_Order);
+		BIG q=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 		BIG[] u=new BIG[2];
 		BIG[] v=new BIG[2];
 		for (i=0;i<2;i++)
 		{
-			t.copy(new BIG(ROM.CURVE_W[i]));  // why not just t=new BIG(ROM.CURVE_W[i]);
+			t.copy(new BIG(ROM.CURVE_DETAILS.getCurveW()[i]));  // why not just t=new BIG(ROM.CURVE_W[i]);
 			DBIG d=BIG.mul(t,e);
 			v[i]=new BIG(d.div(q));
 			u[i]=new BIG(0);
@@ -296,7 +296,7 @@ public final class PAIR {
 		for (i=0;i<2;i++)
 			for (j=0;j<2;j++)
 			{
-				t.copy(new BIG(ROM.CURVE_SB[j][i]));
+				t.copy(new BIG(ROM.CURVE_DETAILS.getCurveSB()[j][i]));
 				t.copy(BIG.modmul(v[j],t,q));
 				u[i].add(q);
 				u[i].sub(t);
@@ -310,12 +310,12 @@ public final class PAIR {
 	{
 		int i,j;
 		BIG t=new BIG(0);
-		BIG q=new BIG(ROM.CURVE_Order);
+		BIG q=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 		BIG[] u=new BIG[4];
 		BIG[] v=new BIG[4];
 		for (i=0;i<4;i++)
 		{
-			t.copy(new BIG(ROM.CURVE_WB[i]));
+			t.copy(new BIG(ROM.CURVE_DETAILS.getCurveWB()[i]));
 			DBIG d=BIG.mul(t,e);
 			v[i]=new BIG(d.div(q));
 			u[i]=new BIG(0);
@@ -324,7 +324,7 @@ public final class PAIR {
 		for (i=0;i<4;i++)
 			for (j=0;j<4;j++)
 			{
-				t.copy(new BIG(ROM.CURVE_BB[j][i]));
+				t.copy(new BIG(ROM.CURVE_DETAILS.getCurveBB()[j][i]));
 				t.copy(BIG.modmul(v[j],t,q));
 				u[i].add(q);
 				u[i].sub(t);
@@ -342,11 +342,11 @@ public final class PAIR {
 			P.affine();
 			R=new ECP();
 			R.copy(P);
-			int i,np,nn;
+			int np,nn;
 			ECP Q=new ECP();
 			Q.copy(P);
-			BIG q=new BIG(ROM.CURVE_Order);
-			FP cru=new FP(new BIG(ROM.CURVE_Cru));
+			BIG q=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
+			FP cru=new FP(new BIG(ROM.CURVE_DETAILS.getCurveCru()));
 			BIG t=new BIG(0);
 			BIG[] u=glv(e);
 			Q.getx().mul(cru);
@@ -386,8 +386,8 @@ public final class PAIR {
 		if (ROM.USE_GS_G2)
 		{
 			ECP2[] Q=new ECP2[4];
-			FP2 f=new FP2(new BIG(ROM.CURVE_Fra),new BIG(ROM.CURVE_Frb));
-			BIG q=new BIG(ROM.CURVE_Order);
+			FP2 f=new FP2(new BIG(ROM.CURVE_DETAILS.getCurveFra()),new BIG(ROM.CURVE_DETAILS.getCurveFrb()));
+			BIG q=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 			BIG[] u=gs(e);
 
 
@@ -430,8 +430,8 @@ public final class PAIR {
 		if (ROM.USE_GS_GT)
 		{
 			FP12[] g=new FP12[4];
-			FP2 f=new FP2(new BIG(ROM.CURVE_Fra),new BIG(ROM.CURVE_Frb));
-			BIG q=new BIG(ROM.CURVE_Order);
+			FP2 f=new FP2(new BIG(ROM.CURVE_DETAILS.getCurveFra()),new BIG(ROM.CURVE_DETAILS.getCurveFrb()));
+			BIG q=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 			BIG t=new BIG(0);
 			int i,np,nn;
 			BIG[] u=gs(e);
@@ -472,7 +472,7 @@ public final class PAIR {
 		r.mul(m);
 		if (!r.isunity()) return false;
 
-		FP2 f=new FP2(new BIG(ROM.CURVE_Fra),new BIG(ROM.CURVE_Frb));
+		FP2 f=new FP2(new BIG(ROM.CURVE_DETAILS.getCurveFra()),new BIG(ROM.CURVE_DETAILS.getCurveFrb()));
 
 		r.copy(m); r.frob(f); r.frob(f);
 		FP12 w=new FP12(r); w.frob(f); w.frob(f);
@@ -480,7 +480,7 @@ public final class PAIR {
 		if (!ROM.GT_STRONG)
 		{
 			if (!w.equals(r)) return false;
-			BIG x=new BIG(ROM.CURVE_Bnx);
+			BIG x=new BIG(ROM.CURVE_DETAILS.getCurveBnx());
 			r.copy(m); w=r.pow(x); w=w.pow(x);
 			r.copy(w); r.sqr(); r.mul(w); r.sqr();
 			w.copy(m); w.frob(f);

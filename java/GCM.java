@@ -50,7 +50,6 @@ public class GCM {
 	private int[][] table=new int[128][4]; /* 2k bytes */
 	private byte[] stateX=new byte[16];
 	private byte[]Y_0=new byte[16];
-	private int counter;
 	private int[] lenA=new int[2];
 	private int[] lenC=new int[2];
 	private int status;
@@ -190,7 +189,6 @@ public class GCM {
 	private boolean ghash(byte[] plain,int len)
 	{
 		int i,j=0;
-		int counter;
 	//	byte[] B=new byte[16];
 	//	byte[] b=new byte[4];
 

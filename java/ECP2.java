@@ -214,7 +214,7 @@ public final class ECP2 {
 		x.norm();
 		FP2 r=new FP2(x);
 		r.sqr();
-		FP2 b=new FP2(new BIG(ROM.CURVE_B));
+		FP2 b=new FP2(new BIG(ROM.CURVE_DETAILS.getCurveB()));
 		b.div_ip();
 		r.mul(x);
 		r.add(b);
@@ -443,7 +443,7 @@ public final class ECP2 {
 	public ECP2 mul(BIG e)
 	{
 /* fixed size windows */
-		int i,b,nb,m,s,ns;
+		int i,nb,s,ns;
 		BIG mt=new BIG();
 		BIG t=new BIG();
 		ECP2 P=new ECP2();

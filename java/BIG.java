@@ -77,7 +77,7 @@ public class BIG {
 /* calculate Field Excess */
 	public static int EXCESS(BIG a)
 	{
-		return ((a.w[ROM.NLEN-1]&ROM.OMASK)>>(ROM.CURVE.getModBits()%ROM.BASEBITS));
+		return ((a.w[ROM.NLEN-1]&ROM.OMASK)>>(ROM.MOD_CURVE.getModBits()%ROM.BASEBITS));
 	}
 
 /* test for zero */
@@ -143,7 +143,7 @@ public class BIG {
 	public void cmove(BIG g,int d)
 	{
 		int i;
-		int t,b=-d;
+		int b=-d;
 
 		for (i=0;i<ROM.NLEN;i++)
 		{
@@ -591,7 +591,7 @@ public class BIG {
 	{
 		DBIG d=new DBIG(0);
 		int i,b,j=0,r=0;
-		for (i=0;i<2*ROM.CURVE.getModBits();i++)
+		for (i=0;i<2*ROM.MOD_CURVE.getModBits();i++)
 		{
 			if (j==0) r=rng.getByte();
 			else r>>=1;
@@ -708,43 +708,44 @@ nbs is number of bits processed, and nzs is number of trailing 0s detected */
 /* reduce a DBIG to a BIG using the appropriate form of the modulus */
 	public static BIG mod(DBIG d)
 	{
-		BIG b;
-		if (ROM.MODTYPE==ROM.PSEUDO_MERSENNE)
+		if (ROM.FIELD_DETAILS.isPseudoMersenne())
 		{
 			int v,tw;
-			BIG t=d.split(ROM.CURVE.getModBits());
-			b=new BIG(d);
+			BIG t=d.split(ROM.MOD_CURVE.getModBits());
+			BIG b=new BIG(d);
 
-			v=t.pmul(ROM.MConst);
+			v=t.pmul(ROM.FIELD_DETAILS.getMConst());
 			tw=t.w[ROM.NLEN-1];
 			t.w[ROM.NLEN-1]&=ROM.TMASK;
-			t.inc(ROM.MConst*((tw>>ROM.TBITS)+(v<<(ROM.BASEBITS-ROM.TBITS))));
+			t.inc(ROM.FIELD_DETAILS.getMConst()*((tw>>ROM.TBITS)+(v<<(ROM.BASEBITS-ROM.TBITS))));
 
 			b.add(t);
 			b.norm();
+			return b;
 		}
-		if (ROM.MODTYPE==ROM.MONTGOMERY_FRIENDLY)
+		if (ROM.FIELD_DETAILS.isMontgomeryFriendly())
 		{
 			for (int i=0;i<ROM.NLEN;i++)
-				d.w[ROM.NLEN+i]+=d.muladd(d.w[i],ROM.MConst-1,d.w[i],ROM.NLEN+i-1);
+				d.w[ROM.NLEN+i]+=d.muladd(d.w[i],ROM.FIELD_DETAILS.getMConst()-1,d.w[i],ROM.NLEN+i-1);
 
-			b=new BIG(0);
+			BIG b=new BIG(0);
 
 			for (int i=0;i<ROM.NLEN;i++ )
 				b.w[i]=d.w[ROM.NLEN+i];
 			b.norm();
+			return b;
 		}
 
-		if (ROM.MODTYPE==ROM.NOT_SPECIAL)
+		if (ROM.FIELD_DETAILS.isNotSpecial())
 		{
-			BIG md=new BIG(ROM.Modulus);
+			BIG md=new BIG(ROM.FIELD_DETAILS.getModulus());
 			long sum;
 			int sp;
 			sum=d.w[0];
 			for (int j=0;j<ROM.NLEN;j++)
 			{
 				for (int i=0;i<j;i++) sum+=(long)d.w[i]*md.w[j-i];
-				sp=((int)sum*ROM.MConst)&ROM.MASK;
+				sp=((int)sum*ROM.FIELD_DETAILS.getMConst())&ROM.MASK;
 				d.w[j]=sp; sum+=(long)sp*md.w[0];
 				sum=d.w[j+1]+(sum>>ROM.BASEBITS);
 			}
@@ -761,14 +762,15 @@ nbs is number of bits processed, and nzs is number of trailing 0s detected */
 			sum=d.w[ROM.DNLEN-1]+(sum>>ROM.BASEBITS);
 			d.w[ROM.DNLEN-1]=(int)sum&ROM.MASK;
 
-			b=new BIG(0);
+			BIG b=new BIG(0);
 
 			for (int i=0;i<ROM.NLEN;i++ )
 				b.w[i]=d.w[ROM.NLEN+i];
 			b.norm();
+			return b;
 		}
 
-		return b;
+		return null;
 	}
 
 /* return a*b mod m */

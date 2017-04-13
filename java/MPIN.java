@@ -51,7 +51,7 @@ public class MPIN
 
 	public static ECP mapit(byte[] h)
 	{
-		BIG q=new BIG(ROM.Modulus);
+		BIG q=new BIG(ROM.FIELD_DETAILS.getModulus());
 		BIG x=BIG.fromBytes(h);
 		x.mod(q);
 		ECP P;
@@ -67,7 +67,7 @@ public class MPIN
 /* needed for SOK */
 	public static ECP2 mapit2(byte[] h)
 	{
-		BIG q=new BIG(ROM.Modulus);
+		BIG q=new BIG(ROM.FIELD_DETAILS.getModulus());
 		BIG x=BIG.fromBytes(h);
 		BIG one=new BIG(1);
 		FP2 X;
@@ -81,10 +81,10 @@ public class MPIN
 			x.inc(1); x.norm();
 		}
 /* Fast Hashing to G2 - Fuentes-Castaneda, Knapp and Rodriguez-Henriquez */
-		BIG Fra=new BIG(ROM.CURVE_Fra);
-		BIG Frb=new BIG(ROM.CURVE_Frb);
+		BIG Fra=new BIG(ROM.CURVE_DETAILS.getCurveFra());
+		BIG Frb=new BIG(ROM.CURVE_DETAILS.getCurveFrb());
 		X=new FP2(Fra,Frb);
-		x=new BIG(ROM.CURVE_Bnx);
+		x=new BIG(ROM.CURVE_DETAILS.getCurveBnx());
 
 		T=new ECP2(); T.copy(Q);
 		T.mul(x); T.neg();
@@ -112,7 +112,7 @@ public class MPIN
 	{
 		ECP P;
 		BIG x=new BIG(u);
-		BIG p=new BIG(ROM.Modulus);
+		BIG p=new BIG(ROM.FIELD_DETAILS.getModulus());
 		x.mod(p);
 		while (true)
 		{
@@ -163,7 +163,7 @@ public class MPIN
 		ECP P=new ECP(u,v);
 		if (P.is_infinity()) return INVALID_POINT;
 
-		BIG p=new BIG(ROM.Modulus);
+		BIG p=new BIG(ROM.FIELD_DETAILS.getModulus());
 		u=BIG.randomnum(p,rng);
 
 		su=rng.getByte(); /*if (su<0) su=-su;*/ su%=2;
@@ -243,7 +243,7 @@ public class MPIN
 	public static int RANDOM_GENERATE(RAND rng,byte[] S)
 	{
 		BIG s;
-		BIG r=new BIG(ROM.CURVE_Order);
+		BIG r=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 		s=BIG.randomnum(r,rng);
 
 		s.toBytes(S);
@@ -272,7 +272,7 @@ public class MPIN
 /* Implement step 2 on client side of MPin protocol */
 	public static int CLIENT_2(byte[] X,byte[] Y,byte[] SEC)
 	{
-		BIG r=new BIG(ROM.CURVE_Order);
+		BIG r=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 		ECP P=ECP.fromBytes(SEC);
 		if (P.is_infinity()) return INVALID_POINT;
 
@@ -289,7 +289,7 @@ public class MPIN
 /* Implement step 1 on client side of MPin protocol */
 	public static int CLIENT_1(int date,byte[] CLIENT_ID,RAND rng,byte[] X,int pin,byte[] TOKEN,byte[] SEC,byte[] xID,byte[] xCID,byte[] PERMIT)
 	{
-		BIG r=new BIG(ROM.CURVE_Order);
+		BIG r=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 //		BIG q=new BIG(ROM.Modulus);
 		BIG x;
 //		BIG m=new BIG(0);
@@ -303,7 +303,7 @@ public class MPIN
 			x=BIG.fromBytes(X);
 		}
 		ECP P,T,W;
-		BIG px;
+//		BIG px;
 //		byte[] t=new byte[EFS];
 
 		byte[] h=hashit(0,CLIENT_ID);
@@ -353,7 +353,7 @@ public class MPIN
 /* Extract Server Secret SST=S*Q where Q is fixed generator in G2 and S is master secret */
 	public static int GET_SERVER_SECRET(byte[] S,byte[] SST)
 	{
-		ECP2 Q=new ECP2(new FP2(new BIG(ROM.CURVE_Pxa),new BIG(ROM.CURVE_Pxb)),new FP2(new BIG(ROM.CURVE_Pya),new BIG(ROM.CURVE_Pyb)));
+		ECP2 Q=new ECP2(new FP2(new BIG(ROM.CURVE_DETAILS.getCurvePxa()),new BIG(ROM.CURVE_DETAILS.getCurvePxb())),new FP2(new BIG(ROM.CURVE_DETAILS.getCurvePya()),new BIG(ROM.CURVE_DETAILS.getCurvePyb())));
 
 		BIG s=BIG.fromBytes(S);
 		Q=PAIR.G2mul(Q,s);
@@ -370,7 +370,7 @@ public class MPIN
 	public static int GET_G1_MULTIPLE(RAND rng, int type,byte[] X,byte[] G,byte[] W)
 	{
 		BIG x;
-		BIG r=new BIG(ROM.CURVE_Order);
+		BIG r=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 		if (rng!=null)
 		{
 			x=BIG.randomnum(r,rng);
@@ -431,8 +431,8 @@ public class MPIN
 /* Implement step 2 of MPin protocol on server side */
 	public static int SERVER_2(int date,byte[] HID,byte[] HTID,byte[] Y,byte[] SST,byte[] xID,byte[] xCID,byte[] mSEC,byte[] E,byte[] F)
 	{
-		BIG q=new BIG(ROM.Modulus);
-		ECP2 Q=new ECP2(new FP2(new BIG(ROM.CURVE_Pxa),new BIG(ROM.CURVE_Pxb)),new FP2(new BIG(ROM.CURVE_Pya),new BIG(ROM.CURVE_Pyb)));
+		new BIG(ROM.FIELD_DETAILS.getModulus());
+		ECP2 Q=new ECP2(new FP2(new BIG(ROM.CURVE_DETAILS.getCurvePxa()),new BIG(ROM.CURVE_DETAILS.getCurvePxb())),new FP2(new BIG(ROM.CURVE_DETAILS.getCurvePya()),new BIG(ROM.CURVE_DETAILS.getCurvePyb())));
 		ECP2 sQ=ECP2.fromBytes(SST);
 		if (sQ.is_infinity()) return INVALID_POINT;
 
@@ -557,7 +557,7 @@ public class MPIN
 
 		P=mapit(CID);
 
-		ECP2 Q=new ECP2(new FP2(new BIG(ROM.CURVE_Pxa),new BIG(ROM.CURVE_Pxb)),new FP2(new BIG(ROM.CURVE_Pya),new BIG(ROM.CURVE_Pyb)));
+		ECP2 Q=new ECP2(new FP2(new BIG(ROM.CURVE_DETAILS.getCurvePxa()),new BIG(ROM.CURVE_DETAILS.getCurvePxb())),new FP2(new BIG(ROM.CURVE_DETAILS.getCurvePya()),new BIG(ROM.CURVE_DETAILS.getCurvePyb())));
 
 		g=PAIR.ate(Q,T);
 		g=PAIR.fexp(g);
@@ -587,9 +587,9 @@ public class MPIN
 
 		W=PAIR.G1mul(W,x);
 
-		FP2 f=new FP2(new BIG(ROM.CURVE_Fra),new BIG(ROM.CURVE_Frb));
-		BIG r=new BIG(ROM.CURVE_Order);
-		BIG q=new BIG(ROM.Modulus);
+		FP2 f=new FP2(new BIG(ROM.CURVE_DETAILS.getCurveFra()),new BIG(ROM.CURVE_DETAILS.getCurveFrb()));
+		BIG r=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
+		BIG q=new BIG(ROM.FIELD_DETAILS.getModulus());
 
 		BIG m=new BIG(q);
 		m.mod(r);
@@ -692,7 +692,7 @@ public class MPIN
         {
           byte[] h = hashit(TimeValue,xCID);
           BIG y = BIG.fromBytes(h);
-          BIG q=new BIG(ROM.CURVE_Order);
+          BIG q=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
           y.mod(q);
           y.toBytes(Y);
         }

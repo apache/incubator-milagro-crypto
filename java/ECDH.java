@@ -1,3 +1,5 @@
+import rom.field.FieldDetails;
+
 /*
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
@@ -101,7 +103,7 @@ public final class ECDH {
 /* Output key of length olen */
 	public static byte[] PBKDF2(byte[] Pass,byte[] Salt,int rep,int olen)
 	{
-		int i,j,k,len,d,opt;
+		int i,j,k,d,opt;
 		d=olen/32; if (olen%32!=0) d++;
 		byte[] F=new byte[EFS];
 		byte[] U=new byte[EFS];
@@ -269,22 +271,22 @@ public final class ECDH {
  * otherwise it is generated randomly internally */
 	public static int KEY_PAIR_GENERATE(RAND RNG,byte[] S,byte[] W)
 	{
-		BIG r,gx,gy,s,wx,wy;
+		BIG r,gx,gy,s;
 		ECP G,WP;
 		int res=0;
 		byte[] T=new byte[EFS];
 
-		gx=new BIG(ROM.CURVE_Gx);
+		gx=new BIG(ROM.CURVE_DETAILS.getCurveGx());
 
-		if (ROM.CURVETYPE!=ROM.MONTGOMERY)
+		if (ROM.CURVE_DETAILS.getCurveType()!=FieldDetails.MONTGOMERY)
 		{
-			gy=new BIG(ROM.CURVE_Gy);
+			gy=new BIG(ROM.CURVE_DETAILS.getCurveGy());
 			G=new ECP(gx,gy);
 		}
 		else
 			G=new ECP(gx);
 
-		r=new BIG(ROM.CURVE_Order);
+		r=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 
 		if (RNG==null)
 		{
@@ -311,7 +313,7 @@ public final class ECDH {
 		ECP WP=ECP.fromBytes(W);
 		int res=0;
 
-		r=new BIG(ROM.CURVE_Order);
+		r=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 
 		if (WP.is_infinity()) res=INVALID_PUBLIC_KEY;
 
@@ -326,8 +328,7 @@ public final class ECDH {
 /* IEEE-1363 Diffie-Hellman online calculation Z=S.WD */
 	public static int ECPSVDP_DH(byte[] S,byte[] WD,byte[] Z)
 	{
-		BIG r,s,wx,wy,z;
-		int valid;
+		BIG r,s;
 		ECP W;
 		int res=0;
 		byte[] T=new byte[EFS];
@@ -339,7 +340,7 @@ public final class ECDH {
 
 		if (res==0)
 		{
-			r=new BIG(ROM.CURVE_Order);
+			r=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 			s.mod(r);
 
 			W=W.mul(s);
@@ -364,11 +365,11 @@ public final class ECDH {
 		H.process_array(F);
 		byte[] B=H.hash();
 
-		gx=new BIG(ROM.CURVE_Gx);
-		gy=new BIG(ROM.CURVE_Gy);
+		gx=new BIG(ROM.CURVE_DETAILS.getCurveGx());
+		gy=new BIG(ROM.CURVE_DETAILS.getCurveGy());
 
 		G=new ECP(gx,gy);
-		r=new BIG(ROM.CURVE_Order);
+		r=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 
 		s=BIG.fromBytes(S);
 		f=BIG.fromBytes(B);
@@ -405,17 +406,16 @@ public final class ECDH {
 		BIG r,gx,gy,f,c,d,h2;
 		int res=0;
 		ECP G,WP,P;
-		int valid;
 
 		HASH H=new HASH();
 		H.process_array(F);
 		byte[] B=H.hash();
 
-		gx=new BIG(ROM.CURVE_Gx);
-		gy=new BIG(ROM.CURVE_Gy);
+		gx=new BIG(ROM.CURVE_DETAILS.getCurveGx());
+		gy=new BIG(ROM.CURVE_DETAILS.getCurveGy());
 
 		G=new ECP(gx,gy);
-		r=new BIG(ROM.CURVE_Order);
+		r=new BIG(ROM.CURVE_DETAILS.getCurveOrder());
 
 		c=BIG.fromBytes(C);
 		d=BIG.fromBytes(D);
@@ -453,7 +453,7 @@ public final class ECDH {
 /* IEEE1363 ECIES encryption. Encryption of plaintext M uses public key W and produces ciphertext V,C,T */
 	public static byte[] ECIES_ENCRYPT(byte[] P1,byte[] P2,RAND RNG,byte[] W,byte[] M,byte[] V,byte[] T)
 	{
-		int i,len;
+		int i;
 
 		byte[] Z=new byte[EFS];
 		byte[] VZ=new byte[3*EFS+1];
@@ -490,7 +490,7 @@ public final class ECDH {
 	public static byte[] ECIES_DECRYPT(byte[] P1,byte[] P2,byte[] V,byte[] C,byte[] T,byte[] U)
 	{
 
-		int i,len;
+		int i;
 
 		byte[] Z=new byte[EFS];
 		byte[] VZ=new byte[3*EFS+1];

@@ -1,3 +1,5 @@
+import rom.field.FieldDetails;
+
 /*
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
@@ -34,7 +36,7 @@ public final class ECP {
 	}
 /* test for O point-at-infinity */
 	public boolean is_infinity() {
-		if (ROM.CURVETYPE==ROM.EDWARDS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.EDWARDS)
 		{
 			x.reduce(); y.reduce(); z.reduce();
 			return (x.iszilch() && y.equals(z));
@@ -45,9 +47,9 @@ public final class ECP {
 	private void cswap(ECP Q,int d)
 	{
 		x.cswap(Q.x,d);
-		if (ROM.CURVETYPE!=ROM.MONTGOMERY) y.cswap(Q.y,d);
+		if (ROM.CURVE_DETAILS.getCurveType()!=FieldDetails.MONTGOMERY) y.cswap(Q.y,d);
 		z.cswap(Q.z,d);
-		if (ROM.CURVETYPE!=ROM.EDWARDS)
+		if (ROM.CURVE_DETAILS.getCurveType()!=FieldDetails.EDWARDS)
 		{
 			boolean bd;
 			if (d==0) bd=false;
@@ -62,9 +64,9 @@ public final class ECP {
 	private void cmove(ECP Q,int d)
 	{
 		x.cmove(Q.x,d);
-		if (ROM.CURVETYPE!=ROM.MONTGOMERY) y.cmove(Q.y,d);
+		if (ROM.CURVE_DETAILS.getCurveType()!=FieldDetails.MONTGOMERY) y.cmove(Q.y,d);
 		z.cmove(Q.z,d);
-		if (ROM.CURVETYPE!=ROM.EDWARDS)
+		if (ROM.CURVE_DETAILS.getCurveType()!=FieldDetails.EDWARDS)
 		{
 			boolean bd;
 			if (d==0) bd=false;
@@ -108,7 +110,7 @@ public final class ECP {
 	public boolean equals(ECP Q) {
 		if (is_infinity() && Q.is_infinity()) return true;
 		if (is_infinity() || Q.is_infinity()) return false;
-		if (ROM.CURVETYPE==ROM.WEIERSTRASS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.WEIERSTRASS)
 		{
 			FP zs2=new FP(z); zs2.sqr();
 			FP zo2=new FP(Q.z); zo2.sqr();
@@ -128,7 +130,7 @@ public final class ECP {
 			a.copy(x); a.mul(Q.z); a.reduce();
 			b.copy(Q.x); b.mul(z); b.reduce();
 			if (!a.equals(b)) return false;
-			if (ROM.CURVETYPE==ROM.EDWARDS)
+			if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.EDWARDS)
 			{
 				a.copy(y); a.mul(Q.z); a.reduce();
 				b.copy(Q.y); b.mul(z); b.reduce();
@@ -142,18 +144,18 @@ public final class ECP {
 	public void copy(ECP P)
 	{
 		x.copy(P.x);
-		if (ROM.CURVETYPE!=ROM.MONTGOMERY) y.copy(P.y);
+		if (ROM.CURVE_DETAILS.getCurveType()!=FieldDetails.MONTGOMERY) y.copy(P.y);
 		z.copy(P.z);
 		INF=P.INF;
 	}
 /* this=-this */
 	public void neg() {
 		if (is_infinity()) return;
-		if (ROM.CURVETYPE==ROM.WEIERSTRASS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.WEIERSTRASS)
 		{
 			y.neg(); y.norm();
 		}
-		if (ROM.CURVETYPE==ROM.EDWARDS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.EDWARDS)
 		{
 			x.neg(); x.norm();
 		}
@@ -175,11 +177,11 @@ public final class ECP {
 		FP r=new FP(x);
 		r.sqr();
 
-		if (ROM.CURVETYPE==ROM.WEIERSTRASS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.WEIERSTRASS)
 		{ // x^3+Ax+B
-			FP b=new FP(new BIG(ROM.CURVE_B));
+			FP b=new FP(new BIG(ROM.CURVE_DETAILS.getCurveB()));
 			r.mul(x);
-			if (ROM.CURVE_A==-3)
+			if (ROM.CURVE_DETAILS.getCurveA()==-3)
 			{
 				FP cx=new FP(x);
 				cx.imul(3);
@@ -188,26 +190,26 @@ public final class ECP {
 			}
 			r.add(b);
 		}
-		if (ROM.CURVETYPE==ROM.EDWARDS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.EDWARDS)
 		{ // (Ax^2-1)/(Bx^2-1)
-			FP b=new FP(new BIG(ROM.CURVE_B));
+			FP b=new FP(new BIG(ROM.CURVE_DETAILS.getCurveB()));
 
 			FP one=new FP(1);
 			b.mul(r);
 			b.sub(one);
-			if (ROM.CURVE_A==-1) r.neg();
+			if (ROM.CURVE_DETAILS.getCurveA()==-1) r.neg();
 			r.sub(one);
 
 			b.inverse();
 
 			r.mul(b);
 		}
-		if (ROM.CURVETYPE==ROM.MONTGOMERY)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.MONTGOMERY)
 		{ // x^3+Ax^2+x
 			FP x3=new FP(0);
 			x3.copy(r);
 			x3.mul(x);
-			r.imul(ROM.CURVE_A);
+			r.imul(ROM.CURVE_DETAILS.getCurveA());
 			r.add(x3);
 			r.add(x);
 		}
@@ -222,7 +224,7 @@ public final class ECP {
 		z=new FP(1);
 		FP rhs=RHS(x);
 
-		if (ROM.CURVETYPE==ROM.MONTGOMERY)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.MONTGOMERY)
 		{
 			if (rhs.jacobi()==1) INF=false;
 			else inf();
@@ -259,7 +261,7 @@ public final class ECP {
 		z=new FP(1);
 		if (rhs.jacobi()==1)
 		{
-			if (ROM.CURVETYPE!=ROM.MONTGOMERY) y.copy(rhs.sqrt());
+			if (ROM.CURVE_DETAILS.getCurveType()!=FieldDetails.MONTGOMERY) y.copy(rhs.sqrt());
 			INF=false;
 		}
 		else INF=true;
@@ -271,7 +273,7 @@ public final class ECP {
 		FP one=new FP(1);
 		if (z.equals(one)) return;
 		z.inverse();
-		if (ROM.CURVETYPE==ROM.WEIERSTRASS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.WEIERSTRASS)
 		{
 			FP z2=new FP(z);
 			z2.sqr();
@@ -279,12 +281,12 @@ public final class ECP {
 			y.mul(z2);
 			y.mul(z);  y.reduce();
 		}
-		if (ROM.CURVETYPE==ROM.EDWARDS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.EDWARDS)
 		{
 			x.mul(z); x.reduce();
 			y.mul(z); y.reduce();
 		}
-		if (ROM.CURVETYPE==ROM.MONTGOMERY)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.MONTGOMERY)
 		{
 			x.mul(z); x.reduce();
 		}
@@ -329,13 +331,13 @@ public final class ECP {
 	public void toBytes(byte[] b)
 	{
 		byte[] t=new byte[ROM.MODBYTES];
-		if (ROM.CURVETYPE!=ROM.MONTGOMERY) b[0]=0x04;
+		if (ROM.CURVE_DETAILS.getCurveType()!=FieldDetails.MONTGOMERY) b[0]=0x04;
 		else b[0]=0x02;
 
 		affine();
 		x.redc().toBytes(t);
 		for (int i=0;i<ROM.MODBYTES;i++) b[i+1]=t[i];
-		if (ROM.CURVETYPE!=ROM.MONTGOMERY)
+		if (ROM.CURVE_DETAILS.getCurveType()!=FieldDetails.MONTGOMERY)
 		{
 			y.redc().toBytes(t);
 			for (int i=0;i<ROM.MODBYTES;i++) b[i+ROM.MODBYTES+1]=t[i];
@@ -345,7 +347,7 @@ public final class ECP {
 	public static ECP fromBytes(byte[] b)
 	{
 		byte[] t=new byte[ROM.MODBYTES];
-		BIG p=new BIG(ROM.Modulus);
+		BIG p=new BIG(ROM.FIELD_DETAILS.getModulus());
 
 		for (int i=0;i<ROM.MODBYTES;i++) t[i]=b[i+1];
 		BIG px=BIG.fromBytes(t);
@@ -364,12 +366,12 @@ public final class ECP {
 	public String toString() {
 		if (is_infinity()) return "infinity";
 		affine();
-		if (ROM.CURVETYPE==ROM.MONTGOMERY) return "("+x.redc().toString()+")";
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.MONTGOMERY) return "("+x.redc().toString()+")";
 		else return "("+x.redc().toString()+","+y.redc().toString()+")";
 	}
 /* this*=2 */
 	public void dbl() {
-		if (ROM.CURVETYPE==ROM.WEIERSTRASS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.WEIERSTRASS)
 		{
 			if (INF) return;
 			if (y.iszilch())
@@ -384,7 +386,7 @@ public final class ECP {
 			FP w3=new FP(x);
 			FP w8=new FP(x);
 
-			if (ROM.CURVE_A==-3)
+			if (ROM.CURVE_DETAILS.getCurveA()==-3)
 			{
 				w6.sqr();
 				w1.copy(w6);
@@ -426,7 +428,7 @@ public final class ECP {
 			y.norm();
 			z.norm();
 		}
-		if (ROM.CURVETYPE==ROM.EDWARDS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.EDWARDS)
 		{
 			FP C=new FP(x);
 			FP D=new FP(y);
@@ -436,7 +438,7 @@ public final class ECP {
 			x.mul(y); x.add(x);
 			C.sqr();
 			D.sqr();
-			if (ROM.CURVE_A==-1) C.neg();
+			if (ROM.CURVE_DETAILS.getCurveA()==-1) C.neg();
 			y.copy(C); y.add(D);
 			y.norm();
 			H.sqr(); H.add(H);
@@ -451,7 +453,7 @@ public final class ECP {
 			y.norm();
 			z.norm();
 		}
-		if (ROM.CURVETYPE==ROM.MONTGOMERY)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.MONTGOMERY)
 		{
 			FP A=new FP(x);
 			FP B=new FP(x);
@@ -470,7 +472,7 @@ public final class ECP {
 
 			x.copy(AA); x.mul(BB);
 
-			A.copy(C); A.imul((ROM.CURVE_A+2)/4);
+			A.copy(C); A.imul((ROM.CURVE_DETAILS.getCurveA()+2)/4);
 
 			BB.add(A);
 			z.copy(BB); z.mul(C);
@@ -482,7 +484,7 @@ public final class ECP {
 
 /* this+=Q */
 	public void add(ECP Q) {
-		if (ROM.CURVETYPE==ROM.WEIERSTRASS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.WEIERSTRASS)
 		{
 			if (INF)
 			{
@@ -555,9 +557,9 @@ public final class ECP {
 			y.norm();
 			z.norm();
 		}
-		if (ROM.CURVETYPE==ROM.EDWARDS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.EDWARDS)
 		{
-			FP b=new FP(new BIG(ROM.CURVE_B));
+			FP b=new FP(new BIG(ROM.CURVE_DETAILS.getCurveB()));
 			FP A=new FP(z);
 			FP B=new FP(0);
 			FP C=new FP(x);
@@ -578,7 +580,7 @@ public final class ECP {
 			G.copy(B); G.add(E);
 			C.add(D);
 
-			if (ROM.CURVE_A==1)
+			if (ROM.CURVE_DETAILS.getCurveA()==1)
 			{
 				E.copy(D); D.sub(C);
 			}
@@ -590,11 +592,11 @@ public final class ECP {
 			B.mul(F);
 			x.copy(A); x.mul(B);
 
-			if (ROM.CURVE_A==1)
+			if (ROM.CURVE_DETAILS.getCurveA()==1)
 			{
 				C.copy(E); C.mul(G);
 			}
-			if (ROM.CURVE_A==-1)
+			if (ROM.CURVE_DETAILS.getCurveA()==-1)
 			{
 				C.mul(G);
 			}
@@ -694,11 +696,11 @@ public final class ECP {
 
 /* constant time multiply by small integer of length bts - use ladder */
 	public ECP pinmul(int e,int bts) {
-		if (ROM.CURVETYPE==ROM.MONTGOMERY)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.MONTGOMERY)
 			return this.mul(new BIG(e));
 		else
 		{
-			int nb,i,b;
+			int i,b;
 			ECP P=new ECP();
 			ECP R0=new ECP();
 			ECP R1=new ECP(); R1.copy(this);
@@ -725,7 +727,7 @@ public final class ECP {
 		if (e.iszilch() || is_infinity()) return new ECP();
 
 		ECP P=new ECP();
-		if (ROM.CURVETYPE==ROM.MONTGOMERY)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.MONTGOMERY)
 		{
 /* use Ladder */
 			int nb,i,b;
@@ -750,7 +752,7 @@ public final class ECP {
 		else
 		{
 // fixed size windows
-			int i,b,nb,m,s,ns;
+			int i,nb,s,ns;
 			BIG mt=new BIG();
 			BIG t=new BIG();
 			ECP Q=new ECP();
@@ -774,7 +776,7 @@ public final class ECP {
 			}
 
 // convert the table to affine
-			if (ROM.CURVETYPE==ROM.WEIERSTRASS)
+			if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.WEIERSTRASS)
 				multiaffine(8,W);
 
 // make exponent odd - add 2P if even, P if odd
@@ -845,7 +847,7 @@ public final class ECP {
 		W[7]=new ECP(); W[7].copy(W[6]); W[7].add(S);
 
 // convert the table to affine
-		if (ROM.CURVETYPE==ROM.WEIERSTRASS)
+		if (ROM.CURVE_DETAILS.getCurveType()==FieldDetails.WEIERSTRASS)
 			multiaffine(8,W);
 
 // if multiplier is odd, add 2, else add 1 to multiplier, and add 2P or P to correction

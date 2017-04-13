@@ -33,8 +33,7 @@ public class TestECM
 
 	public static void main(String[] args)
 	{
-		int i,j=0,res;
-		int result;
+		int i,res;
 		String pp=new String("M0ng00se");
 
 		int EGS=ECDH.EGS;

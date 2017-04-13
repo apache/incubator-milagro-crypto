@@ -1,6 +1,6 @@
-package rom;
+package rom.mod;
 
-public class MF256Curve implements Curve {
+public class MF256Curve implements ModCurve {
 
 	public static final int MODBITS=256; /* Number of bits in Modulus */
 	public static final int MOD8=7;  /* Modulus mod 8 */
