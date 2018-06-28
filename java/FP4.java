@@ -21,6 +21,8 @@ under the License.
 
 /* FP4 elements are of the form a+ib, where i is sqrt(-1+sqrt(-1))  */
 
+package org.apache.milagro.amcl.XXX;
+
 public final class FP4 {
 	private final FP2 a;
 	private final FP2 b;
@@ -41,6 +43,13 @@ public final class FP4 {
 		reduce();
 		return (a.iszilch() && b.iszilch());
 	}
+
+	public void cmove(FP4 g,int d)
+	{
+		a.cmove(g.a,d);
+		b.cmove(g.b,d);
+	}
+
 /* test this==1 ? */
 	public boolean isunity() {
 		FP2 one=new FP2(1);
@@ -117,25 +126,28 @@ public final class FP4 {
 /* set this=-this */
 	public void neg()
 	{
+		norm();
 		FP2 m=new FP2(a);
 		FP2 t=new FP2(0);
 		m.add(b);
+//	m.norm();
 		m.neg();
-		m.norm();
+	//	m.norm();
 		t.copy(m); t.add(b);
 		b.copy(m);
 		b.add(a);
 		a.copy(t);
+	norm();
 	}
 /* this=conjugate(this) */
 	public void conj()
 	{
-		b.neg(); b.norm();
+		b.neg(); norm();
 	}
 /* this=-conjugate(this) */
 	public void nconj()
 	{
-		a.neg(); a.norm();
+		a.neg(); norm();
 	}
 /* this+=x */
 	public void add(FP4 x)
@@ -157,16 +169,25 @@ public final class FP4 {
 		a.mul(s);
 		b.mul(s);
 	}
+
+/* this=x-this */
+	public void rsub(FP4 x)
+	{
+		neg();
+		add(x);
+	}
+
+
 /* this*=c where c is int */
 	public void imul(int c)
 	{
 		a.imul(c);
 		b.imul(c);
 	}
-/* this*=this */
+/* this*=this */	
 	public void sqr()
 	{
-		norm();
+//		norm();
 
 		FP2 t1=new FP2(a);
 		FP2 t2=new FP2(b);
@@ -177,6 +198,10 @@ public final class FP4 {
 		t2.mul_ip();
 
 		t2.add(a);
+
+		t1.norm();
+		t2.norm();
+
 		a.copy(t1);
 
 		a.mul(t2);
@@ -184,6 +209,7 @@ public final class FP4 {
 		t2.copy(t3);
 		t2.mul_ip();
 		t2.add(t3);
+		t2.norm();
 		t2.neg();
 		a.add(t2);
 
@@ -195,7 +221,7 @@ public final class FP4 {
 /* this*=y */
 	public void mul(FP4 y)
 	{
-		norm();
+//		norm();
 
 		FP2 t1=new FP2(a);
 		FP2 t2=new FP2(b);
@@ -208,12 +234,27 @@ public final class FP4 {
 		t3.add(y.a);
 		t4.add(a);
 
-		t4.mul(t3);
-		t4.sub(t1);
-		t4.norm();
+	t3.norm();
+	t4.norm();
 
-		b.copy(t4);
-		b.sub(t2);
+		t4.mul(t3);
+
+	t3.copy(t1);
+	t3.neg();
+	t4.add(t3);
+	t4.norm();
+
+	//	t4.sub(t1);
+	//	t4.norm();
+
+	t3.copy(t2);
+	t3.neg();
+	b.copy(t4);
+	b.add(t3);
+
+	//	b.copy(t4);
+	//	b.sub(t2);
+
 		t2.mul_ip();
 		a.copy(t2);
 		a.add(t1);
@@ -221,12 +262,12 @@ public final class FP4 {
 		norm();
 	}
 /* convert this to hex string */
-	public String toString()
+	public String toString() 
 	{
 		return ("["+a.toString()+","+b.toString()+"]");
 	}
 
-	public String toRawString()
+	public String toRawString() 
 	{
 		return ("["+a.toRawString()+","+b.toRawString()+"]");
 	}
@@ -234,7 +275,7 @@ public final class FP4 {
 /* this=1/this */
 	public void inverse()
 	{
-		norm();
+//		norm();
 
 		FP2 t1=new FP2(a);
 		FP2 t2=new FP2(b);
@@ -242,10 +283,12 @@ public final class FP4 {
 		t1.sqr();
 		t2.sqr();
 		t2.mul_ip();
+	t2.norm();
 		t1.sub(t2);
 		t1.inverse();
 		a.mul(t1);
 		t1.neg();
+	t1.norm();
 		b.mul(t1);
 	}
 
@@ -253,14 +296,15 @@ public final class FP4 {
 /* this*=i where i = sqrt(-1+sqrt(-1)) */
 	public void times_i()
 	{
-		norm();
+//		norm();
 		FP2 s=new FP2(b);
 		FP2 t=new FP2(b);
 		s.times_i();
 		t.add(s);
-		t.norm();
+	//	t.norm();
 		b.copy(a);
 		a.copy(t);
+		norm();
 	}
 
 /* this=this^p using Frobenius */
@@ -291,13 +335,16 @@ public final class FP4 {
 		return r;
 	}
 /* XTR xtr_a function */
-	public void xtr_A(FP4 w,FP4 y,FP4 z)
+	public void xtr_A(FP4 w,FP4 y,FP4 z) 
 	{
 		FP4 r=new FP4(w);
 		FP4 t=new FP4(w);
+	//y.norm();
 		r.sub(y);
+	r.norm();
 		r.pmul(a);
 		t.add(y);
+	t.norm();
 		t.pmul(b);
 		t.times_i();
 
@@ -313,6 +360,7 @@ public final class FP4 {
 		FP4 w=new FP4(this);
 		sqr(); w.conj();
 		w.add(w);
+	w.norm();
 		sub(w);
 		reduce();
 	}
@@ -393,9 +441,9 @@ public final class FP4 {
 					w.copy(d); d.copy(e);
 					e.rsub(w); e.norm();
 
-					t.copy(cv);
+					t.copy(cv); 
 					t.xtr_A(cu,cumv,cum2v);
-					cum2v.copy(cumv);
+					cum2v.copy(cumv); 
 					cum2v.conj();
 					cumv.copy(cv);
 					cv.copy(cu);
@@ -502,13 +550,103 @@ public final class FP4 {
 		r=r.xtr_pow(d);
 		return r;
 	}
+
+/* this/=2 */
+	public void div2()
+	{
+		a.div2();
+		b.div2();
+	}
+
+	public void div_i()
+	{
+		FP2 u=new FP2(a);
+		FP2 v=new FP2(b);
+		u.div_ip();
+		a.copy(v);
+		b.copy(u);
+	}
+
+	public void div_2i() {
+		FP2 u=new FP2(a);
+		FP2 v=new FP2(b);
+		u.div_ip2();
+		v.add(v); v.norm();
+		a.copy(v);
+		b.copy(u);
+	}
+
+
+/* sqrt(a+ib) = sqrt(a+sqrt(a*a-n*b*b)/2)+ib/(2*sqrt(a+sqrt(a*a-n*b*b)/2)) */
+/* returns true if this is QR */
+	public boolean sqrt()
+	{
+		if (iszilch()) return true;
+		FP2 wa=new FP2(a);
+		FP2 ws=new FP2(b);
+		FP2 wt=new FP2(a);
+		
+		if (ws.iszilch())
+		{
+			if (wt.sqrt())
+			{
+				a.copy(wt);
+				b.zero();
+			} else {
+				wt.div_ip();
+				wt.sqrt();
+				b.copy(wt);
+				a.zero();
+			}
+			return true;
+		}
+
+		ws.sqr();
+		wa.sqr();
+		ws.mul_ip();
+		ws.norm();
+		wa.sub(ws);
+
+		ws.copy(wa);
+		if (!ws.sqrt()) {
+			return false;
+		}
+
+		wa.copy(wt); wa.add(ws); wa.norm(); wa.div2();
+
+		if (!wa.sqrt()) {
+			wa.copy(wt); wa.sub(ws); wa.norm(); wa.div2();
+			if (!wa.sqrt()) {
+				return false;
+			}
+		}
+		wt.copy(b);
+		ws.copy(wa); ws.add(wa);
+		ws.inverse();
+
+		wt.mul(ws);
+		a.copy(wa);
+		b.copy(wt);
+
+		return true;
+	}
+
+/* this*=s where s is FP */
+	public void qmul(FP s)
+	{
+		a.pmul(s);
+		b.pmul(s);
+	}
+
+
+
 /*
 	public static void main(String[] args) {
 		BIG m=new BIG(ROM.Modulus);
 		BIG e=new BIG(12);
 		BIG a=new BIG(0);
 		BIG b=new BIG(0);
-
+		
 		a.inc(27); b.inc(45);
 
 		FP2 w0=new FP2(a,b);
@@ -522,8 +660,8 @@ public final class FP4 {
 		FP4 w=new FP4(w0,w1);
 		FP4 t=new FP4(w);
 
-		a=new BIG(ROM.CURVE_Fra);
-		b=new BIG(ROM.CURVE_Frb);
+		a=new BIG(ROM_ZZZ.CURVE_Fra);
+		b=new BIG(ROM_ZZZ.CURVE_Frb);
 
 		FP2 f=new FP2(a,b);
 
@@ -578,6 +716,6 @@ public final class FP4 {
 
 		FP4 cr=w.xtr_pow2(c1,c2,c3,e1,e2);
 
-		System.out.println("c^e= "+cr.toString());
+		System.out.println("c^e= "+cr.toString()); 
 	} */
 }

@@ -1,45 +1,37 @@
-AMCL is very simple to build for Swift.
 
-First - decide the modulus and curve type you want to use. Edit rom.swift 
-where indicated. You will probably want to use one of the curves whose 
-details are already in there.
+Each supported primitive is implemented inside of its own swift namespace. 
 
-Three example API files are provided, mpin.swift which 
-supports our M-Pin (tm) protocol, ecdh.swift which supports elliptic 
-curve key exchange, digital signature and public key crypto, and rsa.swift
-which supports the RSA method. The first  can be tested using the 
-TestMPIN.swift driver programs, the second can be tested using TestECDH.swift 
-and TestECM.swift, and the third with TestRSA.swift
+So for example to support both ed25519 and the NIST P256 curves, one
+could import into a particular module both "ed25519" and "nist256"
 
-In the rom.swift file you must provide the curve constants. Several examples
-are provided there, if you are willing to use one of these.
+Separate ROM files provide the constants required for each curve. Some
+files (big.swift, fp.swift, ecp.swift) also specify certain constants 
+that must be set for the particular curve.
 
-For a quick jumpstart:-
+--------------------------------------
 
-From a terminal window in a /lib directory create a dynamic library using the command
+To build the library and see it in action, copy all of the files in this 
+directory to a fresh root directory. Then execute the python3 script 
+config32.py or config64.py (depending om whether you want a 32 or 
+64-bit build), and select the curves that you wish to support. Libraries 
+will be built automatically including all of the modules that you will need.
 
-swiftc big.swift rom.swift dbig.swift rand.swift hash.swift fp.swift fp2.swift ecp.swift ecp2.swift aes.swift gcm.swift fp4.swift fp12.swift ff.swift pair.swift rsa.swift ecdh.swift mpin.swift -Ounchecked -whole-module-optimization -emit-library -emit-module -module-name clint
+As a quick example execute from your root directory
 
-This creates the files 
+py config64.py
 
-libclint.dylib
-clint.swiftmodule
+or
 
-Copy these to a project directory, which contains only the files 
+python3 config64.py
 
-TestECDH.swift
-TestRSA.swift
-TestMPIN.swift
+Then select options 1, 3, 7, 18, 20, 25, 26 and 27 (these are fixed for the 
+example program provided). Select 0 to exit.
 
-And create and run the projects by issuing the commands
+Then execute
 
-swift -lclint -I. TestMPIN.swift 
-swift -lclint -I. TestECDH.swift 
-swift -lclint -I. TestRSA.swift 
+swift -I. -L. -led25519 -lnist256 -lgoldilocks -lbn254 -lbls383 -lbls24 -lbls48 -lrsa2048 TestALL.swift 
 
-Note that classes and methods that need to be exposed to consuming programs, 
-should be made "public" when and if needed. Here we have done this as needed 
-just for these example programs
+and
 
-
+swift -I. -L. -led25519 -lnist256 -lgoldilocks -lbn254 -lbls383 -lbls24 -lbls48 -lrsa2048 BenchtestALL.swift 
 

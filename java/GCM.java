@@ -18,11 +18,10 @@ under the License.
 */
 
 
-
 /*
  * Implementation of the AES-GCM Encryption/Authentication
  *
- * Some restrictions..
+ * Some restrictions.. 
  * 1. Only for use with AES
  * 2. Returned tag is always 128-bits. Truncate at your own risk.
  * 3. The order of function calls must follow some rules
@@ -37,6 +36,8 @@ under the License.
  *
  * See http://www.mindspring.com/~dmcgrew/gcm-nist-6.pdf
  */
+
+package org.apache.milagro.amcl;
 
 public class GCM {
 	public static final int NB=4;
@@ -76,7 +77,7 @@ public class GCM {
 		int i,j,c;
 		byte[] b=new byte[4];
 
-		for (i=j=0;i<NB;i++,j+=4)
+		for (i=j=0;i<NB;i++,j+=4) 
 		{
 			b[0]=H[j]; b[1]=H[j+1]; b[2]=H[j+2]; b[3]=H[j+3];
 			table[0][i]=pack(b);
@@ -100,15 +101,15 @@ public class GCM {
 		j=8; m=0;
 		for (i=0;i<128;i++)
 		{
-			c=(stateX[m]>>>(--j))&1;
-			if (c!=0) for (k=0;k<NB;k++) P[k]^=table[i][k];
+			c=(stateX[m]>>>(--j))&1; c=~c+1;
+			for (k=0;k<NB;k++) P[k]^=(table[i][k]&c);
 			if (j==0)
 			{
 				j=8; m++;
 				if (m==16) break;
 			}
 		}
-		for (i=j=0;i<NB;i++,j+=4)
+		for (i=j=0;i<NB;i++,j+=4) 
 		{
 			b=unpack(P[i]);
 			stateX[j]=b[0]; stateX[j+1]=b[1]; stateX[j+2]=b[2]; stateX[j+3]=b[3];
@@ -137,7 +138,7 @@ public class GCM {
 	}
 
 /* Initialize GCM mode */
-	public void init(byte[] key,int niv,byte[] iv)
+	public void init(int nk,byte[] key,int niv,byte[] iv)
 	{ /* iv size niv is usually 12 bytes (96 bits). AES key size nk can be 16,24 or 32 bytes */
 		int i;
 		byte[] H=new byte[16];
@@ -145,10 +146,10 @@ public class GCM {
 
 		for (i=0;i<16;i++) {H[i]=0; stateX[i]=0;}
 
-		a.init(AES.ECB,key,iv);
+		a.init(AES.ECB,nk,key,iv);
 		a.ecb_encrypt(H);     /* E(K,0) */
 		precompute(H);
-
+	
 		lenA[0]=lenC[0]=lenA[1]=lenC[1]=0;
 		if (niv==12)
 		{
@@ -196,7 +197,7 @@ public class GCM {
 
 		if (status==GCM_ACCEPTING_HEADER) status=GCM_ACCEPTING_CIPHER;
 		if (status!=GCM_ACCEPTING_CIPHER) return false;
-
+		
 		while (j<len)
 		{
 			for (i=0;i<16 && j<len;i++)
@@ -221,7 +222,7 @@ public class GCM {
 
 		if (status==GCM_ACCEPTING_HEADER) status=GCM_ACCEPTING_CIPHER;
 		if (status!=GCM_ACCEPTING_CIPHER) return new byte[0];
-
+		
 		while (j<len)
 		{
 
@@ -232,7 +233,7 @@ public class GCM {
 			a.f[12]=b[0]; a.f[13]=b[1]; a.f[14]=b[2]; a.f[15]=b[3]; /* increment counter */
 			for (i=0;i<16;i++) B[i]=a.f[i];
 			a.ecb_encrypt(B);        /* encrypt it  */
-
+		
 			for (i=0;i<16 && j<len;i++)
 			{
 				cipher[j]=(byte)(plain[j]^B[i]);
@@ -256,7 +257,7 @@ public class GCM {
 
 		if (status==GCM_ACCEPTING_HEADER) status=GCM_ACCEPTING_CIPHER;
 		if (status!=GCM_ACCEPTING_CIPHER) return new byte[0];
-
+	
 		while (j<len)
 		{
 
@@ -269,8 +270,9 @@ public class GCM {
 			a.ecb_encrypt(B);        /* encrypt it  */
 			for (i=0;i<16 && j<len;i++)
 			{
+				byte oc=cipher[j];
 				plain[j]=(byte)(cipher[j]^B[i]);
-				stateX[i]^=cipher[j++];
+				stateX[i]^=oc; j++;
 				lenC[1]++; if (lenC[1]==0) lenC[0]++;
 			}
 			gf2mul();
@@ -326,7 +328,7 @@ public class GCM {
 		byte[] N=new byte[100];   // IV - Initialisation vector
 		byte[] M=new byte[100];  // Plaintext to be encrypted/authenticated
 		byte[] C=new byte[100];  // Ciphertext
-		byte[] P=new byte[100];  // Recovered Plaintext
+		byte[] P=new byte[100];  // Recovered Plaintext 
 
 		GCM g=new GCM();
 
@@ -344,7 +346,7 @@ public class GCM {
 		for (i=0;i<len;i++) System.out.format("%02x",M[i]);
 		System.out.format("\n");
 
-		g.init(K,lenIV,N);
+		g.init(16,K,lenIV,N);
 		g.add_header(H,lenH);
 		C=g.add_plain(M,len);
 		T=g.finish(true);
@@ -352,12 +354,12 @@ public class GCM {
 		System.out.format("Ciphertext=\n");
 		for (i=0;i<len;i++) System.out.format("%02x",C[i]);
 		System.out.format("\n");
-
+        
 		System.out.format("Tag=\n");
 		for (i=0;i<16;i++) System.out.format("%02x",T[i]);
 		System.out.format("\n");
 
-		g.init(K,lenIV,N);
+		g.init(16,K,lenIV,N);
 		g.add_header(H,lenH);
 		P=g.add_cipher(C,len);
 		T=g.finish(true);
@@ -370,5 +372,5 @@ public class GCM {
 		for (i=0;i<16;i++) System.out.format("%02x",T[i]);
 		System.out.format("\n");
 	}
-	*/
+*/	
 }

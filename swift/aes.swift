@@ -1,24 +1,24 @@
 /*
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
+	Licensed to the Apache Software Foundation (ASF) under one
+	or more contributor license agreements.  See the NOTICE file
+	distributed with this work for additional information
+	regarding copyright ownership.  The ASF licenses this file
+	to you under the Apache License, Version 2.0 (the
+	"License"); you may not use this file except in compliance
+	with the License.  You may obtain a copy of the License at
+	
+	http://www.apache.org/licenses/LICENSE-2.0
 
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
+	Unless required by applicable law or agreed to in writing,
+	software distributed under the License is distributed on an
+	"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+	KIND, either express or implied.  See the License for the
+	specific language governing permissions and limitations
+	under the License.
 */
+
 //
 //  aes.swift
-//  
 //
 //  Created by Michael Scott on 22/06/2015.
 //  Copyright (c) 2015 Michael Scott. All rights reserved.
@@ -28,25 +28,33 @@ under the License.
 
 final public class AES {
     var mode:Int=0;
-    private var fkey=[UInt32](count:44,repeatedValue:0)
-    private var rkey=[UInt32](count:44,repeatedValue:0)
-    var f=[UInt8](count:16,repeatedValue:0)
+    private var fkey=[UInt32](repeating: 0,count: 44)
+    private var rkey=[UInt32](repeating: 0,count: 44)
+    var f=[UInt8](repeating: 0,count: 16)
+    
+    public init() {}
 
-    static let ECB:Int=0
-    static let CBC:Int=1
-    static let CFB1:Int=2
-    static let CFB2:Int=3
-    static let CFB4:Int=5
-    static let OFB1:Int=14
-    static let OFB2:Int=15
-    static let OFB4:Int=17
-    static let OFB8:Int=21
-    static let OFB16:Int=29
-    static public let KS:Int=16; /* Key Size in bytes */
-    static public let BS:Int=16; /* Block Size */
+    static public let ECB:Int=0
+    static public let CBC:Int=1
+    static public let CFB1:Int=2
+    static public let CFB2:Int=3
+    static public let CFB4:Int=5
+    static public let OFB1:Int=14
+    static public let OFB2:Int=15
+    static public let OFB4:Int=17
+    static public let OFB8:Int=21
+    static public let OFB16:Int=29
+    static public let CTR1:Int=30
+    static public let CTR2:Int=31
+    static public let CTR4:Int=33 
+    static public let CTR8:Int=37 
+    static public let CTR16:Int=45
 
+    static let KS:Int=16; /* Key Size in bytes */
+    static let BS:Int=16; /* Block Size */
+    
     private static let InCo:[UInt8] = [ 0xB,0xD,0x9,0xE]  /* Inverse Coefficients */
-
+    
     private static let ptab:[UInt8] =
     [ 1, 3, 5, 15, 17, 51, 85, 255, 26, 46, 114, 150, 161, 248, 19, 53,
      95, 225, 56, 72, 216, 115, 149, 164, 247, 2, 6, 10, 30, 34, 102, 170,
@@ -64,7 +72,7 @@ final public class AES {
      69, 207, 74, 222, 121, 139, 134, 145, 168, 227, 62, 66, 198, 81, 243, 14,
      18, 54, 90, 238, 41, 123, 141, 140, 143, 138, 133, 148, 167, 242, 13, 23,
      57, 75, 221, 124, 132, 151, 162, 253, 28, 36, 108, 180, 199, 82, 246, 1]
-
+    
     private static let ltab:[UInt8] =
     [ 0, 255, 25, 1, 50, 2, 26, 198, 75, 199, 27, 104, 51, 238, 223, 3,
      100, 4, 224, 14, 52, 141, 129, 239, 76, 113, 8, 200, 248, 105, 28, 193,
@@ -82,7 +90,7 @@ final public class AES {
      83, 57, 132, 60, 65, 162, 109, 71, 20, 42, 158, 93, 86, 242, 211, 171,
      68, 17, 146, 217, 35, 32, 46, 137, 180, 124, 184, 38, 119, 153, 227, 165,
      103, 74, 237, 222, 197, 49, 254, 24, 13, 99, 140, 128, 192, 247, 112, 7]
-
+    
     private static let fbsub:[UInt8] =
     [ 99, 124, 119, 123, 242, 107, 111, 197, 48, 1, 103, 43, 254, 215, 171, 118,
      202, 130, 201, 125, 250, 89, 71, 240, 173, 212, 162, 175, 156, 164, 114, 192,
@@ -100,7 +108,7 @@ final public class AES {
      112, 62, 181, 102, 72, 3, 246, 14, 97, 53, 87, 185, 134, 193, 29, 158,
      225, 248, 152, 17, 105, 217, 142, 148, 155, 30, 135, 233, 206, 85, 40, 223,
      140, 161, 137, 13, 191, 230, 66, 104, 65, 153, 45, 15, 176, 84, 187, 22]
-
+    
     private static let rbsub:[UInt8] =
     [ 82, 9, 106, 213, 48, 54, 165, 56, 191, 64, 163, 158, 129, 243, 215, 251,
      124, 227, 57, 130, 155, 47, 255, 135, 52, 142, 67, 68, 196, 222, 233, 203,
@@ -118,7 +126,7 @@ final public class AES {
      96, 81, 127, 169, 25, 181, 74, 13, 45, 229, 122, 159, 147, 201, 156, 239,
      160, 224, 59, 77, 174, 42, 245, 176, 200, 235, 187, 60, 131, 83, 153, 97,
      23, 43, 4, 126, 186, 119, 214, 38, 225, 105, 20, 99, 85, 33, 12, 125]
-
+    
     private static let rco:[UInt8] =
     [1,2,4,8,16,32,64,128,27,54,108,216,171,77,154,47]
 
@@ -211,50 +219,50 @@ final public class AES {
     0x81f3afca,0x3ec468b9,0x2c342438,0x5f40a3c2,0x72c31d16,0xc25e2bc,
     0x8b493c28,0x41950dff,0x7101a839,0xdeb30c08,0x9ce4b4d8,0x90c15664,
     0x6184cb7b,0x70b632d5,0x745c6c48,0x4257b8d0]
-
+    
     /* Rotates 32-bit word left by 1, 2 or 3 byte  */
-
-    private static func ROTL8(x: UInt32) -> UInt32
+    
+    private static func ROTL8(_ x: UInt32) -> UInt32
     {
         return (((x)<<8)|((x)>>24))
     }
-
-    private static func ROTL16(x: UInt32) -> UInt32
+    
+    private static func ROTL16(_ x: UInt32) -> UInt32
     {
         return (((x)<<16)|((x)>>16))
     }
-
-    private static func ROTL24(x: UInt32) -> UInt32
+    
+    private static func ROTL24(_ x: UInt32) -> UInt32
     {
         return (((x)<<24)|((x)>>8))
     }
-
-    private static func pack(b: [UInt8]) -> UInt32
+    
+    private static func pack(_ b: [UInt8]) -> UInt32
     { /* pack bytes into a 32-bit Word */
         var r=((UInt32(b[3])&0xff)<<24)|((UInt32(b[2])&0xff)<<16)
         r = r|((UInt32(b[1])&0xff)<<8)|(UInt32(b[0])&0xff)
         return r
     }
-
-    private static func unpack(a: UInt32) -> [UInt8]
+  
+    private static func unpack(_ a: UInt32) -> [UInt8]
     { /* unpack bytes from a word */
         let b:[UInt8]=[UInt8(a&0xff),UInt8((a>>8)&0xff),UInt8((a>>16)&0xff),UInt8((a>>24)&0xff)];
         return b;
     }
-
-    private static func bmul(x: UInt8,_ y:UInt8) -> UInt8
+    
+    private static func bmul(_ x: UInt8,_ y:UInt8) -> UInt8
     { /* x.y= AntiLog(Log(x) + Log(y)) */
-
+    
         let ix=Int(x)&0xff
         let iy=Int(y)&0xff
         let lx=Int(ltab[ix])&0xff
         let ly=Int(ltab[iy])&0xff
-
+    
         if x != 0 && y != 0 {return ptab[(lx+ly)%255]}
         else {return UInt8(0)}
     }
-
-    private static func SubByte(a: UInt32) -> UInt32
+    
+    private static func SubByte(_ a: UInt32) -> UInt32
     {
         var b=unpack(a)
         b[0]=fbsub[Int(b[0])]
@@ -263,18 +271,18 @@ final public class AES {
         b[3]=fbsub[Int(b[3])]
         return pack(b);
     }
-
-    private static func product(x: UInt32,_ y: UInt32) -> UInt8
+    
+    private static func product(_ x: UInt32,_ y: UInt32) -> UInt8
     { /* dot product of two 4-byte arrays */
         var xb=unpack(x);
         var yb=unpack(y);
-
+    
         return (bmul(xb[0],yb[0])^bmul(xb[1],yb[1])^bmul(xb[2],yb[2])^bmul(xb[3],yb[3]))
     }
 
-    private static func InvMixCol(x: UInt32) -> UInt32
+    private static func InvMixCol(_ x: UInt32) -> UInt32
     { /* matrix Multiplication */
-        var b=[UInt8](count:4,repeatedValue:0)
+        var b=[UInt8](repeating: 0,count: 4)
         var m=pack(InCo);
         b[3]=product(m,x);
         m=ROTL24(m);
@@ -286,183 +294,198 @@ final public class AES {
         let y=pack(b)
         return y
     }
+  
+    private static func increment(_ f:inout [UInt8])
+    {
+        for i in 0 ..< 16
+        {
+            f[i]+=1
+            if f[i] != 0 {break}
+        }
+    }   
 
     /* reset cipher */
-    func reset(m: Int,_ iv:[UInt8]?)
+    public func reset(_ m: Int,_ iv:[UInt8]?)
     { /* reset mode, or reset iv */
         mode=m;
-        for var i=0;i<16;i++ {f[i]=0}
+        for i in 0 ..< 16 {f[i]=0}
         if (mode != AES.ECB) && (iv != nil)
-            {for var i=0;i<16;i++ {f[i]=iv![i]}} /*??*/
+            {for i in 0 ..< 16 {f[i]=iv![i]}} /*??*/
     }
-
-    func init_it(m:Int,_ key:[UInt8],_ iv:[UInt8]?)
+    
+    public func init_it(_ m:Int,_ key:[UInt8],_ iv:[UInt8]?)
     {   /* Key=16 bytes */
         /* Key Scheduler. Create expanded encryption key */
-        var CipherKey=[UInt32](count:4,repeatedValue:0)
-        var b=[UInt8](count:4,repeatedValue:0)
+        var CipherKey=[UInt32](repeating: 0,count: 4)
+        var b=[UInt8](repeating: 0,count: 4)
         let nk=4;
         reset(m,iv);
         let N=44;
-
+        
         var j=0
-        for  var i=0;i<nk;i++
+        for  i in 0 ..< nk
         {
-            for var k=0;k<4;k++ {b[k]=key[j+k]}
+            for k in 0 ..< 4 {b[k]=key[j+k]}
             CipherKey[i]=AES.pack(b);
             j+=4;
         }
-        for var i=0;i<nk;i++ {fkey[i]=CipherKey[i]}
+        for i in 0 ..< nk {fkey[i]=CipherKey[i]}
         j=nk
-        for var k=0;j<N;k++
+        var k=0
+        while j<N
         {
             fkey[j]=fkey[j-nk]^AES.SubByte(AES.ROTL24(fkey[j-1]))^UInt32(AES.rco[k])
-            for var i=1;i<nk && (i+j)<N;i++
+            var i=1
+            while i<nk && (i+j)<N
             {
                 fkey[i+j]=fkey[i+j-nk]^fkey[i+j-1]
+                i+=1
             }
             j+=nk
+            k+=1
         }
-
+        
         /* now for the expanded decrypt key in reverse order */
-
-        for var j=0;j<4;j++ {rkey[j+N-4]=fkey[j]}
-        for var i=4;i<N-4;i+=4
+        
+        for j in 0 ..< 4 {rkey[j+N-4]=fkey[j]}
+        var i=4
+        while i<N-4
         {
             let k=N-4-i;
-            for var j=0;j<4;j++ {rkey[k+j]=AES.InvMixCol(fkey[i+j])}
+            for j in 0 ..< 4 {rkey[k+j]=AES.InvMixCol(fkey[i+j])}
+            i+=4
         }
-        for var j=N-4;j<N;j++ {rkey[j-N+4]=fkey[j]}
+        for j in N-4 ..< N {rkey[j-N+4]=fkey[j]}
     }
-
+    
     func getreg() -> [UInt8]
     {
-        var ir=[UInt8](count:16,repeatedValue:0)
-        for var i=0;i<16;i++ {ir[i]=f[i]}
+        var ir=[UInt8](repeating: 0,count: 16)
+        for i in 0 ..< 16 {ir[i]=f[i]}
         return ir;
     }
-
+    
     /* Encrypt a single block */
-    func ecb_encrypt(inout buff:[UInt8])
+    func ecb_encrypt(_ buff:inout [UInt8])
     {
-        var b=[UInt8](count:4,repeatedValue:0)
-        var p=[UInt32](count:4,repeatedValue:0)
-        var q=[UInt32](count:4,repeatedValue:0)
-
+        var b=[UInt8](repeating: 0,count: 4)
+        var p=[UInt32](repeating: 0,count: 4)
+        var q=[UInt32](repeating: 0,count: 4)
+    
         var j=0
-        for var i=0;i<4;i++
+        for i in 0 ..< 4
         {
-            for var k=0;k<4;k++ {b[k]=buff[j+k]}
+            for k in 0 ..< 4 {b[k]=buff[j+k]}
             p[i]=AES.pack(b);
             p[i]^=fkey[i];
             j+=4
         }
-
+    
         var k=4;
-
+    
     /* State alternates between p and q */
-        for var i=1;i<10;i++
+        for _ in 1 ..< 10
         {
             q[0]=fkey[k]^AES.ftable[Int(p[0]&0xff)]^AES.ROTL8(AES.ftable[Int((p[1]>>8)&0xff)])^AES.ROTL16(AES.ftable[Int((p[2]>>16)&0xff)])^AES.ROTL24(AES.ftable[Int((p[3]>>24)&0xff)])
-
+            
             q[1]=fkey[k+1]^AES.ftable[Int(p[1]&0xff)]^AES.ROTL8(AES.ftable[Int((p[2]>>8)&0xff)])^AES.ROTL16(AES.ftable[Int((p[3]>>16)&0xff)])^AES.ROTL24(AES.ftable[Int((p[0]>>24)&0xff)])
-
+            
             q[2]=fkey[k+2]^AES.ftable[Int(p[2]&0xff)]^AES.ROTL8(AES.ftable[Int((p[3]>>8)&0xff)])^AES.ROTL16(AES.ftable[Int((p[0]>>16)&0xff)])^AES.ROTL24(AES.ftable[Int((p[1]>>24)&0xff)])
-
+            
             q[3]=fkey[k+3]^AES.ftable[Int(p[3]&0xff)]^AES.ROTL8(AES.ftable[Int((p[0]>>8)&0xff)])^AES.ROTL16(AES.ftable[Int((p[1]>>16)&0xff)])^AES.ROTL24(AES.ftable[Int((p[2]>>24)&0xff)])
-
+            
             k+=4;
-            for (j=0;j<4;j++)
+            for j in 0 ..< 4
             {
 				let t=p[j]; p[j]=q[j]; q[j]=t;
             }
         }
-
+    
     /* Last Round */
-
+    
         q[0]=fkey[k]^UInt32(AES.fbsub[Int(p[0]&0xff)])^AES.ROTL8(UInt32(AES.fbsub[Int((p[1]>>8)&0xff)]))^AES.ROTL16(UInt32(AES.fbsub[Int((p[2]>>16)&0xff)]))^AES.ROTL24(UInt32(AES.fbsub[Int((p[3]>>24)&0xff)]))
-
+    
         q[1]=fkey[k+1]^UInt32(AES.fbsub[Int(p[1]&0xff)])^AES.ROTL8(UInt32(AES.fbsub[Int((p[2]>>8)&0xff)]))^AES.ROTL16(UInt32(AES.fbsub[Int((p[3]>>16)&0xff)]))^AES.ROTL24(UInt32(AES.fbsub[Int((p[0]>>24)&0xff)]))
-
+    
         q[2]=fkey[k+2]^UInt32(AES.fbsub[Int(p[2]&0xff)])^AES.ROTL8(UInt32(AES.fbsub[Int((p[3]>>8)&0xff)]))^AES.ROTL16(UInt32(AES.fbsub[Int((p[0]>>16)&0xff)]))^AES.ROTL24(UInt32(AES.fbsub[Int((p[1]>>24)&0xff)]))
-
+    
         q[3]=fkey[k+3]^UInt32(AES.fbsub[Int((p[3])&0xff)])^AES.ROTL8(UInt32(AES.fbsub[Int((p[0]>>8)&0xff)]))^AES.ROTL16(UInt32(AES.fbsub[Int((p[1]>>16)&0xff)]))^AES.ROTL24(UInt32(AES.fbsub[Int((p[2]>>24)&0xff)]))
-
+    
         j=0
-        for var i=0;i<4;i++
+        for i in 0 ..< 4
         {
             b=AES.unpack(q[i])
-            for var k=0;k<4;k++ {buff[j+k]=b[k]}
+            for k in 0 ..< 4 {buff[j+k]=b[k]}
             j+=4
         }
     }
-
+    
     /* Decrypt a single block */
-    func ecb_decrypt(inout buff:[UInt8])
+    func ecb_decrypt(_ buff:inout [UInt8])
     {
-        var b=[UInt8](count:4,repeatedValue:0)
-        var p=[UInt32](count:4,repeatedValue:0)
-        var q=[UInt32](count:4,repeatedValue:0)
-
+        var b=[UInt8](repeating: 0,count: 4)
+        var p=[UInt32](repeating: 0,count: 4)
+        var q=[UInt32](repeating: 0,count: 4)
+    
         var j=0
-        for var i=0;i<4;i++
+        for i in 0 ..< 4
         {
-            for var k=0;k<4;k++ {b[k]=buff[j+k]}
+            for k in 0 ..< 4 {b[k]=buff[j+k]}
             p[i]=AES.pack(b);
             p[i]^=rkey[i];
             j+=4
         }
-
+    
         var k=4
-
+    
     /* State alternates between p and q */
-        for var i=1;i<10;i++
+        for _ in 1 ..< 10
         {
-
+            
             q[0]=rkey[k]^AES.rtable[Int(p[0]&0xff)]^AES.ROTL8(AES.rtable[Int((p[3]>>8)&0xff)])^AES.ROTL16(AES.rtable[Int((p[2]>>16)&0xff)])^AES.ROTL24(AES.rtable[Int((p[1]>>24)&0xff)])
-
+            
             q[1]=rkey[k+1]^AES.rtable[Int(p[1]&0xff)]^AES.ROTL8(AES.rtable[Int((p[0]>>8)&0xff)])^AES.ROTL16(AES.rtable[Int((p[3]>>16)&0xff)])^AES.ROTL24(AES.rtable[Int((p[2]>>24)&0xff)])
-
-
+            
+        
             q[2]=rkey[k+2]^AES.rtable[Int(p[2]&0xff)]^AES.ROTL8(AES.rtable[Int((p[1]>>8)&0xff)])^AES.ROTL16(AES.rtable[Int((p[0]>>16)&0xff)])^AES.ROTL24(AES.rtable[Int((p[3]>>24)&0xff)])
-
+       
             q[3]=rkey[k+3]^AES.rtable[Int(p[3]&0xff)]^AES.ROTL8(AES.rtable[Int((p[2]>>8)&0xff)])^AES.ROTL16(AES.rtable[Int((p[1]>>16)&0xff)])^AES.ROTL24(AES.rtable[Int((p[0]>>24)&0xff)])
-
-
+            
+    
             k+=4;
-            for var j=0;j<4;j++
+            for j in 0 ..< 4
             {
 				let t=p[j]; p[j]=q[j]; q[j]=t;
             }
         }
-
+    
     /* Last Round */
-
+        
         q[0]=rkey[k]^UInt32(AES.rbsub[Int(p[0]&0xff)])^AES.ROTL8(UInt32(AES.rbsub[Int((p[3]>>8)&0xff)]))^AES.ROTL16(UInt32(AES.rbsub[Int((p[2]>>16)&0xff)]))^AES.ROTL24(UInt32(AES.rbsub[Int((p[1]>>24)&0xff)]))
-
+        
         q[1]=rkey[k+1]^UInt32(AES.rbsub[Int(p[1]&0xff)])^AES.ROTL8(UInt32(AES.rbsub[Int((p[0]>>8)&0xff)]))^AES.ROTL16(UInt32(AES.rbsub[Int((p[3]>>16)&0xff)]))^AES.ROTL24(UInt32(AES.rbsub[Int((p[2]>>24)&0xff)]))
-
-
+        
+        
         q[2]=rkey[k+2]^UInt32(AES.rbsub[Int(p[2]&0xff)])^AES.ROTL8(UInt32(AES.rbsub[Int((p[1]>>8)&0xff)]))^AES.ROTL16(UInt32(AES.rbsub[Int((p[0]>>16)&0xff)]))^AES.ROTL24(UInt32(AES.rbsub[Int((p[3]>>24)&0xff)]))
 
         q[3]=rkey[k+3]^UInt32(AES.rbsub[Int((p[3])&0xff)])^AES.ROTL8(UInt32(AES.rbsub[Int((p[2]>>8)&0xff)]))^AES.ROTL16(UInt32(AES.rbsub[Int((p[1]>>16)&0xff)]))^AES.ROTL24(UInt32(AES.rbsub[Int((p[0]>>24)&0xff)]))
-
+    
         j=0
-        for var i=0;i<4;i++
+        for i in 0 ..< 4
         {
             b=AES.unpack(q[i]);
-            for var k=0;k<4;k++ {buff[j+k]=b[k]}
+            for k in 0 ..< 4 {buff[j+k]=b[k]}
             j+=4
         }
     }
-
+    
     /* Encrypt using selected mode of operation */
-    func encrypt(inout buff:[UInt8]) -> UInt32
+    @discardableResult public func encrypt(_ buff:inout [UInt8]) -> UInt32
     {
-        var st=[UInt8](count:16,repeatedValue:0)
-
+        var st=[UInt8](repeating: 0,count: 16)
+    
     // Supported Modes of Operation
-
+    
         var fell_off:UInt32=0;
         switch (mode)
         {
@@ -470,28 +493,28 @@ final public class AES {
             ecb_encrypt(&buff)
             return 0
         case AES.CBC:
-            for var j=0;j<16;j++ {buff[j]^=f[j]}
+            for j in 0 ..< 16 {buff[j]^=f[j]}
             ecb_encrypt(&buff);
-            for var j=0;j<16;j++ {f[j]=buff[j]}
+            for j in 0 ..< 16 {f[j]=buff[j]}
             return 0;
-
+    
         case AES.CFB1:
             fallthrough
         case AES.CFB2:
             fallthrough
         case AES.CFB4:
             let bytes=mode-AES.CFB1+1
-            for var j=0;j<bytes;j++ {fell_off=(fell_off<<8)|UInt32(f[j])}
-            for var j=0;j<16;j++ {st[j]=f[j]}
-            for var j=bytes;j<16;j++ {f[j-bytes]=f[j]}
+            for j in 0 ..< bytes {fell_off=(fell_off<<8)|UInt32(f[j])}
+            for j in 0 ..< 16 {st[j]=f[j]}
+            for j in bytes ..< 16 {f[j-bytes]=f[j]}
             ecb_encrypt(&st);
-            for var j=0;j<bytes;j++
+            for j in 0 ..< bytes
             {
 				buff[j]^=st[j];
 				f[16-bytes+j]=buff[j];
             }
             return fell_off;
-
+    
         case AES.OFB1:
             fallthrough
         case AES.OFB2:
@@ -501,25 +524,41 @@ final public class AES {
         case AES.OFB8:
             fallthrough
         case AES.OFB16:
-
+    
             let bytes=mode-AES.OFB1+1
             ecb_encrypt(&f)
-            for var j=0;j<bytes;j++ {buff[j]^=f[j]}
+            for j in 0 ..< bytes {buff[j]^=f[j]}
             return 0;
+    
+        case AES.CTR1:
+            fallthrough
+        case AES.CTR2:
+            fallthrough
+        case AES.CTR4:
+            fallthrough
+        case AES.CTR8:
+            fallthrough
+        case AES.CTR16:
+            let bytes=mode-AES.CTR1+1
+            for j in 0 ..< 16 {st[j]=f[j]}
+            ecb_encrypt(&st)
+            for j in 0 ..< bytes {buff[j]^=st[j]}
+            AES.increment(&f)
+            return 0
 
         default:
             return 0;
         }
     }
-
+    
     /* Decrypt using selected mode of operation */
-    func decrypt(inout buff:[UInt8]) -> UInt32
+    @discardableResult public func decrypt(_ buff:inout [UInt8]) -> UInt32
     {
 
-        var st=[UInt8](count:16,repeatedValue:0)
-
+        var st=[UInt8](repeating: 0,count: 16)
+        
         // Supported Modes of Operation
-
+        
         var fell_off:UInt32=0;
         switch (mode)
         {
@@ -527,13 +566,13 @@ final public class AES {
             ecb_decrypt(&buff);
             return 0;
         case AES.CBC:
-            for var j=0;j<16;j++
+            for j in 0 ..< 16
             {
 				st[j]=f[j];
 				f[j]=buff[j];
             }
             ecb_decrypt(&buff);
-            for var j=0;j<16;j++
+            for j in 0 ..< 16
             {
 				buff[j]^=st[j];
 				st[j]=0;
@@ -545,11 +584,11 @@ final public class AES {
             fallthrough
         case AES.CFB4:
             let bytes=mode-AES.CFB1+1;
-            for var j=0;j<bytes;j++ {fell_off=(fell_off<<8)|UInt32(f[j])}
-            for var j=0;j<16;j++ {st[j]=f[j]}
-            for var j=bytes;j<16;j++ {f[j-bytes]=f[j]}
+            for j in 0 ..< bytes {fell_off=(fell_off<<8)|UInt32(f[j])}
+            for j in 0 ..< 16 {st[j]=f[j]}
+            for j in bytes ..< 16 {f[j-bytes]=f[j]}
             ecb_encrypt(&st);
-            for var j=0;j<bytes;j++
+            for j in 0 ..< bytes
             {
 				f[16-bytes+j]=buff[j]
 				buff[j]^=st[j]
@@ -566,21 +605,37 @@ final public class AES {
         case AES.OFB16:
             let bytes=mode-AES.OFB1+1
             ecb_encrypt(&f);
-            for var j=0;j<bytes;j++ {buff[j]^=f[j]}
+            for j in 0 ..< bytes {buff[j]^=f[j]}
             return 0;
+
+        case AES.CTR1:
+            fallthrough
+        case AES.CTR2:
+            fallthrough
+        case AES.CTR4:
+            fallthrough
+        case AES.CTR8:
+            fallthrough
+        case AES.CTR16:
+            let bytes=mode-AES.CTR1+1
+            for j in 0 ..< 16 {st[j]=f[j]}
+            ecb_encrypt(&st)
+            for j in 0 ..< bytes {buff[j]^=st[j]}
+            AES.increment(&f)
+            return 0
 
         default:
             return 0;
         }
     }
-
+        
     /* Clean up and delete left-overs */
-    func end()
+    public func end()
     { // clean up
-        for var i=0;i<44;i++
+        for i in 0 ..< 44
             {fkey[i]=0; rkey[i]=0}
-        for var i=0;i<16;i++
+        for i in 0 ..< 16
             {f[i]=0}
     }
-
+    
 }

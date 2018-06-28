@@ -1,28 +1,49 @@
-AMCL is very simple to build for Go.
+Namespaces are used to separate different curves.
 
-First - decide the modulus and curve type you want to use. Edit ROM.go 
-where indicated. You will probably want to use one of the curves whose 
-details are already in there.
+So for example to support both ED25519 and the NIST P256 curves, one
+could import into a particular module both "amcl/ED25519" and "amcl/NIST256"
 
-Three example API files are provided, MPIN.go which 
-supports our M-Pin (tm) protocol, ECDH.go which supports elliptic 
-curve key exchange, digital signature and public key crypto, and RSA.go
-which supports the RSA method.
+Separate ROM files provide the constants required for each curve. Some
+files (BIG.go, FP.go, ECP.go) also specify certain constants 
+that must be set for the particular curve.
 
-In the ROM.go file you must provide the curve constants. Several examples
-are provided there, if you are willing to use one of these.
+--------------------------------------
 
-For a quick jumpstart:-
+Make sure that the GOPATH environmental variable is set.
 
-export GOPATH=$PWD
+Then clone the AMCL repository by executing
 
-go run ./examples-go/mpin.go
+go get github.com/milagro-crypto/amcl
 
-or 
+Ignore the warning message about "no Go files"
 
-go run ./examples-go/ecdh.go
+This assumes that Git is installed on your machine - see 
+https://git-scm.com/download/
+
+Next navigate to $GOPATH/src/github.com/milagro-crypto/amcl/version3/go
+
+To build the library and see it in action, execute the python3 
+script config32.py or config64.py (depending om whether you want a 
+32 or 64-bit build), and select the curves that you wish to support. 
+
+As a quick example execute
+
+py config64.py
 
 or
 
-go run ./examples-go/rsa.go
+python3 config64.py
+
+Then select options 1, 3, 7, 18, 20, 25, 26 and 27 (these are fixed for the example 
+program provided). Select 0 to exit.
+
+Run the test program by executing
+
+go run TestALL.go
+
+The correct PIN is 1234
+
+Next run the Benchmark program by executing
+
+go run BenchtestALL.go
 

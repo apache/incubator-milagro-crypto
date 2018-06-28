@@ -20,7 +20,7 @@ under the License.
 //
 // Program to convert from Big to AMCL BIG format
 // cl /O2 bigtobig.cpp big.cpp miracl.lib
-// gcc -O2 bigtobig.cpp big.cpp miracl.a -o bigtobig
+// g++ -O2 bigtobig.cpp big.cpp miracl.a -o bigtobig
 //
 //
 
@@ -59,7 +59,7 @@ void eval_product (Big& oldn,Big& n,char op)
         switch (op)
         {
         case TIMES:
-                n*=oldn;
+                n*=oldn; 
                 break;
         case '/':
                 n=oldn/n;
@@ -221,7 +221,7 @@ int main(int argc, char **argv)
     n=0;
     Base=10;
     while (ip<argc)
-    {
+    { 
         if (!gotP && strcmp(argv[ip],"-f")==0)
         {
             ip++;
@@ -241,7 +241,7 @@ int main(int argc, char **argv)
                 return 0;
             }
         }
-
+ 
 
         if (strcmp(argv[ip],"-h")==0)
         {
@@ -249,7 +249,7 @@ int main(int argc, char **argv)
             Base=16;
             continue;
         }
-
+   
         if (!gotP)
         {
             mip->IOBASE=Base;
@@ -258,14 +258,14 @@ int main(int argc, char **argv)
             gotP=TRUE;
             continue;
         }
-        if (!gotA)
+        if (!gotA) 
         {
             mip->IOBASE=Base;
             chunk=atoi(argv[ip++]);
             gotA=TRUE;
             continue;
         }
-        if (!gotB)
+        if (!gotB) 
         {
             mip->IOBASE=Base;
             basebits=atoi(argv[ip++]);

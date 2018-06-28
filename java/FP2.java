@@ -21,6 +21,8 @@ under the License.
 
 /* FP2 elements are of the form a+ib, where i is sqrt(-1) */
 
+package org.apache.milagro.amcl.XXX;
+
 public final class FP2 {
 	private final FP a;
 	private final FP b;
@@ -98,10 +100,15 @@ public final class FP2 {
 		a=new FP(c);
 		b=new FP(0);
 	}
-
+/*
+	public BIG geta()
+	{
+		return a.tobig();
+	}
+*/
 /* extract a */
 	public BIG getA()
-	{
+	{ 
 		return a.redc();
 	}
 
@@ -135,13 +142,11 @@ public final class FP2 {
 /* negate this mod Modulus */
 	public void neg()
 	{
-		norm();
 		FP m=new FP(a);
 		FP t=new FP(0);
 
 		m.add(b);
 		m.neg();
-		m.norm();
 		t.copy(m); t.add(b);
 		b.copy(m);
 		b.add(a);
@@ -152,6 +157,7 @@ public final class FP2 {
 	public void conj()
 	{
 		b.neg();
+		b.norm();
 	}
 
 /* this+=a */
@@ -167,6 +173,12 @@ public final class FP2 {
 		FP2 m=new FP2(x);
 		m.neg();
 		add(m);
+	}
+
+	public void rsub(FP2 x)       // *****
+	{
+		neg();
+		add(x);
 	}
 
 /* this*=s, where s is an FP */
@@ -186,43 +198,56 @@ public final class FP2 {
 /* this*=this */
 	public void sqr()
 	{
-		norm();
-
 		FP w1=new FP(a);
 		FP w3=new FP(a);
 		FP mb=new FP(b);
-		w3.mul(b);
+
 		w1.add(b);
 		mb.neg();
+
+		w3.add(a);
+		w3.norm();
+		b.mul(w3);
+
 		a.add(mb);
+
+		w1.norm();
+		a.norm();
+
 		a.mul(w1);
-		b.copy(w3); b.add(w3);
-		norm();
 	}
 
 /* this*=y */
+/* Now uses Lazy reduction */
 	public void mul(FP2 y)
 	{
-		norm();  /* This is needed here as {a,b} is not normed before additions */
+		if ((long)(a.XES+b.XES)*(y.a.XES+y.b.XES)>(long)FP.FEXCESS)
+		{
+			if (a.XES>1) a.reduce();
+			if (b.XES>1) b.reduce();		
+		}
 
-		FP w1=new FP(a);
-		FP w2=new FP(b);
-		FP w5=new FP(a);
-		FP mw=new FP(0);
+		DBIG pR=new DBIG(0);
+		BIG C=new BIG(a.x);
+		BIG D=new BIG(y.a.x);
 
-		w1.mul(y.a);  // w1=a*y.a  - this norms w1 and y.a, NOT a
-		w2.mul(y.b);  // w2=b*y.b  - this norms w2 and y.b, NOT b
-		w5.add(b);    // w5=a+b
-		b.copy(y.a); b.add(y.b); // b=y.a+y.b
+		pR.ucopy(FP.p);
 
-		b.mul(w5);
-		mw.copy(w1); mw.add(w2); mw.neg();
+		DBIG A=BIG.mul(a.x,y.a.x);
+		DBIG B=BIG.mul(b.x,y.b.x);
 
-		b.add(mw); mw.add(w1);
-		a.copy(w1);	a.add(mw);
+		C.add(b.x); C.norm();
+		D.add(y.b.x); D.norm();
 
-		norm();
+		DBIG E=BIG.mul(C,D);
+		DBIG F=new DBIG(A); F.add(B);
+		B.rsub(pR);
 
+		A.add(B); A.norm();
+		E.sub(F); E.norm();
+
+		a.x.copy(FP.mod(A)); a.XES=3;
+		b.x.copy(FP.mod(E)); b.XES=2;
 	}
 
 /* sqrt(a+ib) = sqrt(a+sqrt(a*a-n*b*b)/2)+ib/(2*sqrt(a+sqrt(a*a-n*b*b)/2)) */
@@ -235,10 +260,12 @@ public final class FP2 {
 		w1.sqr(); w2.sqr(); w1.add(w2);
 		if (w1.jacobi()!=1) { zero(); return false; }
 		w1=w1.sqrt();
-		w2.copy(a); w2.add(w1); w2.div2();
+		w2.copy(a); w2.add(w1); 
+		w2.norm(); w2.div2();
 		if (w2.jacobi()!=1)
 		{
-			w2.copy(a); w2.sub(w1); w2.div2();
+			w2.copy(a); w2.sub(w1); 
+			w2.norm(); w2.div2();
 			if (w2.jacobi()!=1) { zero(); return false; }
 		}
 		w2=w2.sqrt();
@@ -250,12 +277,12 @@ public final class FP2 {
 	}
 
 /* output to hex string */
-	public String toString()
+	public String toString() 
 	{
 		return ("["+a.toString()+","+b.toString()+"]");
 	}
 
-	public String toRawString()
+	public String toRawString() 
 	{
 		return ("["+a.toRawString()+","+b.toRawString()+"]");
 	}
@@ -273,6 +300,7 @@ public final class FP2 {
 		w1.inverse();
 		a.mul(w1);
 		w1.neg();
+		w1.norm();
 		b.mul(w1);
 	}
 
@@ -286,7 +314,6 @@ public final class FP2 {
 /* this*=sqrt(-1) */
 	public void times_i()
 	{
-	//	a.norm();
 		FP z=new FP(a);
 		a.copy(b); a.neg();
 		b.copy(z);
@@ -296,13 +323,21 @@ public final class FP2 {
 /* where X*2-(1+sqrt(-1)) is irreducible for FP4, assumes p=3 mod 8 */
 	public void mul_ip()
 	{
-		norm();
 		FP2 t=new FP2(this);
 		FP z=new FP(a);
 		a.copy(b);
 		a.neg();
 		b.copy(z);
 		add(t);
+	}
+
+	public void div_ip2()
+	{
+		FP2 t=new FP2(0);
+		norm();
+		t.a.copy(a); t.a.add(b);
+		t.b.copy(b); t.b.sub(a);
+		copy(t);
 		norm();
 	}
 
@@ -314,6 +349,7 @@ public final class FP2 {
 		t.a.copy(a); t.a.add(b);
 		t.b.copy(b); t.b.sub(a);
 		copy(t);
+		norm();
 		div2();
 	}
 /*

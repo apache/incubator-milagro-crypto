@@ -18,7 +18,7 @@ under the License.
 */
 
 /*
- *   Cryptographic strong random number generator
+ *   Cryptographic strong random number generator 
  *
  *   Unguessable seed -> SHA -> PRNG internal state -> SHA -> random numbers
  *   Slow - but secure
@@ -28,6 +28,8 @@ under the License.
 
 /* Marsaglia & Zaman Random number generator constants */
 
+
+package org.apache.milagro.amcl;
 
 public class RAND {
 /* Cryptographically strong pseudo-random number generator */
@@ -61,7 +63,7 @@ public class RAND {
 			pdiff=(t - (((long)ira[i])&0xffffffffL) - (long)borrow)&0xffffffffL;
 			if (pdiff<t) borrow=0;
 			if (pdiff>t) borrow=1;
-			ira[i]=(int)(pdiff&0xffffffffL);
+			ira[i]=(int)(pdiff&0xffffffffL); 
 		}
 
 		return ira[0];
@@ -87,7 +89,7 @@ public class RAND {
 
 	private void fill_pool()
 	{
-		HASH sh=new HASH();
+		HASH256 sh=new HASH256();
 		for (int i=0;i<128;i++) sh.process(sbrand());
 		pool=sh.hash();
 		pool_ptr=0;
@@ -104,7 +106,7 @@ public class RAND {
 		int i;
 		byte [] digest;
 		byte [] b=new byte[4];
-		HASH sh=new HASH();
+		HASH256 sh=new HASH256();
 		pool_ptr=0;
 		for (i=0;i<NK;i++) ira[i]=0;
 		if (rawlen>0)
@@ -115,7 +117,7 @@ public class RAND {
 
 /* initialise PRNG from distilled randomness */
 
-			for (i=0;i<8;i++)
+			for (i=0;i<8;i++) 
 			{
 				b[0]=digest[4*i]; b[1]=digest[4*i+1]; b[2]=digest[4*i+2]; b[3]=digest[4*i+3];
 				sirand(pack(b));
@@ -136,7 +138,7 @@ public class RAND {
 
 /* get random byte */
 	public int getByte()
-	{
+	{ 
 		int r;
 		r=pool[pool_ptr++];
 		if (pool_ptr>=32) fill_pool();
@@ -154,7 +156,7 @@ public class RAND {
 		for (i=0;i<100;i++) raw[i]=(byte)i;
 
 		rng.seed(100,raw);
-
+ 
 		for (i=0;i<1000;i++)
 			System.out.format("%03d ",rng.getByte());
 	} */

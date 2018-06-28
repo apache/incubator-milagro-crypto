@@ -18,13 +18,14 @@ under the License.
 */
 
 
-/* AES Encryption */
-
+/* AES Encryption */ 
+package org.apache.milagro.amcl;
 
 public class AES {
+	int Nk,Nr;
 	int mode;
-	private int[] fkey=new int[44];
-	private int[] rkey=new int[44];
+	private int[] fkey=new int[60];
+	private int[] rkey=new int[60];
 	public byte[] f=new byte[16];
 
 
@@ -38,6 +39,11 @@ public class AES {
 	public static final int OFB4=17;
 	public static final int OFB8=21;
 	public static final int OFB16=29;
+	public static final int CTR1=30;
+	public static final int CTR2=31;
+	public static final int CTR4=33; 
+	public static final int CTR8=37; 
+	public static final int CTR16=45; 
 
 	private static final byte[] InCo={(byte)0xB,(byte)0xD,(byte)0x9,(byte)0xE};  /* Inverse Coefficients */
 
@@ -253,7 +259,7 @@ public class AES {
 		else return (byte)0;
 	}
 
-  //  if (x && y)
+  //  if (x && y) 
 
 	private static int SubByte(int a)
 	{
@@ -262,7 +268,7 @@ public class AES {
 		b[1]=fbsub[(int)b[1]&0xff];
 		b[2]=fbsub[(int)b[2]&0xff];
 		b[3]=fbsub[(int)b[3]&0xff];
-		return pack(b);
+		return pack(b);    
 	}
 
 	private static byte product(int x,int y)
@@ -270,7 +276,7 @@ public class AES {
 		byte [] xb;//=new byte[4];
 		byte [] yb;//=new byte[4];
 		xb=unpack(x);
-		yb=unpack(y);
+		yb=unpack(y); 
 
 		return (byte)(bmul(xb[0],yb[0])^bmul(xb[1],yb[1])^bmul(xb[2],yb[2])^bmul(xb[3],yb[3]));
 	}
@@ -292,6 +298,16 @@ public class AES {
 		return y;
 	}
 
+	private static void increment(byte [] f)
+	{
+		int i;
+		for (i=0;i<16;i++)
+		{
+			f[i]++;
+			if (f[i]!=0) break;
+		}
+	}
+
 /* reset cipher */
 	public void reset(int m,byte[] iv)
 	{ /* reset mode, or reset iv */
@@ -311,16 +327,23 @@ public class AES {
 	}
 
 /* Initialise cipher */
-	public void init(int m,byte[] key,byte[] iv)
+	public boolean init(int m,int nk,byte[] key,byte[] iv)
 	{	/* Key=16 bytes */
 		/* Key Scheduler. Create expanded encryption key */
-		int i,j,k,N,nk;
-		int [] CipherKey=new int[4];
-    	byte [] b=new byte[4];
-		nk=4;
-		reset(m,iv);
-		N=44;
+		int i,j,k,N,nr;
+		int [] CipherKey=new int[8];
+		byte [] b=new byte[4];
+		nk/=4;
 
+		if (nk!=4 && nk!=6 && nk!=8) return false;
+
+		nr=6+nk;
+
+		Nk=nk; Nr=nr;
+
+		reset(m,iv);
+		N=4*(nr+1);
+    
 		for (i=j=0;i<nk;i++,j+=4)
 		{
 			for (k=0;k<4;k++) b[k]=key[j+k];
@@ -336,13 +359,14 @@ public class AES {
 
  /* now for the expanded decrypt key in reverse order */
 
-		for (j=0;j<4;j++) rkey[j+N-4]=fkey[j];
+		for (j=0;j<4;j++) rkey[j+N-4]=fkey[j]; 
 		for (i=4;i<N-4;i+=4)
 		{
 			k=N-4-i;
 			for (j=0;j<4;j++) rkey[k+j]=InvMixCol(fkey[i+j]);
 		}
 		for (j=N-4;j<N;j++) rkey[j-N+4]=fkey[j];
+		return true;
 	}
 
 /* Encrypt a single block */
@@ -364,8 +388,8 @@ public class AES {
 		k=4;
 
 /* State alternates between p and q */
-		for (i=1;i<10;i++)
-		{
+		for (i=1;i<Nr;i++)
+		{ 
 			q[0]=fkey[k]^ftable[p[0]&0xff]^
 				ROTL8(ftable[(p[1]>>>8)&0xff])^
 				ROTL16(ftable[(p[2]>>>16)&0xff])^
@@ -390,8 +414,8 @@ public class AES {
 			}
 		}
 
-/* Last Round */
-
+/* Last Round */ 
+    
 		q[0]=fkey[k]^((int)fbsub[p[0]&0xff]&0xff)^
 			ROTL8((int)fbsub[(p[1]>>>8)&0xff]&0xff)^
 			ROTL16((int)fbsub[(p[2]>>>16)&0xff]&0xff)^
@@ -438,8 +462,8 @@ public class AES {
 		k=4;
 
 /* State alternates between p and q */
-		for (i=1;i<10;i++)
-		{
+		for (i=1;i<Nr;i++)
+		{ 
 			q[0]=rkey[k]^rtable[p[0]&0xff]^
 				ROTL8(rtable[(p[3]>>>8)&0xff])^
 				ROTL16(rtable[(p[2]>>>16)&0xff])^
@@ -464,7 +488,7 @@ public class AES {
 			}
 		}
 
-/* Last Round */
+/* Last Round */ 
 
 		q[0]=rkey[k]^((int)rbsub[p[0]&0xff]&0xff)^
 			ROTL8((int)rbsub[(p[3]>>>8)&0xff]&0xff)^
@@ -498,12 +522,12 @@ public class AES {
 		byte[] st=new byte[16];
 		int fell_off;
 
-// Supported Modes of Operation
+// Supported Modes of Operation 
 
 		fell_off=0;
 		switch (mode)
 		{
-		case ECB:
+		case ECB: 
 			ecb_encrypt(buff);
 			return 0;
 		case CBC:
@@ -520,7 +544,7 @@ public class AES {
 			for (j=0;j<16;j++) st[j]=f[j];
 			for (j=bytes;j<16;j++) f[j-bytes]=f[j];
 			ecb_encrypt(st);
-			for (j=0;j<bytes;j++)
+			for (j=0;j<bytes;j++) 
 			{
 				buff[j]^=st[j];
 				f[16-bytes+j]=buff[j];
@@ -538,6 +562,18 @@ public class AES {
 			for (j=0;j<bytes;j++) buff[j]^=f[j];
 			return 0;
 
+		case CTR1:
+		case CTR2:
+		case CTR4:
+		case CTR8:
+		case CTR16:
+
+			bytes=mode-CTR1+1;
+			for (j=0;j<16;j++) st[j]=f[j];
+			ecb_encrypt(st);
+			for (j=0;j<bytes;j++) buff[j]^=st[j];
+			increment(f);
+
     default:
 			return 0;
 		}
@@ -550,7 +586,7 @@ public class AES {
 		byte[] st=new byte[16];
 		int fell_off;
 
-   // Supported modes of operation
+   // Supported modes of operation 
 		fell_off=0;
 		switch (mode)
 		{
@@ -558,14 +594,14 @@ public class AES {
 			ecb_decrypt(buff);
 			return 0;
 		case CBC:
-			for (j=0;j<16;j++)
+			for (j=0;j<16;j++) 
 			{
 				st[j]=f[j];
 				f[j]=buff[j];
 			}
 			ecb_decrypt(buff);
 			for (j=0;j<16;j++)
-			{
+			{	 
 				buff[j]^=st[j];
 				st[j]=0;
 			}
@@ -594,7 +630,18 @@ public class AES {
 			for (j=0;j<bytes;j++) buff[j]^=f[j];
 			return 0;
 
+		case CTR1:
+		case CTR2:
+		case CTR4:
+		case CTR8:
+		case CTR16:
 
+			bytes=mode-CTR1+1;
+			for (j=0;j<16;j++) st[j]=f[j];
+			ecb_encrypt(st);
+			for (j=0;j<bytes;j++) buff[j]^=st[j];
+			increment(f);
+ 
 		default:
 			return 0;
 		}
@@ -602,9 +649,9 @@ public class AES {
 
 /* Clean up and delete left-overs */
 	public void end()
-	{ // clean up
+	{ // clean up 
 		int i;
-		for (i=0;i<44;i++)
+		for (i=0;i<4*(Nr+1);i++)
 			fkey[i]=rkey[i]=0;
 		for (i=0;i<16;i++)
 			f[i]=0;
@@ -613,36 +660,36 @@ public class AES {
 	public static void main(String[] args) {
 		int i;
 
-		byte[] key=new byte[16];
+		byte[] key=new byte[32];
 		byte[] block=new byte[16];
 		byte[] iv=new byte[16];
 
-		for (i=0;i<16;i++) key[i]=0;
+		for (i=0;i<32;i++) key[i]=0;
 		key[0]=1;
 		for (i=0;i<16;i++) iv[i]=(byte)i;
 		for (i=0;i<16;i++) block[i]=(byte)i;
 
 		AES a=new AES();
 
-		a.init(CBC,key,iv);
-		System.out.println("Plain= ");
+		a.init(CTR16,32,key,iv);
+		System.out.println("Plain= "); 
 		for (i=0;i<16;i++)  System.out.format("%02X ", block[i]&0xff);
-		System.out.println("");
+		System.out.println(""); 
 
 		a.encrypt(block);
 
-		System.out.println("Encrypt= ");
+		System.out.println("Encrypt= "); 
 		for (i=0;i<16;i++)  System.out.format("%02X ", block[i]&0xff);
-		System.out.println("");
+		System.out.println(""); 
 
-		a.reset(CBC,iv);
+		a.reset(CTR16,iv);
 		a.decrypt(block);
 
-		System.out.println("Decrypt= ");
+		System.out.println("Decrypt= "); 
 		for (i=0;i<16;i++)  System.out.format("%02X ", block[i]&0xff);
-		System.out.println("");
+		System.out.println(""); 
 
 		a.end();
 
-	}
+	} 
 }

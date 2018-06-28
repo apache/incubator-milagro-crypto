@@ -1,28 +1,49 @@
-AMCL is very simple to build for JavaScript.
+Suppose you want to implement ECDH with NIST256 elliptic curve. First you need to initialize the context:
 
-First - decide the modulus type and curve type you want to use. Edit ROM.js 
-where indicated. You might want to use one of the curves whose details are
-already in there.
+```
+var ctx = new CTX("NIST256");
+```
+then you can call the functions as follows:
+```
+ctx.ECDH.KEY_PAIR_GENERATE(...);
+ctx.ECDH.ECPSVDP_DH(...);
+```
+If you need to use more than one elliptic curve in the same script you only need to initialize two different contexts, for example
+```
+var ctx1 = new CTX("NIST256");
+var ctx2 = new CTX("C25519");
+```
+The following is the list of all elliptic curves supported by MCJS
+```
+['ED25519', 'C25519', 'C41417', 'GOLDILOCKS', 'NIST256', 'NIST384','NIST521', 'BRAINPOOL', 'ANSSI', 'HIFIVE', 'NUMS256W', 'SECP256K1'
+'NUMS256E', 'NUMS384W', 'NUMS384E', 'NUMS512W', 'NUMS512E', 'BN254', 'BN254CX', 'BLS383', 'BLS381', 'FP256BN', 'FP512BN', 'BLS461', 'BLS24', 'BLS48'];
+```
 
-Three example API files are provided, MPIN.js which 
-supports our M-Pin (tm) protocol, ECDH.js which supports elliptic 
-curve key exchange, digital signature and public key crypto, and RSA.js
-which supports RSA encryption. The first  can be tested using the 
-TestMPIN.html driver programs, the second can be tested using TestECDH.html 
-and TestECM.html, and the third using TestRSA.html
+This library supports also RSA encryption/decryption and RSA signature. The following is a quick example on how to use RSA. First initialize the context
+```
+var ctx = new CTX("RSA2048");
+```
+then you can call the RSA functions as follows:
+```
+ctx.RSA.ENCRYPT(...);
+ctx.RSA.DECRYPT(...);
+```
+The following is the list of all the RSA security level supported by *MCJS*
+```
+['RSA2048','RSA3072','RSA4096'];
+```
 
-In the ROM.js file you must provide the curve constants. Several examples
-are provided there, if you are willing to use one of these.
+MCJS supports also SHA256, SHA384, SHA512, AES-GCM encryption and Marsaglia & Zaman random number generator. Those functions are contained in every context initialized with RSA or with an elliptic curve. If you want to create a context supporting only those general functions then initialize it with no parameter as follows:
+```
+var ctx = new CTX();
+```
 
-To help generate the ROM constants for your own curve some MIRACL helper 
-programs are included. The program bngen.cpp generates the ROM details for a 
-BN curve, and the program ecgen.cpp generates the ROM for EC curves.
-
-The program bigtobig.cpp converts a big number to the AMCL 
-BIG format.
+--------------------------------------
 
 
-For quick jumpstart:-
+To see some running examples, load TestALL.html or BenchtestALL.html into your favourite browser.
+You might have to wait a few minutes for the scripts to complete.
 
-Run Chrome browser and navigate to TestMPIN.html
+For TestALL.html the PIN number is 1234.
+
 

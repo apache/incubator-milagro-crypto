@@ -22,1070 +22,1420 @@ under the License.
 
 //#define HAS_MAIN
 
-#include "amcl.h"
+#include "ecp_ZZZ.h"
 
 /* test for P=O point-at-infinity */
-int ECP_isinf(ECP *P)
+int ECP_ZZZ_isinf(ECP_ZZZ *P)
 {
-#if CURVETYPE==EDWARDS
-	FP_reduce(P->x);
-	FP_reduce(P->y);
-	FP_reduce(P->z);
-	return (BIG_iszilch(P->x) && BIG_comp(P->y,P->z)==0);
-#else
-	return P->inf;
+//    if (P->inf) return 1;
+//    FP_YYY_reduce(&(P->x));
+//    FP_YYY_reduce(&(P->z));
+#if CURVETYPE_ZZZ==EDWARDS
+//    FP_YYY_reduce(&(P->y));
+    return (FP_YYY_iszilch(&(P->x)) && FP_YYY_equals(&(P->y),&(P->z)));
 #endif
+#if CURVETYPE_ZZZ==WEIERSTRASS
+//    FP_YYY_reduce(&(P->y));
+    return (FP_YYY_iszilch(&(P->x)) && FP_YYY_iszilch(&(P->z)));
+#endif
+#if CURVETYPE_ZZZ==MONTGOMERY
+    return FP_YYY_iszilch(&(P->z));
+#endif
+//    return P->inf;
+
 }
 
 /* Conditional swap of P and Q dependant on d */
-static void ECP_cswap(ECP *P,ECP *Q,int d)
+static void ECP_ZZZ_cswap(ECP_ZZZ *P,ECP_ZZZ *Q,int d)
 {
-	BIG_cswap(P->x,Q->x,d);
-#if CURVETYPE!=MONTGOMERY
-	BIG_cswap(P->y,Q->y,d);
+    FP_YYY_cswap(&(P->x),&(Q->x),d);
+#if CURVETYPE_ZZZ!=MONTGOMERY
+    FP_YYY_cswap(&(P->y),&(Q->y),d);
 #endif
-	BIG_cswap(P->z,Q->z,d);
-#if CURVETYPE!=EDWARDS
-	d=~(d-1);
-	d=d&(P->inf^Q->inf);
-	P->inf^=d;
-	Q->inf^=d;
-#endif
+    FP_YYY_cswap(&(P->z),&(Q->z),d);
+/*
+    d=~(d-1);
+    d=d&(P->inf^Q->inf);
+    P->inf^=d;
+    Q->inf^=d;
+*/
 }
 
+#if CURVETYPE_ZZZ!=MONTGOMERY
 /* Conditional move Q to P dependant on d */
-static void ECP_cmove(ECP *P,ECP *Q,int d)
+static void ECP_ZZZ_cmove(ECP_ZZZ *P,ECP_ZZZ *Q,int d)
 {
-	BIG_cmove(P->x,Q->x,d);
-#if CURVETYPE!=MONTGOMERY
-	BIG_cmove(P->y,Q->y,d);
+    FP_YYY_cmove(&(P->x),&(Q->x),d);
+#if CURVETYPE_ZZZ!=MONTGOMERY
+    FP_YYY_cmove(&(P->y),&(Q->y),d);
 #endif
-	BIG_cmove(P->z,Q->z,d);
-#if CURVETYPE!=EDWARDS
-	d=~(d-1);
-	P->inf^=(P->inf^Q->inf)&d;
-#endif
+    FP_YYY_cmove(&(P->z),&(Q->z),d);
+/*
+    d=~(d-1);
+    P->inf^=(P->inf^Q->inf)&d;
+*/
 }
 
 /* return 1 if b==c, no branching */
 static int teq(sign32 b,sign32 c)
 {
-	sign32 x=b^c;
-	x-=1;  // if x=0, x now -1
-	return (int)((x>>31)&1);
+    sign32 x=b^c;
+    x-=1;  // if x=0, x now -1
+    return (int)((x>>31)&1);
 }
+#endif // CURVETYPE_ZZZ!=MONTGOMERY
 
+#if CURVETYPE_ZZZ!=MONTGOMERY
 /* Constant time select from pre-computed table */
-static void ECP_select(ECP *P,ECP W[],sign32 b)
+static void ECP_ZZZ_select(ECP_ZZZ *P,ECP_ZZZ W[],sign32 b)
 {
-  ECP MP;
-  sign32 m=b>>31;
-  sign32 babs=(b^m)-m;
+    ECP_ZZZ MP;
+    sign32 m=b>>31;
+    sign32 babs=(b^m)-m;
 
-  babs=(babs-1)/2;
+    babs=(babs-1)/2;
 
-  ECP_cmove(P,&W[0],teq(babs,0));  // conditional move
-  ECP_cmove(P,&W[1],teq(babs,1));
-  ECP_cmove(P,&W[2],teq(babs,2));
-  ECP_cmove(P,&W[3],teq(babs,3));
-  ECP_cmove(P,&W[4],teq(babs,4));
-  ECP_cmove(P,&W[5],teq(babs,5));
-  ECP_cmove(P,&W[6],teq(babs,6));
-  ECP_cmove(P,&W[7],teq(babs,7));
+    ECP_ZZZ_cmove(P,&W[0],teq(babs,0));  // conditional move
+    ECP_ZZZ_cmove(P,&W[1],teq(babs,1));
+    ECP_ZZZ_cmove(P,&W[2],teq(babs,2));
+    ECP_ZZZ_cmove(P,&W[3],teq(babs,3));
+    ECP_ZZZ_cmove(P,&W[4],teq(babs,4));
+    ECP_ZZZ_cmove(P,&W[5],teq(babs,5));
+    ECP_ZZZ_cmove(P,&W[6],teq(babs,6));
+    ECP_ZZZ_cmove(P,&W[7],teq(babs,7));
 
-  ECP_copy(&MP,P);
-  ECP_neg(&MP);  // minus P
-  ECP_cmove(P,&MP,(int)(m&1));
+    ECP_ZZZ_copy(&MP,P);
+    ECP_ZZZ_neg(&MP);  // minus P
+    ECP_ZZZ_cmove(P,&MP,(int)(m&1));
 }
+#endif
 
 /* Test P == Q */
 /* SU=168 */
-int ECP_equals(ECP *P,ECP *Q)
+int ECP_ZZZ_equals(ECP_ZZZ *P,ECP_ZZZ *Q)
 {
-#if CURVETYPE==WEIERSTRASS
-	BIG pz2,qz2,a,b;
-	if (ECP_isinf(P) && ECP_isinf(Q)) return 1;
-	if (ECP_isinf(P) || ECP_isinf(Q)) return 0;
+    FP_YYY a,b;
+//    if (ECP_ZZZ_isinf(P) && ECP_ZZZ_isinf(Q)) return 1;
+//    if (ECP_ZZZ_isinf(P) || ECP_ZZZ_isinf(Q)) return 0;
 
-	FP_sqr(pz2,P->z); FP_sqr(qz2,Q->z);
 
-	FP_mul(a,P->x,qz2);
-	FP_mul(b,Q->x,pz2);
-	FP_reduce(a);
-	FP_reduce(b);
-	if (BIG_comp(a,b)!=0) return 0;
+    FP_YYY_mul(&a,&(P->x),&(Q->z));
+    FP_YYY_mul(&b,&(Q->x),&(P->z));
+    if (!FP_YYY_equals(&a,&b)) return 0;
 
-	FP_mul(a,P->y,qz2);
-	FP_mul(a,a,Q->z);
-	FP_mul(b,Q->y,pz2);
-	FP_mul(b,b,P->z);
-	FP_reduce(a);
-	FP_reduce(b);
-	if (BIG_comp(a,b)!=0) return 0;
-	return 1;
-#else
-	BIG a,b;
-	if (ECP_isinf(P) && ECP_isinf(Q)) return 1;
-	if (ECP_isinf(P) || ECP_isinf(Q)) return 0;
-
-	FP_mul(a,P->x,Q->z);
-	FP_mul(b,Q->x,P->z);
-	FP_reduce(a);
-	FP_reduce(b);
-	if (BIG_comp(a,b)!=0) return 0;
-
-#if CURVETYPE==EDWARDS
-	FP_mul(a,P->y,Q->z);
-	FP_mul(b,Q->y,P->z);
-	FP_reduce(a);
-	FP_reduce(b);
-	if (BIG_comp(a,b)!=0) return 0;
+#if CURVETYPE_ZZZ!=MONTGOMERY
+    FP_YYY_mul(&a,&(P->y),&(Q->z));
+    FP_YYY_mul(&b,&(Q->y),&(P->z));
+    if (!FP_YYY_equals(&a,&b)) return 0;
 #endif
 
-	return 1;
-#endif
+    return 1;
+
 }
 
 /* Set P=Q */
 /* SU=16 */
-void ECP_copy(ECP *P,ECP *Q)
+void ECP_ZZZ_copy(ECP_ZZZ *P,ECP_ZZZ *Q)
 {
-#if CURVETYPE!=EDWARDS
-	P->inf=Q->inf;
+//    P->inf=Q->inf;
+    FP_YYY_copy(&(P->x),&(Q->x));
+#if CURVETYPE_ZZZ!=MONTGOMERY
+    FP_YYY_copy(&(P->y),&(Q->y));
 #endif
-	BIG_copy(P->x,Q->x);
-#if CURVETYPE!=MONTGOMERY
-	BIG_copy(P->y,Q->y);
-#endif
-	BIG_copy(P->z,Q->z);
+    FP_YYY_copy(&(P->z),&(Q->z));
 }
 
 /* Set P=-Q */
-#if CURVETYPE!=MONTGOMERY
+#if CURVETYPE_ZZZ!=MONTGOMERY
 /* SU=8 */
-void ECP_neg(ECP *P)
+void ECP_ZZZ_neg(ECP_ZZZ *P)
 {
-	if (ECP_isinf(P)) return;
-#if CURVETYPE==WEIERSTRASS
-	FP_neg(P->y,P->y);
-	BIG_norm(P->y);
+//    if (ECP_ZZZ_isinf(P)) return;
+#if CURVETYPE_ZZZ==WEIERSTRASS
+    FP_YYY_neg(&(P->y),&(P->y));
+    FP_YYY_norm(&(P->y));
 #else
-	FP_neg(P->x,P->x);
-	BIG_norm(P->x);
+    FP_YYY_neg(&(P->x),&(P->x));
+    FP_YYY_norm(&(P->x));
 #endif
 
 }
 #endif
 
 /* Set P=O */
-void ECP_inf(ECP *P)
+void ECP_ZZZ_inf(ECP_ZZZ *P)
 {
-#if CURVETYPE==EDWARDS
-	BIG_zero(P->x); FP_one(P->y); FP_one(P->z);
-#else
-	P->inf=1;
+    FP_YYY_zero(&(P->x));
+#if CURVETYPE_ZZZ!=MONTGOMERY
+    FP_YYY_one(&(P->y));
 #endif
+#if CURVETYPE_ZZZ!=EDWARDS
+    FP_YYY_zero(&(P->z));
+#else
+    FP_YYY_one(&(P->z));
+#endif
+//    P->inf=1;
 }
 
 /* Calculate right Hand Side of curve equation y^2=RHS */
 /* SU=56 */
-void ECP_rhs(BIG v,BIG x)
+void ECP_ZZZ_rhs(FP_YYY *v,FP_YYY *x)
 {
-#if CURVETYPE==WEIERSTRASS
-/* x^3+Ax+B */
-	BIG t;
-	FP_sqr(t,x);
-	FP_mul(t,t,x);
+#if CURVETYPE_ZZZ==WEIERSTRASS
+    /* x^3+Ax+B */
+    FP_YYY t;
+    FP_YYY_sqr(&t,x);
+    FP_YYY_mul(&t,&t,x);
 
-	if (CURVE_A==-3)
-	{
-		FP_neg(v,x);
-		BIG_norm(v);
-		BIG_imul(v,v,-CURVE_A);
-		BIG_norm(v);
-		FP_add(v,t,v);
-	}
-	else BIG_copy(v,t);
+    if (CURVE_A_ZZZ==-3)
+    {
+        FP_YYY_neg(v,x);
+        FP_YYY_norm(v);
+        FP_YYY_imul(v,v,-CURVE_A_ZZZ);
+        FP_YYY_norm(v);
+        FP_YYY_add(v,&t,v);
+    }
+    else FP_YYY_copy(v,&t);
 
-	BIG_rcopy(t,CURVE_B);
-	FP_nres(t);
-	FP_add(v,t,v);
-	FP_reduce(v);
+    FP_YYY_rcopy(&t,CURVE_B_ZZZ);
+
+    FP_YYY_add(v,&t,v);
+    FP_YYY_reduce(v);
 #endif
 
-#if CURVETYPE==EDWARDS
-/* (Ax^2-1)/(Bx^2-1) */
-	BIG t,m,one;
-	BIG_rcopy(m,Modulus);
-	FP_sqr(v,x);
-	FP_one(one);
-	BIG_rcopy(t,CURVE_B); FP_nres(t);
-	FP_mul(t,v,t); FP_sub(t,t,one);
-	if (CURVE_A==1) FP_sub(v,v,one);
+#if CURVETYPE_ZZZ==EDWARDS
+    /* (Ax^2-1)/(Bx^2-1) */
+    FP_YYY t,one;
+    FP_YYY_sqr(v,x);
+    FP_YYY_one(&one);
+    FP_YYY_rcopy(&t,CURVE_B_ZZZ);
 
-	if (CURVE_A==-1)
-	{
-		FP_add(v,v,one);
-		FP_neg(v,v);
-	}
-	FP_redc(v); FP_redc(t);
-	BIG_moddiv(v,v,t,m);
-	FP_nres(v);
+    FP_YYY_mul(&t,v,&t);
+    FP_YYY_sub(&t,&t,&one);
+	FP_YYY_norm(&t);
+    if (CURVE_A_ZZZ==1) FP_YYY_sub(v,v,&one);
+
+    if (CURVE_A_ZZZ==-1)
+    {
+        FP_YYY_add(v,v,&one);
+        FP_YYY_norm(v);
+        FP_YYY_neg(v,v);
+    }
+	FP_YYY_norm(v);
+	FP_YYY_inv(&t,&t);
+	FP_YYY_mul(v,v,&t);
+	FP_YYY_reduce(v);
 #endif
 
-#if CURVETYPE==MONTGOMERY
-/* x^3+Ax^2+x */
-	BIG x2,x3;
-	FP_sqr(x2,x);
-	FP_mul(x3,x2,x);
-	BIG_copy(v,x);
-	FP_imul(x2,x2,CURVE_A);
-	FP_add(v,v,x2);
-	FP_add(v,v,x3);
-	FP_reduce(v);
+#if CURVETYPE_ZZZ==MONTGOMERY
+    /* x^3+Ax^2+x */
+    FP_YYY x2,x3;
+    FP_YYY_sqr(&x2,x);
+    FP_YYY_mul(&x3,&x2,x);
+    FP_YYY_copy(v,x);
+    FP_YYY_imul(&x2,&x2,CURVE_A_ZZZ);
+    FP_YYY_add(v,v,&x2);
+    FP_YYY_add(v,v,&x3);
+    FP_YYY_reduce(v);
 #endif
 }
 
 /* Set P=(x,y) */
 
-#if CURVETYPE==MONTGOMERY
+#if CURVETYPE_ZZZ==MONTGOMERY
 
 /* Set P=(x,{y}) */
 
-int ECP_set(ECP *P,BIG x)
+int ECP_ZZZ_set(ECP_ZZZ *P,BIG_XXX x)
 {
-	BIG m,rhs;
-	BIG_rcopy(m,Modulus);
-	BIG_copy(rhs,x);
-	FP_nres(rhs);
-	ECP_rhs(rhs,rhs);
-	FP_redc(rhs);
+    BIG_XXX m,b;
+    FP_YYY rhs;
+    BIG_XXX_rcopy(m,Modulus_YYY);
 
-	if (BIG_jacobi(rhs,m)!=1)
-	{
-		ECP_inf(P);
-		return 0;
-	}
-	P->inf=0;
-	BIG_copy(P->x,x); FP_nres(P->x);
-	FP_one(P->z);
-	return 1;
+    FP_YYY_nres(&rhs,x);
+
+    ECP_ZZZ_rhs(&rhs,&rhs);
+    FP_YYY_redc(b,&rhs);
+
+    if (BIG_XXX_jacobi(b,m)!=1)
+    {
+        ECP_ZZZ_inf(P);
+        return 0;
+    }
+ //   P->inf=0;
+    FP_YYY_nres(&(P->x),x);
+    FP_YYY_one(&(P->z));
+    return 1;
 }
 
 /* Extract x coordinate as BIG */
-int ECP_get(BIG x,ECP *P)
+int ECP_ZZZ_get(BIG_XXX x,ECP_ZZZ *P)
 {
-	if (ECP_isinf(P)) return -1;
-	ECP_affine(P);
-	BIG_copy(x,P->x);
-	FP_redc(x);
-	return 0;
+    if (ECP_ZZZ_isinf(P)) return -1;
+    ECP_ZZZ_affine(P);
+    FP_YYY_redc(x,&(P->x));
+    return 0;
 }
 
 
 #else
 /* Extract (x,y) and return sign of y. If x and y are the same return only x */
 /* SU=16 */
-int ECP_get(BIG x,BIG y,ECP *P)
+int ECP_ZZZ_get(BIG_XXX x,BIG_XXX y,ECP_ZZZ *P)
 {
-	int s;
-#if CURVETYPE!=EDWARDS
-	if (ECP_isinf(P)) return -1;
-#endif
-	ECP_affine(P);
+    int s;
 
-	BIG_copy(y,P->y);
-	FP_redc(y);
+    if (ECP_ZZZ_isinf(P)) return -1;
 
-	s=BIG_parity(y);
+    ECP_ZZZ_affine(P);
 
-	BIG_copy(x,P->x);
-	FP_redc(x);
+    FP_YYY_redc(y,&(P->y));
+    s=BIG_XXX_parity(y);
 
-	return s;
+    FP_YYY_redc(x,&(P->x));
+
+    return s;
 }
 
 /* Set P=(x,{y}) */
 /* SU=96 */
-int ECP_set(ECP *P,BIG x,BIG y)
+int ECP_ZZZ_set(ECP_ZZZ *P,BIG_XXX x,BIG_XXX y)
 {
-	BIG rhs,y2;
-	BIG_copy(y2,y);
+    FP_YYY rhs,y2;
 
-	FP_nres(y2);
+    FP_YYY_nres(&y2,y);
+    FP_YYY_sqr(&y2,&y2);
+    FP_YYY_reduce(&y2);
 
-	FP_sqr(y2,y2);
-	FP_reduce(y2);
+    FP_YYY_nres(&rhs,x);
+    ECP_ZZZ_rhs(&rhs,&rhs);
 
-	BIG_copy(rhs,x);
-	FP_nres(rhs);
+    if (!FP_YYY_equals(&y2,&rhs))
+    {
+        ECP_ZZZ_inf(P);
+        return 0;
+    }
 
-	ECP_rhs(rhs,rhs);
+   // P->inf=0;
 
-	if (BIG_comp(y2,rhs)!=0)
-	{
-		ECP_inf(P);
-		return 0;
-	}
-#if CURVETYPE==WEIERSTRASS
-	P->inf=0;
-#endif
-	BIG_copy(P->x,x); FP_nres(P->x);
-	BIG_copy(P->y,y); FP_nres(P->y);
-	FP_one(P->z);
-	return 1;
+    FP_YYY_nres(&(P->x),x);
+    FP_YYY_nres(&(P->y),y);
+    FP_YYY_one(&(P->z));
+    return 1;
 }
 
 /* Set P=(x,y), where y is calculated from x with sign s */
 /* SU=136 */
-int ECP_setx(ECP *P,BIG x,int s)
+int ECP_ZZZ_setx(ECP_ZZZ *P,BIG_XXX x,int s)
 {
-	BIG t,rhs,m;
-	BIG_rcopy(m,Modulus);
+    FP_YYY rhs;
+    BIG_XXX t,m;
+    BIG_XXX_rcopy(m,Modulus_YYY);
 
-	BIG_copy(rhs,x);
-	FP_nres(rhs);
-	ECP_rhs(rhs,rhs);
-	BIG_copy(t,rhs);
-	FP_redc(t);
-	if (BIG_jacobi(t,m)!=1)
-	{
-		ECP_inf(P);
-		return 0;
-	}
-#if CURVETYPE==WEIERSTRASS
-	P->inf=0;
-#endif
-	BIG_copy(P->x,x); FP_nres(P->x);
+    FP_YYY_nres(&rhs,x);
 
-	FP_sqrt(P->y,rhs);
-	BIG_copy(rhs,P->y);
-	FP_redc(rhs);
-	if (BIG_parity(rhs)!=s)
-		FP_neg(P->y,P->y);
-	FP_reduce(P->y);
-	FP_one(P->z);
-	return 1;
+    ECP_ZZZ_rhs(&rhs,&rhs);
+
+    FP_YYY_redc(t,&rhs);
+    if (BIG_XXX_jacobi(t,m)!=1)
+    {
+        ECP_ZZZ_inf(P);
+        return 0;
+    }
+
+  //  P->inf=0;
+
+    FP_YYY_nres(&(P->x),x);
+    FP_YYY_sqrt(&(P->y),&rhs);
+
+//printf("SR= "); FP_YYY_output(&(P->y)); printf("\n");
+
+    FP_YYY_redc(t,&(P->y));
+
+//printf("t= "); BIG_XXX_output(t); printf("\n");
+
+    if (BIG_XXX_parity(t)!=s)
+        FP_YYY_neg(&(P->y),&(P->y));
+    FP_YYY_reduce(&(P->y));
+    FP_YYY_one(&(P->z));
+    return 1;
 }
 
 #endif
+
+void ECP_ZZZ_cfp(ECP_ZZZ *P)
+{ /* multiply point by curves cofactor */
+	BIG_XXX c;
+	int cf=CURVE_Cof_I_ZZZ;
+	if (cf==1) return;
+	if (cf==4)
+	{
+		ECP_ZZZ_dbl(P);
+		ECP_ZZZ_dbl(P);
+		ECP_ZZZ_affine(P);
+		return;
+	}
+	if (cf==8)
+	{
+		ECP_ZZZ_dbl(P);
+		ECP_ZZZ_dbl(P);
+		ECP_ZZZ_dbl(P);
+		ECP_ZZZ_affine(P);
+		return;
+	}
+	BIG_XXX_rcopy(c,CURVE_Cof_ZZZ);
+	ECP_ZZZ_mul(P,c);
+	return;
+}
+
+/* map BIG to point on curve of correct order */
+/* The BIG should be the output of some hash function */
+
+void ECP_ZZZ_mapit(ECP_ZZZ *P,octet *W)
+{
+    BIG_XXX q,x;
+	BIG_XXX_fromBytes(x,W->val);
+    BIG_XXX_rcopy(q,Modulus_YYY);
+    BIG_XXX_mod(x,q);
+
+	for (;;)
+	{
+		for (;;)
+		{
+#if CURVETYPE_ZZZ!=MONTGOMERY
+			ECP_ZZZ_setx(P,x,0);
+#else
+			ECP_ZZZ_set(P,x);
+#endif
+			BIG_XXX_inc(x,1); BIG_XXX_norm(x);
+			if (!ECP_ZZZ_isinf(P)) break;
+		}
+		ECP_ZZZ_cfp(P);
+		if (!ECP_ZZZ_isinf(P)) break;
+	}
+}
 
 /* Convert P to Affine, from (x,y,z) to (x,y) */
 /* SU=160 */
-void ECP_affine(ECP *P)
+void ECP_ZZZ_affine(ECP_ZZZ *P)
 {
-	BIG one,iz,m;
-#if CURVETYPE==WEIERSTRASS
-	BIG izn;
-	if (ECP_isinf(P)) return;
-	FP_one(one);
-	if (BIG_comp(P->z,one)==0) return;
-	BIG_rcopy(m,Modulus);
-	FP_redc(P->z);
+    FP_YYY one,iz;
+    BIG_XXX b;
+    if (ECP_ZZZ_isinf(P)) return;
+    FP_YYY_one(&one);
+    if (FP_YYY_equals(&(P->z),&one)) return;
 
-	BIG_invmodp(iz,P->z,m);
-	FP_nres(iz);
+	FP_YYY_inv(&iz,&(P->z));
+    FP_YYY_mul(&(P->x),&(P->x),&iz);
 
-	FP_sqr(izn,iz);
-	FP_mul(P->x,P->x,izn);
-	FP_mul(izn,izn,iz);
-	FP_mul(P->y,P->y,izn);
-	FP_reduce(P->y);
+#if CURVETYPE_ZZZ==EDWARDS || CURVETYPE_ZZZ==WEIERSTRASS
+
+    FP_YYY_mul(&(P->y),&(P->y),&iz);
+    FP_YYY_reduce(&(P->y));
 
 #endif
-#if CURVETYPE==EDWARDS
-	FP_one(one);
-	if (BIG_comp(P->z,one)==0) return;
-	BIG_rcopy(m,Modulus);
-	FP_redc(P->z);
 
-	BIG_invmodp(iz,P->z,m);
-	FP_nres(iz);
-
-	FP_mul(P->x,P->x,iz);
-	FP_mul(P->y,P->y,iz);
-	FP_reduce(P->y);
-
-#endif
-#if CURVETYPE==MONTGOMERY
-	if (ECP_isinf(P)) return;
-	FP_one(one);
-	if (BIG_comp(P->z,one)==0) return;
-
-	BIG_rcopy(m,Modulus);
-	FP_redc(P->z);
-	BIG_invmodp(iz,P->z,m);
-	FP_nres(iz);
-
-	FP_mul(P->x,P->x,iz);
-
-#endif
-	FP_reduce(P->x);
-	BIG_copy(P->z,one);
+    FP_YYY_reduce(&(P->x));
+    FP_YYY_copy(&(P->z),&one);
 }
 
 /* SU=120 */
-void ECP_outputxyz(ECP *P)
+void ECP_ZZZ_outputxyz(ECP_ZZZ *P)
 {
-	BIG x,y,z;
-	if (ECP_isinf(P))
-	{
-		printf("Infinity\n");
-		return;
-	}
-	BIG_copy(x,P->x); FP_reduce(x); FP_redc(x);
-	BIG_copy(z,P->z); FP_reduce(z); FP_redc(z);
+    BIG_XXX x,z;
+    if (ECP_ZZZ_isinf(P))
+    {
+        printf("Infinity\n");
+        return;
+    }
+    FP_YYY_reduce(&(P->x));
+    FP_YYY_redc(x,&(P->x));
+    FP_YYY_reduce(&(P->z));
+    FP_YYY_redc(z,&(P->z));
 
-#if CURVETYPE!=MONTGOMERY
-	BIG_copy(y,P->y); FP_reduce(y); FP_redc(y);
-	printf("(");BIG_output(x);printf(",");BIG_output(y);printf(",");BIG_output(z);printf(")\n");
+#if CURVETYPE_ZZZ!=MONTGOMERY
+    BIG_XXX y;
+    FP_YYY_reduce(&(P->y));
+    FP_YYY_redc(y,&(P->y));
+    printf("(");
+    BIG_XXX_output(x);
+    printf(",");
+    BIG_XXX_output(y);
+    printf(",");
+    BIG_XXX_output(z);
+    printf(")\n");
 
 #else
-	printf("(");BIG_output(x);printf(",");BIG_output(z);printf(")\n");
+    printf("(");
+    BIG_XXX_output(x);
+    printf(",");
+    BIG_XXX_output(z);
+    printf(")\n");
 #endif
 }
 
 /* SU=16 */
 /* Output point P */
-void ECP_output(ECP *P)
+void ECP_ZZZ_output(ECP_ZZZ *P)
 {
-	if (ECP_isinf(P))
-	{
-		printf("Infinity\n");
-		return;
-	}
-	ECP_affine(P);
-#if CURVETYPE!=MONTGOMERY
-	FP_redc(P->x); FP_redc(P->y);
-	printf("(");BIG_output(P->x);printf(",");BIG_output(P->y);printf(")\n");
-	FP_nres(P->x); FP_nres(P->y);
+    BIG_XXX x;
+    if (ECP_ZZZ_isinf(P))
+    {
+        printf("Infinity\n");
+        return;
+    }
+    ECP_ZZZ_affine(P);
+#if CURVETYPE_ZZZ!=MONTGOMERY
+    BIG_XXX y;
+    FP_YYY_redc(x,&(P->x));
+    FP_YYY_redc(y,&(P->y));
+    printf("(");
+    BIG_XXX_output(x);
+    printf(",");
+    BIG_XXX_output(y);
+    printf(")\n");
 #else
-	FP_redc(P->x);
-	printf("(");BIG_output(P->x);printf(")\n");
-	FP_nres(P->x);
+    FP_YYY_redc(x,&(P->x));
+    printf("(");
+    BIG_XXX_output(x);
+    printf(")\n");
 #endif
 }
 
+/* SU=16 */
+/* Output point P */
+void ECP_ZZZ_rawoutput(ECP_ZZZ *P)
+{
+    BIG_XXX x,z;
+//   if (ECP_ZZZ_isinf(P))
+//   {
+//       printf("Infinity\n");
+//       return;
+//   }
+//    ECP_ZZZ_affine(P);
+#if CURVETYPE_ZZZ!=MONTGOMERY
+    BIG_XXX y;
+    FP_YYY_redc(x,&(P->x));
+    FP_YYY_redc(y,&(P->y));
+    FP_YYY_redc(z,&(P->z));
+    printf("(");
+    BIG_XXX_output(x);
+    printf(",");
+    BIG_XXX_output(y);
+    printf(",");
+    BIG_XXX_output(z);
+    printf(")\n");
+#else
+    FP_YYY_redc(x,&(P->x));
+    FP_YYY_redc(z,&(P->z));
+    printf("(");
+    BIG_XXX_output(x);
+    printf(",");
+    BIG_XXX_output(z);
+    printf(")\n");
+#endif
+}
 
 /* SU=88 */
 /* Convert P to octet string */
-void ECP_toOctet(octet *W,ECP *P)
+void ECP_ZZZ_toOctet(octet *W,ECP_ZZZ *P)
 {
-#if CURVETYPE==MONTGOMERY
-	BIG x;
-	ECP_get(x,P);
-	W->len=MODBYTES+1; W->val[0]=6;
-	BIG_toBytes(&(W->val[1]),x);
+#if CURVETYPE_ZZZ==MONTGOMERY
+    BIG_XXX x;
+    ECP_ZZZ_get(x,P);
+    W->len=MODBYTES_XXX+1;
+    W->val[0]=6;
+    BIG_XXX_toBytes(&(W->val[1]),x);
 #else
-	BIG x,y;
-	ECP_get(x,y,P);
-	W->len=2*MODBYTES+1; W->val[0]=4;
-	BIG_toBytes(&(W->val[1]),x);
-	BIG_toBytes(&(W->val[MODBYTES+1]),y);
+    BIG_XXX x,y;
+    ECP_ZZZ_get(x,y,P);
+    W->len=2*MODBYTES_XXX+1;
+    W->val[0]=4;
+    BIG_XXX_toBytes(&(W->val[1]),x);
+    BIG_XXX_toBytes(&(W->val[MODBYTES_XXX+1]),y);
 #endif
 }
 
 /* SU=88 */
 /* Restore P from octet string */
-int ECP_fromOctet(ECP *P,octet *W)
+int ECP_ZZZ_fromOctet(ECP_ZZZ *P,octet *W)
 {
-#if CURVETYPE==MONTGOMERY
-	BIG x;
-	BIG_fromBytes(x,&(W->val[1]));
-    if (ECP_set(P,x)) return 1;
-	return 0;
+#if CURVETYPE_ZZZ==MONTGOMERY
+    BIG_XXX x;
+    BIG_XXX_fromBytes(x,&(W->val[1]));
+    if (ECP_ZZZ_set(P,x)) return 1;
+    return 0;
 #else
-	BIG x,y;
-	BIG_fromBytes(x,&(W->val[1]));
-	BIG_fromBytes(y,&(W->val[MODBYTES+1]));
-    if (ECP_set(P,x,y)) return 1;
-	return 0;
+    BIG_XXX x,y;
+    BIG_XXX_fromBytes(x,&(W->val[1]));
+    BIG_XXX_fromBytes(y,&(W->val[MODBYTES_XXX+1]));
+    if (ECP_ZZZ_set(P,x,y)) return 1;
+    return 0;
 #endif
 }
 
 
 /* Set P=2P */
 /* SU=272 */
-void ECP_dbl(ECP *P)
+void ECP_ZZZ_dbl(ECP_ZZZ *P)
 {
-#if CURVETYPE==WEIERSTRASS
-	int i;
-	BIG one,s1,s2;
-	BIG w1,w7,w8,w2,w3,w6;
-	if (ECP_isinf(P)) return;
+#if CURVETYPE_ZZZ==WEIERSTRASS
+    FP_YYY t0,t1,t2,t3,x3,y3,z3,b;
 
-	if (BIG_iszilch(P->y))
-	{
-		P->inf=1;
-		return;
-	}
-	FP_one(one);
-	BIG_zero(w6);
+ //   if (ECP_ZZZ_isinf(P)) return;
 
-	if (CURVE_A==-3)
-	{
-		if (BIG_comp(P->z,one)==0) BIG_copy(w6,one);
-		else FP_sqr(w6,P->z);
-		FP_neg(w1,w6);
-		FP_add(w3,P->x,w1);
-		FP_add(w8,P->x,w6);
-		FP_mul(w3,w3,w8);
-		BIG_imul(w8,w3,3);
-	}
-	else
-	{
-/* assuming A=0 */
-		FP_sqr(w1,P->x);
-		BIG_imul(w8,w1,3);
-	}
+    if (CURVE_A_ZZZ==0)
+    {
+        //FP_YYY_copy(&t0,&(P->y));				//FP t0=new FP(y);
+        FP_YYY_sqr(&t0,&(P->y));					//t0.sqr();
+        //FP_YYY_copy(&t1,&(P->y));				//FP t1=new FP(y);
+        FP_YYY_mul(&t1,&(P->y),&(P->z));			//t1.mul(z);
 
-	FP_sqr(w2,P->y);
-	FP_mul(w3,P->x,w2);
+        //FP_YYY_copy(&t2,&(P->z));				//FP t2=new FP(z);
+        FP_YYY_sqr(&t2,&(P->z));					//t2.sqr();
 
-	BIG_imul(w3,w3,4);
-	FP_neg(w1,w3);
-#if CHUNK<64
-	BIG_norm(w1);
+        //FP_YYY_copy(&(P->z),&t0);				//z.copy(t0);
+        FP_YYY_add(&(P->z),&t0,&t0);		//z.add(t0);
+        FP_YYY_norm(&(P->z));					//z.norm();
+        FP_YYY_add(&(P->z),&(P->z),&(P->z));	//z.add(z);
+        FP_YYY_add(&(P->z),&(P->z),&(P->z));	//z.add(z);
+        FP_YYY_norm(&(P->z));					//z.norm();
+
+        FP_YYY_imul(&t2,&t2,3*CURVE_B_I_ZZZ);		//t2.imul(3*ROM.CURVE_B_I);
+        //FP_YYY_copy(&x3,&t2);					//FP x3=new FP(t2);
+        FP_YYY_mul(&x3,&t2,&(P->z));			//x3.mul(z);
+
+        //FP_YYY_copy(&y3,&t0);					//FP y3=new FP(t0);
+        FP_YYY_add(&y3,&t0,&t2);				//y3.add(t2);
+        FP_YYY_norm(&y3);						//y3.norm();
+        FP_YYY_mul(&(P->z),&(P->z),&t1);		//z.mul(t1);
+
+        //FP_YYY_copy(&t1,&t2);					//t1.copy(t2);
+        FP_YYY_add(&t1,&t2,&t2);				//t1.add(t2);
+        FP_YYY_add(&t2,&t2,&t1);				//t2.add(t1);
+        FP_YYY_sub(&t0,&t0,&t2);				//t0.sub(t2);
+        FP_YYY_norm(&t0);						//t0.norm();
+        FP_YYY_mul(&y3,&y3,&t0);				//y3.mul(t0);
+        FP_YYY_add(&y3,&y3,&x3);				//y3.add(x3);
+        //FP_YYY_copy(&t1,&(P->x));				//t1.copy(x);                *** optimization possible
+        FP_YYY_mul(&t1,&(P->x),&(P->y));			//t1.mul(y);
+        //FP_YYY_copy(&(P->x),&t0);				//x.copy(t0);
+        FP_YYY_norm(&t0);					//x.norm();
+        FP_YYY_mul(&(P->x),&t0,&t1);		//x.mul(t1);
+        FP_YYY_add(&(P->x),&(P->x),&(P->x));	//x.add(x);
+        FP_YYY_norm(&(P->x));					//x.norm();
+        FP_YYY_copy(&(P->y),&y3);				//y.copy(y3);
+        FP_YYY_norm(&(P->y));					//y.norm();
+    }
+    else // its -3
+    {
+        //FP_YYY_copy(&t0,&(P->x));				//FP t0=new FP(x);
+        //FP_YYY_copy(&t1,&(P->y));				//FP t1=new FP(y);
+        //FP_YYY_copy(&t2,&(P->z));				//FP t2=new FP(z);
+        //FP_YYY_copy(&t3,&(P->x));				//FP t3=new FP(x);
+        //FP_YYY_copy(&z3,&(P->z));				//FP z3=new FP(z);
+
+        if (CURVE_B_I_ZZZ==0)					//if (ROM.CURVE_B_I==0)
+            FP_YYY_rcopy(&b,CURVE_B_ZZZ);		//b.copy(new FP(new BIG(ROM.CURVE_B)));
+
+        FP_YYY_sqr(&t0,&(P->x));					//t0.sqr();  //1    x^2
+        FP_YYY_sqr(&t1,&(P->y));					//t1.sqr();  //2    y^2
+        FP_YYY_sqr(&t2,&(P->z));					//t2.sqr();  //3
+
+        FP_YYY_mul(&t3,&(P->x),&(P->y));			//t3.mul(y); //4
+        FP_YYY_add(&t3,&t3,&t3);				//t3.add(t3);
+        FP_YYY_norm(&t3);						//t3.norm();//5
+
+        FP_YYY_mul(&z3,&(P->z),&(P->x));			//z3.mul(x);   //6
+        FP_YYY_add(&z3,&z3,&z3);				//z3.add(z3);
+        FP_YYY_norm(&z3);						//z3.norm();//7
+        //FP_YYY_copy(&y3,&t2);					//y3.copy(t2);
+
+        if (CURVE_B_I_ZZZ==0)						//if (ROM.CURVE_B_I==0)
+            FP_YYY_mul(&y3,&t2,&b);				//y3.mul(b); //8
+        else
+            FP_YYY_imul(&y3,&t2,CURVE_B_I_ZZZ);	//y3.imul(ROM.CURVE_B_I);
+
+        FP_YYY_sub(&y3,&y3,&z3);				//y3.sub(z3); //y3.norm(); //9  ***
+        //FP_YYY_copy(&x3,&y3);					//x3.copy(y3);
+        FP_YYY_add(&x3,&y3,&y3);				//x3.add(y3);
+        FP_YYY_norm(&x3);						//x3.norm();//10
+
+        FP_YYY_add(&y3,&y3,&x3);				//y3.add(x3); //y3.norm();//11
+        //FP_YYY_copy(&x3,&t1);					//x3.copy(t1);
+        FP_YYY_sub(&x3,&t1,&y3);				//x3.sub(y3);
+        FP_YYY_norm(&x3);						//x3.norm();//12
+        FP_YYY_add(&y3,&y3,&t1);				//y3.add(t1);
+        FP_YYY_norm(&y3);						//y3.norm();//13
+        FP_YYY_mul(&y3,&y3,&x3);				//y3.mul(x3); //14
+        FP_YYY_mul(&x3,&x3,&t3);				//x3.mul(t3); //15
+        //FP_YYY_copy(&t3,&t2);					//t3.copy(t2);
+        FP_YYY_add(&t3,&t2,&t2);				//t3.add(t2);  //16
+        FP_YYY_add(&t2,&t2,&t3);				//t2.add(t3); //17
+
+        if (CURVE_B_I_ZZZ==0)					//if (ROM.CURVE_B_I==0)
+            FP_YYY_mul(&z3,&z3,&b);				//z3.mul(b); //18
+        else
+            FP_YYY_imul(&z3,&z3,CURVE_B_I_ZZZ);	//z3.imul(ROM.CURVE_B_I);
+
+        FP_YYY_sub(&z3,&z3,&t2);				//z3.sub(t2); //z3.norm();//19
+        FP_YYY_sub(&z3,&z3,&t0);				//z3.sub(t0);
+        FP_YYY_norm(&z3);						//z3.norm();//20  ***
+        //FP_YYY_copy(&t3,&z3);					//t3.copy(z3);
+        FP_YYY_add(&t3,&z3,&z3);				//t3.add(z3); //t3.norm();//21
+
+        FP_YYY_add(&z3,&z3,&t3);				//z3.add(t3);
+        FP_YYY_norm(&z3);						//z3.norm(); //22
+        //FP_YYY_copy(&t3,&t0);					//t3.copy(t0);
+        FP_YYY_add(&t3,&t0,&t0);				//t3.add(t0); //t3.norm(); //23
+        FP_YYY_add(&t0,&t0,&t3);				//t0.add(t3); //t0.norm();//24
+        FP_YYY_sub(&t0,&t0,&t2);				//t0.sub(t2);
+        FP_YYY_norm(&t0);						//t0.norm();//25
+
+        FP_YYY_mul(&t0,&t0,&z3);				//t0.mul(z3);//26
+        FP_YYY_add(&y3,&y3,&t0);				//y3.add(t0); //y3.norm();//27
+        //FP_YYY_copy(&t0,&(P->y));				//t0.copy(y);
+        FP_YYY_mul(&t0,&(P->y),&(P->z));			//t0.mul(z);//28
+        FP_YYY_add(&t0,&t0,&t0);				//t0.add(t0);
+        FP_YYY_norm(&t0);						//t0.norm(); //29
+        FP_YYY_mul(&z3,&z3,&t0);				//z3.mul(t0);//30
+        FP_YYY_sub(&(P->x),&x3,&z3);				//x3.sub(z3); //x3.norm();//31
+        FP_YYY_add(&t0,&t0,&t0);				//t0.add(t0);
+        FP_YYY_norm(&t0);						//t0.norm();//32
+        FP_YYY_add(&t1,&t1,&t1);				//t1.add(t1);
+        FP_YYY_norm(&t1);						//t1.norm();//33
+        //FP_YYY_copy(&z3,&t0);					//z3.copy(t0);
+        FP_YYY_mul(&(P->z),&t0,&t1);				//z3.mul(t1);//34
+
+        //FP_YYY_copy(&(P->x),&x3);				//x.copy(x3);
+        FP_YYY_norm(&(P->x));					//x.norm();
+        FP_YYY_copy(&(P->y),&y3);				//y.copy(y3);
+        FP_YYY_norm(&(P->y));					//y.norm();
+        //FP_YYY_copy(&(P->z),&z3);				//z.copy(z3);
+        FP_YYY_norm(&(P->z));					//z.norm();
+    }
 #endif
-	FP_sqr(P->x,w8);
-	FP_add(P->x,P->x,w1);
-	FP_add(P->x,P->x,w1);
 
-	BIG_norm(P->x);
+#if CURVETYPE_ZZZ==EDWARDS
+    /* Not using square for multiplication swap, as (1) it needs more adds, and (2) it triggers more reductions */
 
-	if (BIG_comp(P->z,one)==0) BIG_copy(P->z,P->y);
-	else FP_mul(P->z,P->z,P->y);
-	FP_add(P->z,P->z,P->z);
+    FP_YYY C,D,H,J;
+
+//    if (ECP_ZZZ_isinf(P)) return;
+
+    //FP_YYY_copy(&C,&(P->x));			//FP C=new FP(x);
+    FP_YYY_sqr(&C,&(P->x));							//C.sqr();
+    //FP_YYY_copy(&D,&(P->y));			//FP D=new FP(y);
+    //FP_YYY_copy(&H,&(P->z));			//FP H=new FP(z);
+
+    FP_YYY_mul(&(P->x),&(P->x),&(P->y));		//x.mul(y);
+    FP_YYY_add(&(P->x),&(P->x),&(P->x));		//x.add(x);
+    FP_YYY_norm(&(P->x));						//x.norm();
+
+    FP_YYY_sqr(&D,&(P->y));							//D.sqr();
+
+    if (CURVE_A_ZZZ==-1)				//if (ROM.CURVE_A==-1)
+        FP_YYY_neg(&C,&C);				//	C.neg();
+
+    //FP_YYY_copy(&(P->y),&C);			//y.copy(C);
+    FP_YYY_add(&(P->y),&C,&D);		//y.add(D);
+    FP_YYY_norm(&(P->y));				//y.norm();
+    FP_YYY_sqr(&H,&(P->z));					//H.sqr();
+    FP_YYY_add(&H,&H,&H);				//H.add(H);
 
 
-	FP_add(w7,w2,w2);
-	FP_sqr(w2,w7);
+    //FP_YYY_copy(&(P->z),&(P->y));		//z.copy(y);
+    //FP_YYY_copy(&J,&(P->y));			//J.copy(y);
 
-	FP_add(w2,w2,w2);
-	FP_sub(w3,w3,P->x);
-	FP_mul(P->y,w8,w3);
-//#if CHUNK<64
-//	BIG_norm(w2);
-//#endif
-	FP_sub(P->y,P->y,w2);
+    FP_YYY_sub(&J,&(P->y),&H);				//J.sub(H);
+    FP_YYY_norm(&J);					//J.norm();
 
-	BIG_norm(P->y);
-	BIG_norm(P->z);
+    FP_YYY_mul(&(P->x),&(P->x),&J);		//x.mul(J);
+    FP_YYY_sub(&C,&C,&D);				//C.sub(D);
+    FP_YYY_norm(&C);					//C.norm();
+    FP_YYY_mul(&(P->z),&(P->y),&J);		//z.mul(J);
+    FP_YYY_mul(&(P->y),&(P->y),&C);		//y.mul(C);
 
-#endif
-
-#if CURVETYPE==EDWARDS
-/* Not using square for multiplication swap, as (1) it needs more adds, and (2) it triggers more reductions */
-	BIG B,C,D,E,F,H,J;
-
-	FP_mul(B,P->x,P->y); FP_add(B,B,B);
-	FP_sqr(C,P->x);
-	FP_sqr(D,P->y);
-	if (CURVE_A==1) BIG_copy(E,C);
-	if (CURVE_A==-1) FP_neg(E,C);
-	FP_add(F,E,D);
-#if CHUNK<64
-	BIG_norm(F);
-#endif
-	FP_sqr(H,P->z);
-	FP_add(H,H,H); FP_sub(J,F,H);
-	FP_mul(P->x,B,J);
-	FP_sub(E,E,D);
-	FP_mul(P->y,F,E);
-	FP_mul(P->z,F,J);
-
-	BIG_norm(P->x);
-	BIG_norm(P->y);
-	BIG_norm(P->z);
 
 #endif
 
-#if CURVETYPE==MONTGOMERY
-	BIG t,A,B,AA,BB,C;
-	if (ECP_isinf(P)) return;
+#if CURVETYPE_ZZZ==MONTGOMERY
+    FP_YYY A,B,AA,BB,C;
 
-	FP_add(A,P->x,P->z);
-	FP_sqr(AA,A);
-	FP_sub(B,P->x,P->z);
-	FP_sqr(BB,B);
-	FP_sub(C,AA,BB);
-//#if CHUNK<64
-//	BIG_norm(C);
-//#endif
+//    if (ECP_ZZZ_isinf(P)) return;
 
-	FP_mul(P->x,AA,BB);
-	FP_imul(A,C,(CURVE_A+2)/4);
-	FP_add(BB,BB,A);
-	FP_mul(P->z,BB,C);
+    //FP_YYY_copy(&A,&(P->x));			//FP A=new FP(x);
+    //FP_YYY_copy(&B,&(P->x));			//FP B=new FP(x);
 
-	BIG_norm(P->x);
-	BIG_norm(P->z);
+    FP_YYY_add(&A,&(P->x),&(P->z));			//A.add(z);
+    FP_YYY_norm(&A);					//A.norm();
+    //FP_YYY_copy(&AA,&A);				//AA.copy(A);
+    FP_YYY_sqr(&AA,&A);				//AA.sqr();
+    FP_YYY_sub(&B,&(P->x),&(P->z));			//B.sub(z);
+    FP_YYY_norm(&B);					//B.norm();
+    //FP_YYY_copy(&BB,&B);				//BB.copy(B);
+    FP_YYY_sqr(&BB,&B);				//BB.sqr();
+    //FP_YYY_copy(&C,&AA);				//C.copy(AA);
+    FP_YYY_sub(&C,&AA,&BB);				//C.sub(BB);
+    FP_YYY_norm(&C);					//C.norm();
+    //FP_YYY_copy(&(P->x),&AA);			//x.copy(AA);
+    FP_YYY_mul(&(P->x),&AA,&BB);	//x.mul(BB);
+
+    //FP_YYY_copy(&A,&C);					//A.copy(C);
+    FP_YYY_imul(&A,&C,(CURVE_A_ZZZ+2)/4);	//A.imul((ROM.CURVE_A+2)/4);
+
+    FP_YYY_add(&BB,&BB,&A);				//BB.add(A);
+    FP_YYY_norm(&BB);					//BB.norm();
+    //FP_YYY_copy(&(P->z),&BB);			//z.copy(BB);
+    FP_YYY_mul(&(P->z),&BB,&C);		//z.mul(C);
+
 #endif
 }
 
-#if CURVETYPE==MONTGOMERY
+#if CURVETYPE_ZZZ==MONTGOMERY
 
 /* Set P+=Q. W is difference between P and Q and is affine */
-void ECP_add(ECP *P,ECP *Q,ECP *W)
+void ECP_ZZZ_add(ECP_ZZZ *P,ECP_ZZZ *Q,ECP_ZZZ *W)
 {
-	BIG A,B,C,D,DA,CB;
+    FP_YYY A,B,C,D,DA,CB;
 
-	FP_add(A,P->x,P->z);
-	FP_sub(B,P->x,P->z);
+    //FP_YYY_copy(&A,&(P->x));	//FP A=new FP(x);
+    //FP_YYY_copy(&B,&(P->x));	//FP B=new FP(x);
+    //FP_YYY_copy(&C,&(Q->x));	//FP C=new FP(Q.x);
+    //FP_YYY_copy(&D,&(Q->x));	//FP D=new FP(Q.x);
 
-	FP_add(C,Q->x,Q->z);
-	FP_sub(D,Q->x,Q->z);
+    FP_YYY_add(&A,&(P->x),&(P->z));	//A.add(z);
+    FP_YYY_sub(&B,&(P->x),&(P->z));	//B.sub(z);
 
-	FP_mul(DA,D,A);
-	FP_mul(CB,C,B);
+    FP_YYY_add(&C,&(Q->x),&(Q->z));	//C.add(Q.z);
 
-	FP_add(A,DA,CB); FP_sqr(A,A);
-	FP_sub(B,DA,CB); FP_sqr(B,B);
+    FP_YYY_sub(&D,&(Q->x),&(Q->z));	//D.sub(Q.z);
+    FP_YYY_norm(&A);			//A.norm();
 
-	BIG_copy(P->x,A);
-	FP_mul(P->z,W->x,B);
+    FP_YYY_norm(&D);			//D.norm();
+    //FP_YYY_copy(&DA,&D);			//DA.copy(D);
+    FP_YYY_mul(&DA,&D,&A);			//DA.mul(A);
 
-	FP_reduce(P->z);
-	if (BIG_iszilch(P->z)) P->inf=1;
-	else P->inf=0;
 
-	BIG_norm(P->x);
+
+    FP_YYY_norm(&C);			//C.norm();
+    FP_YYY_norm(&B);			//B.norm();
+    //FP_YYY_copy(&CB,&C);		//CB.copy(C);
+    FP_YYY_mul(&CB,&C,&B);		//CB.mul(B);
+
+    //FP_YYY_copy(&A,&DA);		//A.copy(DA);
+    FP_YYY_add(&A,&DA,&CB);		//A.add(CB);
+    FP_YYY_norm(&A);			//A.norm();
+    FP_YYY_sqr(&(P->x),&A);			//A.sqr();
+    //FP_YYY_copy(&B,&DA);		//B.copy(DA);
+    FP_YYY_sub(&B,&DA,&CB);		//B.sub(CB);
+    FP_YYY_norm(&B);			//B.norm();
+    FP_YYY_sqr(&B,&B);			//B.sqr();
+
+    //FP_YYY_copy(&(P->x),&A);	//x.copy(A);
+    //FP_YYY_copy(&(P->z),&(W->x));//z.copy(W.x);
+    FP_YYY_mul(&(P->z),&(W->x),&B);	//z.mul(B);
+
 }
-
 
 #else
 
 /* Set P+=Q */
 /* SU=248 */
-void ECP_add(ECP *P,ECP *Q)
+void ECP_ZZZ_add(ECP_ZZZ *P,ECP_ZZZ *Q)
 {
-#if CURVETYPE==WEIERSTRASS
-	int aff;
-	BIG one,B,D,E,C,A;
-	if (ECP_isinf(Q)) return;
-	if (ECP_isinf(P))
-	{
-		ECP_copy(P,Q);
-		return;
-	}
+#if CURVETYPE_ZZZ==WEIERSTRASS
 
-	FP_one(one);
-	aff=1;
-	if (BIG_comp(Q->z,one)!=0) aff=0;
+    int b3;
+    FP_YYY t0,t1,t2,t3,t4,x3,y3,z3,b;
+/*
+    if (ECP_ZZZ_isinf(Q)) return;
+    if (ECP_ZZZ_isinf(P))
+    {
+        ECP_ZZZ_copy(P,Q);
+        return;
+    }
+*/
+    if (CURVE_A_ZZZ==0)
+    {
+        b3=3*CURVE_B_I_ZZZ;					//int b=3*ROM.CURVE_B_I;
+        //FP_YYY_copy(&t0,&(P->x));			//FP t0=new FP(x);
+        FP_YYY_mul(&t0,&(P->x),&(Q->x));		//t0.mul(Q.x);
+        //FP_YYY_copy(&t1,&(P->y));			//FP t1=new FP(y);
+        FP_YYY_mul(&t1,&(P->y),&(Q->y));		//t1.mul(Q.y);
+        //FP_YYY_copy(&t2,&(P->z));			//FP t2=new FP(z);
+        FP_YYY_mul(&t2,&(P->z),&(Q->z));		//t2.mul(Q.z);
+        //FP_YYY_copy(&t3,&(P->x));			//FP t3=new FP(x);
+        FP_YYY_add(&t3,&(P->x),&(P->y));		//t3.add(y);
+        FP_YYY_norm(&t3);					//t3.norm();
+        //FP_YYY_copy(&t4,&(Q->x));			//FP t4=new FP(Q.x);
+        FP_YYY_add(&t4,&(Q->x),&(Q->y));		//t4.add(Q.y);
+        FP_YYY_norm(&t4);					//t4.norm();
+        FP_YYY_mul(&t3,&t3,&t4);			//t3.mul(t4);
+        //FP_YYY_copy(&t4,&t0);				//t4.copy(t0);
+        FP_YYY_add(&t4,&t0,&t1);			//t4.add(t1);
 
-	if (!aff)
-	{
-		FP_sqr(A,Q->z);
-		FP_mul(C,A,Q->z);
+        FP_YYY_sub(&t3,&t3,&t4);			//t3.sub(t4);
+        FP_YYY_norm(&t3);					//t3.norm();
+        //FP_YYY_copy(&t4,&(P->y));			//t4.copy(y);
+        FP_YYY_add(&t4,&(P->y),&(P->z));		//t4.add(z);
+        FP_YYY_norm(&t4);					//t4.norm();
+        //FP_YYY_copy(&x3,&(Q->y));			//FP x3=new FP(Q.y);
+        FP_YYY_add(&x3,&(Q->y),&(Q->z));		//x3.add(Q.z);
+        FP_YYY_norm(&x3);					//x3.norm();
 
-		FP_sqr(B,P->z);
-		FP_mul(D,B,P->z);
+        FP_YYY_mul(&t4,&t4,&x3);			//t4.mul(x3);
+        //FP_YYY_copy(&x3,&t1);				//x3.copy(t1);
+        FP_YYY_add(&x3,&t1,&t2);			//x3.add(t2);
 
-		FP_mul(A,P->x,A);
-		FP_mul(C,P->y,C);
-	}
-	else
-	{
-		BIG_copy(A,P->x);
-		BIG_copy(C,P->y);
+        FP_YYY_sub(&t4,&t4,&x3);			//t4.sub(x3);
+        FP_YYY_norm(&t4);					//t4.norm();
+        //FP_YYY_copy(&x3,&(P->x));			//x3.copy(x);
+        FP_YYY_add(&x3,&(P->x),&(P->z));		//x3.add(z);
+        FP_YYY_norm(&x3);					//x3.norm();
+        //FP_YYY_copy(&y3,&(Q->x));			//FP y3=new FP(Q.x);
+        FP_YYY_add(&y3,&(Q->x),&(Q->z));		//y3.add(Q.z);
+        FP_YYY_norm(&y3);					//y3.norm();
+        FP_YYY_mul(&x3,&x3,&y3);			//x3.mul(y3);
+        //FP_YYY_copy(&y3,&t0);				//y3.copy(t0);
+        FP_YYY_add(&y3,&t0,&t2);			//y3.add(t2);
+        FP_YYY_sub(&y3,&x3,&y3);			//y3.rsub(x3);
+        FP_YYY_norm(&y3);					//y3.norm();
+        //FP_YYY_copy(&x3,&t0);				//x3.copy(t0);
+        FP_YYY_add(&x3,&t0,&t0);			//x3.add(t0);
+        FP_YYY_add(&t0,&t0,&x3);			//t0.add(x3);
+        FP_YYY_norm(&t0);					//t0.norm();
+        FP_YYY_imul(&t2,&t2,b3);				//t2.imul(b);
 
-		FP_sqr(B,P->z);
-		FP_mul(D,B,P->z);
-	}
+        //FP_YYY_copy(&z3,&t1);				//FP z3=new FP(t1);
+        FP_YYY_add(&z3,&t1,&t2);			//z3.add(t2);
+        FP_YYY_norm(&z3);					//z3.norm();
+        FP_YYY_sub(&t1,&t1,&t2);			//t1.sub(t2);
+        FP_YYY_norm(&t1);					//t1.norm();
+        FP_YYY_imul(&y3,&y3,b3);				//y3.imul(b);
 
-	FP_mul(B,Q->x,B); FP_sub(B,B,A); /* B=Qx.z^2-x.Qz^2 */
-	FP_mul(D,Q->y,D); FP_sub(D,D,C); /* D=Qy.z^3-y.Qz^3 */
+        //FP_YYY_copy(&x3,&y3);				//x3.copy(y3);
+        FP_YYY_mul(&x3,&y3,&t4);			//x3.mul(t4);
+        //FP_YYY_copy(&t2,&t3);				//t2.copy(t3);
+        FP_YYY_mul(&t2,&t3,&t1);			//t2.mul(t1);
+        FP_YYY_sub(&(P->x),&t2,&x3);			//x3.rsub(t2);
+        FP_YYY_mul(&y3,&y3,&t0);			//y3.mul(t0);
+        FP_YYY_mul(&t1,&t1,&z3);			//t1.mul(z3);
+        FP_YYY_add(&(P->y),&y3,&t1);			//y3.add(t1);
+        FP_YYY_mul(&t0,&t0,&t3);			//t0.mul(t3);
+        FP_YYY_mul(&z3,&z3,&t4);			//z3.mul(t4);
+        FP_YYY_add(&(P->z),&z3,&t0);			//z3.add(t0);
 
-	FP_reduce(B);
-	if (BIG_iszilch(B))
-	{
-		FP_reduce(D);
-		if (BIG_iszilch(D))
-		{
-			ECP_dbl(P);
-			return;
-		}
-		else
-		{
-			ECP_inf(P);
-			return;
-		}
-	}
-	if (!aff) FP_mul(P->z,P->z,Q->z);
-	FP_mul(P->z,P->z,B);
+        //FP_YYY_copy(&(P->x),&x3);			//x.copy(x3);
+        FP_YYY_norm(&(P->x));				//x.norm();
+        //FP_YYY_copy(&(P->y),&y3);			//y.copy(y3);
+        FP_YYY_norm(&(P->y));				//y.norm();
+        //FP_YYY_copy(&(P->z),&z3);			//z.copy(z3);
+        FP_YYY_norm(&(P->z));				//z.norm();
+    }
+    else
+    {
+        //FP_YYY_copy(&t0,&(P->x));			//FP t0=new FP(x);
+        //FP_YYY_copy(&t1,&(P->y));			//FP t1=new FP(y);
+        //FP_YYY_copy(&t2,&(P->z));			//FP t2=new FP(z);
+        //FP_YYY_copy(&t3,&(P->x));			//FP t3=new FP(x);
+        //FP_YYY_copy(&t4,&(Q->x));			//FP t4=new FP(Q.x);
 
-	FP_sqr(E,B);
-	FP_mul(B,B,E);
-	FP_mul(A,A,E);
+        //FP_YYY_copy(&y3,&(Q->x));			//FP y3=new FP(Q.x);
+        //FP_YYY_copy(&x3,&(Q->y));			//FP x3=new FP(Q.y);
 
-	FP_add(E,A,A);
-	FP_add(E,E,B);
+        if (CURVE_B_I_ZZZ==0)				//if (ROM.CURVE_B_I==0)
+            FP_YYY_rcopy(&b,CURVE_B_ZZZ);	//b.copy(new FP(new BIG(ROM.CURVE_B)));
 
-	FP_sqr(P->x,D);
-	FP_sub(P->x,P->x,E);
+        FP_YYY_mul(&t0,&(P->x),&(Q->x));		//t0.mul(Q.x); //1
+        FP_YYY_mul(&t1,&(P->y),&(Q->y));		//t1.mul(Q.y); //2
+        FP_YYY_mul(&t2,&(P->z),&(Q->z));		//t2.mul(Q.z); //3
 
-	FP_sub(A,A,P->x);
-	FP_mul(P->y,A,D);
-	FP_mul(C,C,B);
-	FP_sub(P->y,P->y,C);
+        FP_YYY_add(&t3,&(P->x),&(P->y));		//t3.add(y);
+        FP_YYY_norm(&t3);					//t3.norm(); //4
+        FP_YYY_add(&t4,&(Q->x),&(Q->y));		//t4.add(Q.y);
+        FP_YYY_norm(&t4);					//t4.norm();//5
+        FP_YYY_mul(&t3,&t3,&t4);			//t3.mul(t4);//6
+        //FP_YYY_copy(&t4,&t0);				//t4.copy(t0);
+        FP_YYY_add(&t4,&t0,&t1);			//t4.add(t1); //t4.norm(); //7
+        FP_YYY_sub(&t3,&t3,&t4);			//t3.sub(t4);
+        FP_YYY_norm(&t3);					//t3.norm(); //8
+        //FP_YYY_copy(&t4,&(P->y));			//t4.copy(y);
+        FP_YYY_add(&t4,&(P->y),&(P->z));		//t4.add(z);
+        FP_YYY_norm(&t4);					//t4.norm();//9
+        FP_YYY_add(&x3,&(Q->y),&(Q->z));		//x3.add(Q.z);
+        FP_YYY_norm(&x3);					//x3.norm();//10
+        FP_YYY_mul(&t4,&t4,&x3);			//t4.mul(x3); //11
+        //FP_YYY_copy(&x3,&t1);				//x3.copy(t1);
+        FP_YYY_add(&x3,&t1,&t2);			//x3.add(t2); //x3.norm();//12
 
-	BIG_norm(P->x);
-	BIG_norm(P->y);
-	BIG_norm(P->z);
+        FP_YYY_sub(&t4,&t4,&x3);			//t4.sub(x3);
+        FP_YYY_norm(&t4);					//t4.norm();//13
+        //FP_YYY_copy(&x3,&(P->x));			//x3.copy(x);
+        FP_YYY_add(&x3,&(P->x),&(P->z));		//x3.add(z);
+        FP_YYY_norm(&x3);					//x3.norm(); //14
+        FP_YYY_add(&y3,&(Q->x),&(Q->z));		//y3.add(Q.z);
+        FP_YYY_norm(&y3);					//y3.norm();//15
+
+        FP_YYY_mul(&x3,&x3,&y3);			//x3.mul(y3); //16
+        //FP_YYY_copy(&y3,&t0);				//y3.copy(t0);
+        FP_YYY_add(&y3,&t0,&t2);			//y3.add(t2); //y3.norm();//17
+
+        FP_YYY_sub(&y3,&x3,&y3);			//y3.rsub(x3);
+        FP_YYY_norm(&y3);					//y3.norm(); //18
+        //FP_YYY_copy(&z3,&t2);				//z3.copy(t2);
+
+        if (CURVE_B_I_ZZZ==0)				//if (ROM.CURVE_B_I==0)
+            FP_YYY_mul(&z3,&t2,&b);			//z3.mul(b); //18
+        else
+            FP_YYY_imul(&z3,&t2,CURVE_B_I_ZZZ);	//z3.imul(ROM.CURVE_B_I);
+
+        //FP_YYY_copy(&x3,&y3);				//x3.copy(y3);
+        FP_YYY_sub(&x3,&y3,&z3);			//x3.sub(z3);
+        FP_YYY_norm(&x3);					//x3.norm(); //20
+        //FP_YYY_copy(&z3,&x3);				//z3.copy(x3);
+        FP_YYY_add(&z3,&x3,&x3);			//z3.add(x3); //z3.norm(); //21
+
+        FP_YYY_add(&x3,&x3,&z3);			//x3.add(z3); //x3.norm(); //22
+        //FP_YYY_copy(&z3,&t1);				//z3.copy(t1);
+        FP_YYY_sub(&z3,&t1,&x3);			//z3.sub(x3);
+        FP_YYY_norm(&z3);					//z3.norm(); //23
+        FP_YYY_add(&x3,&x3,&t1);			//x3.add(t1);
+        FP_YYY_norm(&x3);					//x3.norm(); //24
+
+        if (CURVE_B_I_ZZZ==0)				//if (ROM.CURVE_B_I==0)
+            FP_YYY_mul(&y3,&y3,&b);			//y3.mul(b); //18
+        else
+            FP_YYY_imul(&y3,&y3,CURVE_B_I_ZZZ);	//y3.imul(ROM.CURVE_B_I);
+
+        //FP_YYY_copy(&t1,&t2);				//t1.copy(t2);
+        FP_YYY_add(&t1,&t2,&t2);			//t1.add(t2); //t1.norm();//26
+        FP_YYY_add(&t2,&t2,&t1);			//t2.add(t1); //t2.norm();//27
+
+        FP_YYY_sub(&y3,&y3,&t2);			//y3.sub(t2); //y3.norm(); //28
+
+        FP_YYY_sub(&y3,&y3,&t0);			//y3.sub(t0);
+        FP_YYY_norm(&y3);					//y3.norm(); //29
+        //FP_YYY_copy(&t1,&y3);				//t1.copy(y3);
+        FP_YYY_add(&t1,&y3,&y3);			//t1.add(y3); //t1.norm();//30
+        FP_YYY_add(&y3,&y3,&t1);			//y3.add(t1);
+        FP_YYY_norm(&y3);					//y3.norm(); //31
+
+        //FP_YYY_copy(&t1,&t0);				//t1.copy(t0);
+        FP_YYY_add(&t1,&t0,&t0);			//t1.add(t0); //t1.norm(); //32
+        FP_YYY_add(&t0,&t0,&t1);			//t0.add(t1); //t0.norm();//33
+        FP_YYY_sub(&t0,&t0,&t2);			//t0.sub(t2);
+        FP_YYY_norm(&t0);					//t0.norm();//34
+        //FP_YYY_copy(&t1,&t4);				//t1.copy(t4);
+        FP_YYY_mul(&t1,&t4,&y3);			//t1.mul(y3);//35
+        //FP_YYY_copy(&t2,&t0);				//t2.copy(t0);
+        FP_YYY_mul(&t2,&t0,&y3);			//t2.mul(y3);//36
+        //FP_YYY_copy(&y3,&x3);				//y3.copy(x3);
+        FP_YYY_mul(&y3,&x3,&z3);			//y3.mul(z3);//37
+        FP_YYY_add(&(P->y),&y3,&t2);			//y3.add(t2); //y3.norm();//38
+        FP_YYY_mul(&x3,&x3,&t3);			//x3.mul(t3);//39
+        FP_YYY_sub(&(P->x),&x3,&t1);			//x3.sub(t1);//40
+        FP_YYY_mul(&z3,&z3,&t4);			//z3.mul(t4);//41
+        //FP_YYY_copy(&t1,&t3);				//t1.copy(t3);
+        FP_YYY_mul(&t1,&t3,&t0);			//t1.mul(t0);//42
+        FP_YYY_add(&(P->z),&z3,&t1);			//z3.add(t1);
+        //FP_YYY_copy(&(P->x),&x3);			//x.copy(x3);
+        FP_YYY_norm(&(P->x));				//x.norm();
+        //FP_YYY_copy(&(P->y),&y3);			//y.copy(y3);
+        FP_YYY_norm(&(P->y));				//y.norm();
+        //FP_YYY_copy(&(P->z),&z3);			//z.copy(z3);
+        FP_YYY_norm(&(P->z));				//z.norm();
+    }
 
 #else
-	BIG b,A,B,C,D,E,F,G,H,I;
+    FP_YYY A,B,C,D,E,F,G,b;
 
-	BIG_rcopy(b,CURVE_B); FP_nres(b);
-	FP_mul(A,P->z,Q->z);
+/*
+    if (ECP_ZZZ_isinf(Q)) return;
+    if (ECP_ZZZ_isinf(P))
+    {
+        ECP_ZZZ_copy(P,Q);
+        return;
+    }
+*/
 
-	FP_sqr(B,A);
-	FP_mul(C,P->x,Q->x);
-	FP_mul(D,P->y,Q->y);
-	FP_mul(E,C,D); FP_mul(E,E,b);
+    //FP_YYY_copy(&A,&(P->z));		//FP A=new FP(z);
+    //FP_YYY_copy(&C,&(P->x));		//FP C=new FP(x);
+    //FP_YYY_copy(&D,&(P->y));		//FP D=new FP(y);
 
-	FP_sub(F,B,E);
-	FP_add(G,B,E);
+    FP_YYY_mul(&A,&(P->z),&(Q->z));		//A.mul(Q.z);
+    //FP_YYY_copy(&B,&A);				//B.copy(A);
+    FP_YYY_sqr(&B,&A);				//B.sqr();
+    FP_YYY_mul(&C,&(P->x),&(Q->x));		//C.mul(Q.x);
+    FP_YYY_mul(&D,&(P->y),&(Q->y));		//D.mul(Q.y);
 
-	FP_add(C,C,D);
+    //FP_YYY_copy(&E,&C);				//E.copy(C);
+    FP_YYY_mul(&E,&C,&D);			//E.mul(D);
 
-	if (CURVE_A==1) FP_sub(E,D,C);
+    if (CURVE_B_I_ZZZ==0)			//if (ROM.CURVE_B_I==0)
+    {
+        FP_YYY_rcopy(&b,CURVE_B_ZZZ);	//FP b=new FP(new BIG(ROM.CURVE_B));
+        FP_YYY_mul(&E,&E,&b);			//E.mul(b);
+    }
+    else
+        FP_YYY_imul(&E,&E,CURVE_B_I_ZZZ);	//E.imul(ROM.CURVE_B_I);
 
-	FP_add(B,P->x,P->y);
-	FP_add(D,Q->x,Q->y);
-	FP_mul(B,B,D);
-	FP_sub(B,B,C);
-	FP_mul(B,B,F);
-	FP_mul(P->x,A,B);
+    //FP_YYY_copy(&F,&B);				//F.copy(B);
+    FP_YYY_sub(&F,&B,&E);			//F.sub(E);
+    //FP_YYY_copy(&G,&B);				//G.copy(B);
+    FP_YYY_add(&G,&B,&E);			//G.add(E);
 
+    if (CURVE_A_ZZZ==1)				//if (ROM.CURVE_A==1)
+    {
+        //FP_YYY_copy(&E,&D);			//E.copy(D);
+        FP_YYY_sub(&E,&D,&C);		//E.sub(C);
+    }
+    FP_YYY_add(&C,&C,&D);			//C.add(D);
 
-	if (CURVE_A==1) FP_mul(C,E,G);
-	if (CURVE_A==-1)FP_mul(C,C,G);
+    //FP_YYY_copy(&B,&(P->x));		//B.copy(x);
+    FP_YYY_add(&B,&(P->x),&(P->y));		//B.add(y);
+    //FP_YYY_copy(&D,&(Q->x));		//D.copy(Q.x);
+    FP_YYY_add(&D,&(Q->x),&(Q->y));		//D.add(Q.y);
+    FP_YYY_norm(&B);				//B.norm();
+    FP_YYY_norm(&D);				//D.norm();
+    FP_YYY_mul(&B,&B,&D);			//B.mul(D);
+    FP_YYY_sub(&B,&B,&C);			//B.sub(C);
+    FP_YYY_norm(&B);				//B.norm();
+    FP_YYY_norm(&F);				//F.norm();
+    FP_YYY_mul(&B,&B,&F);			//B.mul(F);
+    //FP_YYY_copy(&(P->x),&A);		//x.copy(A);
+    FP_YYY_mul(&(P->x),&A,&B); //x.mul(B);
+    FP_YYY_norm(&G);				//G.norm();
 
-	FP_mul(P->y,A,C);
-	FP_mul(P->z,F,G);
+    if (CURVE_A_ZZZ==1)				//if (ROM.CURVE_A==1)
+    {
+        FP_YYY_norm(&E);			//E.norm();
+        //FP_YYY_copy(&C,&E);			//C.copy(E);
+        FP_YYY_mul(&C,&E,&G);		//C.mul(G);
+    }
+    if (CURVE_A_ZZZ==-1)			//if (ROM.CURVE_A==-1)
+    {
+        FP_YYY_norm(&C);			//C.norm();
+        FP_YYY_mul(&C,&C,&G);		//C.mul(G);
+    }
+    //FP_YYY_copy(&(P->y),&A);		//y.copy(A);
+    FP_YYY_mul(&(P->y),&A,&C);	//y.mul(C);
 
-	BIG_norm(P->x);
-	BIG_norm(P->y);
-	BIG_norm(P->z);
+    //FP_YYY_copy(&(P->z),&F);		//z.copy(F);
+    FP_YYY_mul(&(P->z),&F,&G);	//z.mul(G);
 
 #endif
 }
 
 /* Set P-=Q */
 /* SU=16 */
-void  ECP_sub(ECP *P,ECP *Q)
+void  ECP_ZZZ_sub(ECP_ZZZ *P,ECP_ZZZ *Q)
 {
-	ECP_neg(Q);
-	ECP_add(P,Q);
-	ECP_neg(Q);
+    ECP_ZZZ_neg(Q);
+    ECP_ZZZ_add(P,Q);
+    ECP_ZZZ_neg(Q);
 }
 
 #endif
 
-
-#if CURVETYPE==WEIERSTRASS
-/* normalises array of points. Assumes P[0] is normalised already */
-
-static void ECP_multiaffine(int m,ECP P[],BIG work[])
-{
-	int i;
-	BIG t1,t2;
-
-	FP_one(work[0]);
-	BIG_copy(work[1],P[0].z);
-	for (i=2;i<m;i++)
-		FP_mul(work[i],work[i-1],P[i-1].z);
-
-	FP_mul(t1,work[m-1],P[m-1].z);
-	FP_inv(t1,t1);
-
-	BIG_copy(t2,P[m-1].z);
-	FP_mul(work[m-1],work[m-1],t1);
-
-	for (i=m-2;;i--)
-    {
-		if (i==0)
-		{
-			FP_mul(work[0],t1,t2);
-			break;
-		}
-		FP_mul(work[i],work[i],t2);
-		FP_mul(work[i],work[i],t1);
-		FP_mul(t2,P[i].z,t2);
-    }
-/* now work[] contains inverses of all Z coordinates */
-
-	for (i=0;i<m;i++)
-	{
-		FP_one(P[i].z);
-		FP_sqr(t1,work[i]);
-		FP_mul(P[i].x,P[i].x,t1);
-		FP_mul(t1,work[i],t1);
-		FP_mul(P[i].y,P[i].y,t1);
-    }
-}
-
-#endif
-
-#if CURVETYPE!=MONTGOMERY
+#if CURVETYPE_ZZZ!=MONTGOMERY
 /* constant time multiply by small integer of length bts - use ladder */
-void ECP_pinmul(ECP *P,int e,int bts)
+void ECP_ZZZ_pinmul(ECP_ZZZ *P,int e,int bts)
 {
-	int nb,i,b;
-	ECP R0,R1;
+    int i,b;
+    ECP_ZZZ R0,R1;
 
-	ECP_affine(P);
-	ECP_inf(&R0);
-	ECP_copy(&R1,P);
+    ECP_ZZZ_affine(P);
+    ECP_ZZZ_inf(&R0);
+    ECP_ZZZ_copy(&R1,P);
 
-    for (i=bts-1;i>=0;i--)
-	{
-		b=(e>>i)&1;
-		ECP_copy(P,&R1);
-		ECP_add(P,&R0);
-		ECP_cswap(&R0,&R1,b);
-		ECP_copy(&R1,P);
-		ECP_dbl(&R0);
-		ECP_cswap(&R0,&R1,b);
-	}
-	ECP_copy(P,&R0);
-	ECP_affine(P);
+    for (i=bts-1; i>=0; i--)
+    {
+        b=(e>>i)&1;
+        ECP_ZZZ_copy(P,&R1);
+        ECP_ZZZ_add(P,&R0);
+        ECP_ZZZ_cswap(&R0,&R1,b);
+        ECP_ZZZ_copy(&R1,P);
+        ECP_ZZZ_dbl(&R0);
+        ECP_ZZZ_cswap(&R0,&R1,b);
+    }
+    ECP_ZZZ_copy(P,&R0);
+    ECP_ZZZ_affine(P);
 }
 #endif
 
 /* Set P=r*P */
 /* SU=424 */
-void ECP_mul(ECP *P,BIG e)
+void ECP_ZZZ_mul(ECP_ZZZ *P,BIG_XXX e)
 {
-#if CURVETYPE==MONTGOMERY
-/* Montgomery ladder */
-	int nb,i,b;
-	ECP R0,R1,D;
-	if (ECP_isinf(P)) return;
-	if (BIG_iszilch(e))
-	{
-		ECP_inf(P);
-		return;
-	}
-	ECP_affine(P);
-
-	ECP_copy(&R0,P);
-	ECP_copy(&R1,P);
-	ECP_dbl(&R1);
-	ECP_copy(&D,P);
-
-	nb=BIG_nbits(e);
-    for (i=nb-2;i>=0;i--)
+#if CURVETYPE_ZZZ==MONTGOMERY
+    /* Montgomery ladder */
+    int nb,i,b;
+    ECP_ZZZ R0,R1,D;
+    if (ECP_ZZZ_isinf(P)) return;
+    if (BIG_XXX_iszilch(e))
     {
-		b=BIG_bit(e,i);
-		ECP_copy(P,&R1);
-		ECP_add(P,&R0,&D);
-		ECP_cswap(&R0,&R1,b);
-		ECP_copy(&R1,P);
-		ECP_dbl(&R0);
-		ECP_cswap(&R0,&R1,b);
-	}
-	ECP_copy(P,&R0);
+        ECP_ZZZ_inf(P);
+        return;
+    }
+    ECP_ZZZ_affine(P);
+
+    ECP_ZZZ_copy(&R0,P);
+    ECP_ZZZ_copy(&R1,P);
+    ECP_ZZZ_dbl(&R1);
+
+    ECP_ZZZ_copy(&D,P);
+    ECP_ZZZ_affine(&D);
+
+    nb=BIG_XXX_nbits(e);
+    for (i=nb-2; i>=0; i--)
+    {
+        b=BIG_XXX_bit(e,i);
+        ECP_ZZZ_copy(P,&R1);
+        ECP_ZZZ_add(P,&R0,&D);
+        ECP_ZZZ_cswap(&R0,&R1,b);
+        ECP_ZZZ_copy(&R1,P);
+        ECP_ZZZ_dbl(&R0);
+
+        ECP_ZZZ_cswap(&R0,&R1,b);
+    }
+
+    ECP_ZZZ_copy(P,&R0);
 
 #else
-/* fixed size windows */
-	int i,b,nb,m,s,ns;
-	BIG mt,t;
-	ECP Q,W[8],C;
-	sign8 w[1+(NLEN*BASEBITS+3)/4];
-#if CURVETYPE==WEIERSTRASS
-	BIG work[8];
+    /* fixed size windows */
+    int i,nb,s,ns;
+    BIG_XXX mt,t;
+    ECP_ZZZ Q,W[8],C;
+    sign8 w[1+(NLEN_XXX*BASEBITS_XXX+3)/4];
+
+    if (ECP_ZZZ_isinf(P)) return;
+    if (BIG_XXX_iszilch(e))
+    {
+        ECP_ZZZ_inf(P);
+        return;
+    }
+
+    ECP_ZZZ_affine(P);
+
+    /* precompute table */
+
+    ECP_ZZZ_copy(&Q,P);
+    ECP_ZZZ_dbl(&Q);
+
+    ECP_ZZZ_copy(&W[0],P);
+
+    for (i=1; i<8; i++)
+    {
+        ECP_ZZZ_copy(&W[i],&W[i-1]);
+        ECP_ZZZ_add(&W[i],&Q);
+    }
+
+//printf("W[1]= ");ECP_output(&W[1]); printf("\n");
+
+    /* make exponent odd - add 2P if even, P if odd */
+    BIG_XXX_copy(t,e);
+    s=BIG_XXX_parity(t);
+    BIG_XXX_inc(t,1);
+    BIG_XXX_norm(t);
+    ns=BIG_XXX_parity(t);
+    BIG_XXX_copy(mt,t);
+    BIG_XXX_inc(mt,1);
+    BIG_XXX_norm(mt);
+    BIG_XXX_cmove(t,mt,s);
+    ECP_ZZZ_cmove(&Q,P,ns);
+    ECP_ZZZ_copy(&C,&Q);
+
+    nb=1+(BIG_XXX_nbits(t)+3)/4;
+
+    /* convert exponent to signed 4-bit window */
+    for (i=0; i<nb; i++)
+    {
+        w[i]=BIG_XXX_lastbits(t,5)-16;
+        BIG_XXX_dec(t,w[i]);
+        BIG_XXX_norm(t);
+        BIG_XXX_fshr(t,4);
+    }
+    w[nb]=BIG_XXX_lastbits(t,5);
+
+    ECP_ZZZ_copy(P,&W[(w[nb]-1)/2]);
+    for (i=nb-1; i>=0; i--)
+    {
+        ECP_ZZZ_select(&Q,W,w[i]);
+        ECP_ZZZ_dbl(P);
+        ECP_ZZZ_dbl(P);
+        ECP_ZZZ_dbl(P);
+        ECP_ZZZ_dbl(P);
+        ECP_ZZZ_add(P,&Q);
+    }
+    ECP_ZZZ_sub(P,&C); /* apply correction */
 #endif
-	if (ECP_isinf(P)) return;
-	if (BIG_iszilch(e))
-	{
-		ECP_inf(P);
-		return;
-	}
-
-	ECP_affine(P);
-
-/* precompute table */
-
-	ECP_copy(&Q,P);
-	ECP_dbl(&Q);
-	ECP_copy(&W[0],P);
-
-	for (i=1;i<8;i++)
-	{
-		ECP_copy(&W[i],&W[i-1]);
-		ECP_add(&W[i],&Q);
-	}
-
-/* convert the table to affine */
-#if CURVETYPE==WEIERSTRASS
-	ECP_multiaffine(8,W,work);
-#endif
-
-/* make exponent odd - add 2P if even, P if odd */
-	BIG_copy(t,e);
-	s=BIG_parity(t);
-	BIG_inc(t,1); BIG_norm(t); ns=BIG_parity(t); BIG_copy(mt,t); BIG_inc(mt,1); BIG_norm(mt);
-	BIG_cmove(t,mt,s);
-	ECP_cmove(&Q,P,ns);
-	ECP_copy(&C,&Q);
-
-	nb=1+(BIG_nbits(t)+3)/4;
-
-/* convert exponent to signed 4-bit window */
-	for (i=0;i<nb;i++)
-	{
-		w[i]=BIG_lastbits(t,5)-16;
-		BIG_dec(t,w[i]); BIG_norm(t);
-		BIG_fshr(t,4);
-	}
-	w[nb]=BIG_lastbits(t,5);
-
-	ECP_copy(P,&W[(w[nb]-1)/2]);
-	for (i=nb-1;i>=0;i--)
-	{
-		ECP_select(&Q,W,w[i]);
-		ECP_dbl(P);
-		ECP_dbl(P);
-		ECP_dbl(P);
-		ECP_dbl(P);
-		ECP_add(P,&Q);
-	}
-	ECP_sub(P,&C); /* apply correction */
-#endif
-	ECP_affine(P);
+    ECP_ZZZ_affine(P);
 }
 
-#if CURVETYPE!=MONTGOMERY
+#if CURVETYPE_ZZZ!=MONTGOMERY
 /* Set P=eP+fQ double multiplication */
 /* constant time - as useful for GLV method in pairings */
 /* SU=456 */
 
-void ECP_mul2(ECP *P,ECP *Q,BIG e,BIG f)
+void ECP_ZZZ_mul2(ECP_ZZZ *P,ECP_ZZZ *Q,BIG_XXX e,BIG_XXX f)
 {
-	BIG te,tf,mt;
-	ECP S,T,W[8],C;
-	sign8 w[1+(NLEN*BASEBITS+1)/2];
-	int i,a,b,s,ns,nb;
-#if CURVETYPE==WEIERSTRASS
-	BIG work[8];
-#endif
+    BIG_XXX te,tf,mt;
+    ECP_ZZZ S,T,W[8],C;
+    sign8 w[1+(NLEN_XXX*BASEBITS_XXX+1)/2];
+    int i,a,b,s,ns,nb;
 
-	ECP_affine(P);
-	ECP_affine(Q);
+    ECP_ZZZ_affine(P);
+    ECP_ZZZ_affine(Q);
 
-	BIG_copy(te,e);
-	BIG_copy(tf,f);
+    BIG_XXX_copy(te,e);
+    BIG_XXX_copy(tf,f);
 
-/* precompute table */
-	ECP_copy(&W[1],P); ECP_sub(&W[1],Q);  /* P+Q */
-	ECP_copy(&W[2],P); ECP_add(&W[2],Q);  /* P-Q */
-	ECP_copy(&S,Q); ECP_dbl(&S);  /* S=2Q */
-	ECP_copy(&W[0],&W[1]); ECP_sub(&W[0],&S);
-	ECP_copy(&W[3],&W[2]); ECP_add(&W[3],&S);
-	ECP_copy(&T,P); ECP_dbl(&T); /* T=2P */
-	ECP_copy(&W[5],&W[1]); ECP_add(&W[5],&T);
-	ECP_copy(&W[6],&W[2]); ECP_add(&W[6],&T);
-	ECP_copy(&W[4],&W[5]); ECP_sub(&W[4],&S);
-	ECP_copy(&W[7],&W[6]); ECP_add(&W[7],&S);
+    /* precompute table */
+    ECP_ZZZ_copy(&W[1],P);
+    ECP_ZZZ_sub(&W[1],Q);  /* P+Q */
+    ECP_ZZZ_copy(&W[2],P);
+    ECP_ZZZ_add(&W[2],Q);  /* P-Q */
+    ECP_ZZZ_copy(&S,Q);
+    ECP_ZZZ_dbl(&S);  /* S=2Q */
+    ECP_ZZZ_copy(&W[0],&W[1]);
+    ECP_ZZZ_sub(&W[0],&S);
+    ECP_ZZZ_copy(&W[3],&W[2]);
+    ECP_ZZZ_add(&W[3],&S);
+    ECP_ZZZ_copy(&T,P);
+    ECP_ZZZ_dbl(&T); /* T=2P */
+    ECP_ZZZ_copy(&W[5],&W[1]);
+    ECP_ZZZ_add(&W[5],&T);
+    ECP_ZZZ_copy(&W[6],&W[2]);
+    ECP_ZZZ_add(&W[6],&T);
+    ECP_ZZZ_copy(&W[4],&W[5]);
+    ECP_ZZZ_sub(&W[4],&S);
+    ECP_ZZZ_copy(&W[7],&W[6]);
+    ECP_ZZZ_add(&W[7],&S);
 
-#if CURVETYPE==WEIERSTRASS
-	ECP_multiaffine(8,W,work);
-#endif
+    /* if multiplier is odd, add 2, else add 1 to multiplier, and add 2P or P to correction */
 
-/* if multiplier is odd, add 2, else add 1 to multiplier, and add 2P or P to correction */
+    s=BIG_XXX_parity(te);
+    BIG_XXX_inc(te,1);
+    BIG_XXX_norm(te);
+    ns=BIG_XXX_parity(te);
+    BIG_XXX_copy(mt,te);
+    BIG_XXX_inc(mt,1);
+    BIG_XXX_norm(mt);
+    BIG_XXX_cmove(te,mt,s);
+    ECP_ZZZ_cmove(&T,P,ns);
+    ECP_ZZZ_copy(&C,&T);
 
-	s=BIG_parity(te);
-	BIG_inc(te,1); BIG_norm(te); ns=BIG_parity(te); BIG_copy(mt,te); BIG_inc(mt,1); BIG_norm(mt);
-	BIG_cmove(te,mt,s);
-	ECP_cmove(&T,P,ns);
-	ECP_copy(&C,&T);
+    s=BIG_XXX_parity(tf);
+    BIG_XXX_inc(tf,1);
+    BIG_XXX_norm(tf);
+    ns=BIG_XXX_parity(tf);
+    BIG_XXX_copy(mt,tf);
+    BIG_XXX_inc(mt,1);
+    BIG_XXX_norm(mt);
+    BIG_XXX_cmove(tf,mt,s);
+    ECP_ZZZ_cmove(&S,Q,ns);
+    ECP_ZZZ_add(&C,&S);
 
-	s=BIG_parity(tf);
-	BIG_inc(tf,1); BIG_norm(tf); ns=BIG_parity(tf); BIG_copy(mt,tf); BIG_inc(mt,1); BIG_norm(mt);
-	BIG_cmove(tf,mt,s);
-	ECP_cmove(&S,Q,ns);
-	ECP_add(&C,&S);
+    BIG_XXX_add(mt,te,tf);
+    BIG_XXX_norm(mt);
+    nb=1+(BIG_XXX_nbits(mt)+1)/2;
 
-	BIG_add(mt,te,tf); BIG_norm(mt);
-	nb=1+(BIG_nbits(mt)+1)/2;
+    /* convert exponent to signed 2-bit window */
+    for (i=0; i<nb; i++)
+    {
+        a=BIG_XXX_lastbits(te,3)-4;
+        BIG_XXX_dec(te,a);
+        BIG_XXX_norm(te);
+        BIG_XXX_fshr(te,2);
+        b=BIG_XXX_lastbits(tf,3)-4;
+        BIG_XXX_dec(tf,b);
+        BIG_XXX_norm(tf);
+        BIG_XXX_fshr(tf,2);
+        w[i]=4*a+b;
+    }
+    w[nb]=(4*BIG_XXX_lastbits(te,3)+BIG_XXX_lastbits(tf,3));
 
-/* convert exponent to signed 2-bit window */
-	for (i=0;i<nb;i++)
-	{
-		a=BIG_lastbits(te,3)-4;
-		BIG_dec(te,a); BIG_norm(te);
-		BIG_fshr(te,2);
-		b=BIG_lastbits(tf,3)-4;
-		BIG_dec(tf,b); BIG_norm(tf);
-		BIG_fshr(tf,2);
-		w[i]=4*a+b;
-	}
-	w[nb]=(4*BIG_lastbits(te,3)+BIG_lastbits(tf,3));
-
-	ECP_copy(P,&W[(w[nb]-1)/2]);
-	for (i=nb-1;i>=0;i--)
-	{
-		ECP_select(&T,W,w[i]);
-		ECP_dbl(P);
-		ECP_dbl(P);
-		ECP_add(P,&T);
-	}
-	ECP_sub(P,&C); /* apply correction */
-	ECP_affine(P);
+    ECP_ZZZ_copy(P,&W[(w[nb]-1)/2]);
+    for (i=nb-1; i>=0; i--)
+    {
+        ECP_ZZZ_select(&T,W,w[i]);
+        ECP_ZZZ_dbl(P);
+        ECP_ZZZ_dbl(P);
+        ECP_ZZZ_add(P,&T);
+    }
+    ECP_ZZZ_sub(P,&C); /* apply correction */
+    ECP_ZZZ_affine(P);
 }
 
 #endif
+
+void ECP_ZZZ_generator(ECP_ZZZ *G)
+{
+	BIG_XXX x,y;
+	BIG_XXX_rcopy(x,CURVE_Gx_ZZZ);
+#if CURVETYPE_ZZZ!=MONTGOMERY
+	BIG_XXX_rcopy(y,CURVE_Gy_ZZZ);
+    ECP_ZZZ_set(G,x,y);
+#else
+	ECP_ZZZ_set(G,x);
+#endif
+}
 
 #ifdef HAS_MAIN
 
 int main()
 {
-	int i;
-	ECP G,P;
-	csprng RNG;
-	BIG r,s,x,y,b,m,w,q;
-	BIG_rcopy(x,CURVE_Gx);
-#if CURVETYPE!=MONTGOMERY
-	BIG_rcopy(y,CURVE_Gy);
+    int i;
+    ECP_ZZZ G,P;
+    csprng RNG;
+    BIG_XXX r,s,x,y,b,m,w,q;
+    BIG_XXX_rcopy(x,CURVE_Gx);
+#if CURVETYPE_ZZZ!=MONTGOMERY
+    BIG_XXX_rcopy(y,CURVE_Gy);
 #endif
-	BIG_rcopy(m,Modulus);
+    BIG_XXX_rcopy(m,Modulus_YYY);
 
-	printf("x= ");BIG_output(x); printf("\n");
-#if CURVETYPE!=MONTGOMERY
-	printf("y= ");BIG_output(y); printf("\n");
+    printf("x= ");
+    BIG_XXX_output(x);
+    printf("\n");
+#if CURVETYPE_ZZZ!=MONTGOMERY
+    printf("y= ");
+    BIG_XXX_output(y);
+    printf("\n");
 #endif
-	RNG_seed(&RNG,3,"abc");
+    RNG_seed(&RNG,3,"abc");
 
-#if CURVETYPE!=MONTGOMERY
-	ECP_set(&G,x,y);
+#if CURVETYPE_ZZZ!=MONTGOMERY
+    ECP_ZZZ_set(&G,x,y);
 #else
-	ECP_set(&G,x);
+    ECP_ZZZ_set(&G,x);
 #endif
-	if (ECP_isinf(&G)) printf("Failed to set - point not on curve\n");
-	else printf("set success\n");
+    if (ECP_ZZZ_isinf(&G)) printf("Failed to set - point not on curve\n");
+    else printf("set success\n");
 
-	ECP_output(&G);
+    ECP_ZZZ_output(&G);
 
-	BIG_rcopy(r,CURVE_Order); //BIG_dec(r,7);
-	printf("r= ");BIG_output(r); printf("\n");
+    BIG_XXX_rcopy(r,CURVE_Order); //BIG_dec(r,7);
+    printf("r= ");
+    BIG_XXX_output(r);
+    printf("\n");
 
-	ECP_copy(&P,&G);
+    ECP_ZZZ_copy(&P,&G);
 
-	ECP_mul(&P,r);
+    ECP_ZZZ_mul(&P,r);
 
-	ECP_output(&P);
+    ECP_ZZZ_output(&P);
 //exit(0);
-	BIG_randomnum(w,&RNG);
-	BIG_mod(w,r);
+    BIG_XXX_randomnum(w,&RNG);
+    BIG_XXX_mod(w,r);
 
-	ECP_copy(&P,&G);
-	ECP_mul(&P,w);
+    ECP_ZZZ_copy(&P,&G);
+    ECP_ZZZ_mul(&P,w);
 
-	ECP_output(&P);
+    ECP_ZZZ_output(&P);
 
-	return 0;
+    return 0;
 }
 
 #endif
