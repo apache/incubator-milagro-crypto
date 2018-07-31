@@ -18,6 +18,7 @@
 */
 
 var HASH512 = function(ctx) {
+    "use strict";
 
     var HASH512 = function() {
         this.length = [];
@@ -274,3 +275,7 @@ var HASH512 = function(ctx) {
 
     return HASH512;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.HASH512 = HASH512;
+}

@@ -140,7 +140,6 @@ void HASH256_process(hash256 *sh,int byt)
 {
     /* process the next message byte */
     int cnt;
-//printf("byte= %x\n",byt);
     cnt=(int)((sh->length[0]/32)%16);
 
     sh->w[cnt]<<=8;

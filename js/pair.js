@@ -18,6 +18,7 @@
 */
 
 var PAIR = function(ctx) {
+    "use strict";
 
     var PAIR = {
         /* Line function */
@@ -128,7 +129,7 @@ var PAIR = function(ctx) {
         /* Optimal R-ate pairing */
         ate: function(P, Q) {
             var fa, fb, f, x, n, n3, K, lv,
-                Qx, Qy, A, r, nb,
+                Qx, Qy, A, r, nb, bt,
                 i;
 
             x = new ctx.BIG(0);
@@ -138,20 +139,20 @@ var PAIR = function(ctx) {
 
             if (ctx.ECP.CURVE_PAIRING_TYPE == ctx.ECP.BN) {
 
-				fa = new ctx.BIG(0);
-				fa.rcopy(ctx.ROM_FIELD.Fra);
-				fb = new ctx.BIG(0);
-				fb.rcopy(ctx.ROM_FIELD.Frb);
-				f = new ctx.FP2(fa, fb); //f.bset(fa,fb);
+                fa = new ctx.BIG(0);
+                fa.rcopy(ctx.ROM_FIELD.Fra);
+                fb = new ctx.BIG(0);
+                fb.rcopy(ctx.ROM_FIELD.Frb);
+                f = new ctx.FP2(fa, fb); //f.bset(fa,fb);
 
-				if (ctx.ECP.SEXTIC_TWIST == ctx.ECP.M_TYPE) {
-					f.inverse();
-					f.norm();
-				}
+                if (ctx.ECP.SEXTIC_TWIST == ctx.ECP.M_TYPE) {
+                    f.inverse();
+                    f.norm();
+                }
 
                 n.pmul(6);
                 if (ctx.ECP.SIGN_OF_X == ctx.ECP.POSITIVEX) {
-                    n.inc(2)
+                    n.inc(2);
                 } else {
                     n.dec(2);
                 }
@@ -175,13 +176,13 @@ var PAIR = function(ctx) {
             A.copy(P);
             nb = n3.nbits();
 
-            for (var i = nb - 2; i >= 1; i--) {
+            for (i = nb - 2; i >= 1; i--) {
                 r.sqr();
                 lv = PAIR.line(A, A, Qx, Qy);
 
                 r.smul(lv,ctx.ECP.SEXTIC_TWIST);
 
-                var bt=n3.bit(i)-n.bit(i);
+                bt=n3.bit(i)-n.bit(i);
 
                 if (bt == 1) {
                     lv = PAIR.line(A, P, Qx, Qy);
@@ -195,10 +196,9 @@ var PAIR = function(ctx) {
                 }
             }
 
-			if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX)
-			{
-				r.conj();
-			}
+            if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX) {
+                r.conj();
+            }
 
             /* R-ate fixup */
             if (ctx.ECP.CURVE_PAIRING_TYPE == ctx.ECP.BN) {
@@ -235,20 +235,20 @@ var PAIR = function(ctx) {
             K = new ctx.ECP2();
 
             if (ctx.ECP.CURVE_PAIRING_TYPE == ctx.ECP.BN) {
-				fa = new ctx.BIG(0);
-				fa.rcopy(ctx.ROM_FIELD.Fra);
-				fb = new ctx.BIG(0);
-				fb.rcopy(ctx.ROM_FIELD.Frb);
-				f = new ctx.FP2(fa, fb); //f.bset(fa,fb);
+                fa = new ctx.BIG(0);
+                fa.rcopy(ctx.ROM_FIELD.Fra);
+                fb = new ctx.BIG(0);
+                fb.rcopy(ctx.ROM_FIELD.Frb);
+                f = new ctx.FP2(fa, fb); //f.bset(fa,fb);
 
-				if (ctx.ECP.SEXTIC_TWIST == ctx.ECP.M_TYPE) {
-					f.inverse();
-					f.norm();
-				}
+                if (ctx.ECP.SEXTIC_TWIST == ctx.ECP.M_TYPE) {
+                    f.inverse();
+                    f.norm();
+                }
 
                 n.pmul(6);
                 if (ctx.ECP.SIGN_OF_X == ctx.ECP.POSITIVEX) {
-                    n.inc(2)
+                    n.inc(2);
                 } else {
                     n.dec(2);
                 }
@@ -275,7 +275,7 @@ var PAIR = function(ctx) {
             B.copy(R);
             nb = n3.nbits();
 
-            for (var i = nb - 2; i >= 1; i--) {
+            for (i = nb - 2; i >= 1; i--) {
                 r.sqr();
                 lv = PAIR.line(A, A, Qx, Qy);
                 r.smul(lv,ctx.ECP.SEXTIC_TWIST);
@@ -302,16 +302,15 @@ var PAIR = function(ctx) {
                 }
             }
 
-			if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX)
-			{
-				r.conj();
-			}
+            if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX) {
+                r.conj();
+            }
 
 
             /* R-ate fixup required for BN curves */
             if (ctx.ECP.CURVE_PAIRING_TYPE == ctx.ECP.BN) {
                 if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX) {
-              //      r.conj();
+                    // r.conj();
                     A.neg();
                     B.neg();
                 }
@@ -709,7 +708,7 @@ var PAIR = function(ctx) {
                     u[i].copy(t);
                     g[i].conj();
                 }
-                u[i].norm();                
+                u[i].norm();
             }
 
             r = ctx.FP12.pow4(g, u);
@@ -752,3 +751,7 @@ var PAIR = function(ctx) {
 
     return PAIR;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.PAIR = PAIR;
+}

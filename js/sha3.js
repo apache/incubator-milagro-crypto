@@ -27,6 +27,7 @@
  */
 
 var SHA3 = function(ctx) {
+    "use strict";
 
     var SHA3 = function(olen) {
         this.length = 0;
@@ -261,3 +262,7 @@ var SHA3 = function(ctx) {
 
     return SHA3;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.SHA3 = SHA3;
+}

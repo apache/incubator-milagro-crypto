@@ -22,6 +22,7 @@
 /* FP2 elements are of the form a+ib, where i is sqrt(-1) */
 
 var FP2 = function(ctx) {
+    "use strict";
 
     /* general purpose constructor */
     var FP2 = function(c, d) {
@@ -347,7 +348,7 @@ var FP2 = function(ctx) {
 
         div_ip2: function() {
             var t = new FP2(0);
-			this.norm();
+            this.norm();
             t.a.copy(this.a);
             t.a.add(this.b);
             t.b.copy(this.b);
@@ -402,3 +403,7 @@ var FP2 = function(ctx) {
 
     return FP2;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.FP2 = FP2;
+}

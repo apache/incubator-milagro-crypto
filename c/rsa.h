@@ -18,7 +18,7 @@ under the License.
 */
 
 /**
- * @file rsa.h
+ * @file rsa_WWW.h
  * @author Mike Scott
  * @brief RSA Header file for implementation of RSA protocol
  *

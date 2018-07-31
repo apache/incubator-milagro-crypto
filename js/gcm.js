@@ -37,6 +37,7 @@
  */
 
 var GCM = function(ctx) {
+    "use strict";
 
     var GCM = function() {
         this.table = new Array(128);
@@ -425,3 +426,7 @@ var GCM = function(ctx) {
 
     return GCM;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.GCM = GCM;
+}

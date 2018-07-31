@@ -18,7 +18,7 @@
 */
 
 /**
- * @file fp12.h
+ * @file fp12_YYY.h
  * @author Mike Scott
  * @brief FP12 Header File
  *

@@ -18,6 +18,7 @@
 */
 
 var PAIR256 = function(ctx) {
+    "use strict";
 
     var PAIR256 = {
         /* Line function */
@@ -126,8 +127,8 @@ var PAIR256 = function(ctx) {
 
         /* Optimal R-ate pairing */
         ate: function(P, Q) {
-            var fa, fb, f, x, n, n3, K, lv,
-                Qx, Qy, A, r, nb,
+            var x, n, n3, lv,
+                Qx, Qy, A, r, nb, bt,
                 i;
 
             x = new ctx.BIG(0);
@@ -149,13 +150,13 @@ var PAIR256 = function(ctx) {
             A.copy(P);
             nb = n3.nbits();
 
-            for (var i = nb - 2; i >= 1; i--) {
+            for (i = nb - 2; i >= 1; i--) {
                 r.sqr();
                 lv = PAIR256.line(A, A, Qx, Qy);
 
                 r.smul(lv,ctx.ECP.SEXTIC_TWIST);
 
-                var bt=n3.bit(i)-n.bit(i);
+                bt=n3.bit(i)-n.bit(i);
 
                 if (bt == 1) {
                     lv = PAIR256.line(A, P, Qx, Qy);
@@ -169,17 +170,16 @@ var PAIR256 = function(ctx) {
                 }
             }
 
-			if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX)
-			{
-				r.conj();
-			}
+            if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX) {
+                r.conj();
+            }
 
             return r;
         },
 
         /* Optimal R-ate double pairing e(P,Q).e(R,S) */
         ate2: function(P, Q, R, S) {
-            var fa, fb, f, x, n, n3, K, lv,
+            var x, n, n3, lv,
                 Qx, Qy, Sx, Sy, A, B, r, nb, bt,
                 i;
 
@@ -206,7 +206,7 @@ var PAIR256 = function(ctx) {
             B.copy(R);
             nb = n3.nbits();
 
-            for (var i = nb - 2; i >= 1; i--) {
+            for (i = nb - 2; i >= 1; i--) {
                 r.sqr();
                 lv = PAIR256.line(A, A, Qx, Qy);
                 r.smul(lv,ctx.ECP.SEXTIC_TWIST);
@@ -233,18 +233,17 @@ var PAIR256 = function(ctx) {
                 }
             }
 
-			if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX)
-			{
-				r.conj();
-			}
+            if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX) {
+                r.conj();
+            }
 
             return r;
         },
 
         /* final exponentiation - keep separate for multi-pairings and to avoid thrashing stack */
         fexp: function(m) {
-            var fa, fb, f, x, r, lv;
-			var t0,t1,t2,t3,t4,t5,t6,t7;
+            var fa, fb, f, x, r, lv,
+                t1,t2,t3,t7;
 
             fa = new ctx.BIG(0);
             fa.rcopy(ctx.ROM_FIELD.Fra);
@@ -256,7 +255,7 @@ var PAIR256 = function(ctx) {
 
             r = new ctx.FP48(m); //r.copy(m);
 
-        /* Easy part of final exp */
+            /* Easy part of final exp */
             lv = new ctx.FP48(r); //lv.copy(r);
             lv.inverse();
             r.conj();
@@ -265,146 +264,146 @@ var PAIR256 = function(ctx) {
             r.frob(f,8);
             r.mul(lv);
 
-        /* Hard part of final exp */
-        // Ghamman & Fouotsa Method
-			t7=new ctx.FP48(r); t7.usqr();
-			t1=t7.pow(x);
+            /* Hard part of final exp */
+            // Ghamman & Fouotsa Method
+            t7=new ctx.FP48(r); t7.usqr();
+            t1=t7.pow(x);
 
-			x.fshr(1);
-			t2=t1.pow(x);
-			x.fshl(1);
+            x.fshr(1);
+            t2=t1.pow(x);
+            x.fshl(1);
 
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3=new ctx.FP48(t1); t3.conj();
-			t2.mul(t3);
-			t2.mul(r);
+            t3=new ctx.FP48(t1); t3.conj();
+            t2.mul(t3);
+            t2.mul(r);
 
-			r.mul(t7);
+            r.mul(t7);
 
-			t1=t2.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
-			t3.copy(t1);
-			t3.frob(f,14);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t1=t2.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
+            t3.copy(t1);
+            t3.frob(f,14);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t1);
-			t3.frob(f,13);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t3.copy(t1);
+            t3.frob(f,13);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t1);
-			t3.frob(f,12);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t3.copy(t1);
+            t3.frob(f,12);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t1);
-			t3.frob(f,11);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t3.copy(t1);
+            t3.frob(f,11);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t1);
-			t3.frob(f,10);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t3.copy(t1);
+            t3.frob(f,10);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t1);
-			t3.frob(f,9);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t3.copy(t1);
+            t3.frob(f,9);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t1);
-			t3.frob(f,8);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t3.copy(t1);
+            t3.frob(f,8);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t2); t3.conj();
-			t1.mul(t3);
-			t3.copy(t1);
-			t3.frob(f,7);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t3.copy(t2); t3.conj();
+            t1.mul(t3);
+            t3.copy(t1);
+            t3.frob(f,7);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t1);
-			t3.frob(f,6);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t3.copy(t1);
+            t3.frob(f,6);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t1);
-			t3.frob(f,5);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t3.copy(t1);
+            t3.frob(f,5);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t1);
-			t3.frob(f,4);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t3.copy(t1);
+            t3.frob(f,4);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t1);
-			t3.frob(f,3);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t3.copy(t1);
+            t3.frob(f,3);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t1);
-			t3.frob(f,2);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
+            t3.copy(t1);
+            t3.frob(f,2);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
 
-			t3.copy(t1);
-			t3.frob(f,1);
-			r.mul(t3);
-			t1=t1.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
-	
-			r.mul(t1);
-			t2.frob(f,15);
-			r.mul(t2);
+            t3.copy(t1);
+            t3.frob(f,1);
+            r.mul(t3);
+            t1=t1.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
+
+            r.mul(t1);
+            t2.frob(f,15);
+            r.mul(t2);
 
             r.reduce();
             return r;
@@ -414,16 +413,16 @@ var PAIR256 = function(ctx) {
     /* GLV method */
     PAIR256.glv = function(e) {
         var u = [],
-        t, q, v, d, x, x2, i, j;
+            q, x, x2;
 
-// -(x^2).P = (Beta.x,y)
+        // -(x^2).P = (Beta.x,y)
         q = new ctx.BIG(0);
         q.rcopy(ctx.ROM_CURVE.CURVE_Order);
         x = new ctx.BIG(0);
         x.rcopy(ctx.ROM_CURVE.CURVE_Bnx);
         x2 = ctx.BIG.smul(x, x);
-		x = ctx.BIG.smul(x2,x2);
-		x2 = ctx.BIG.smul(x,x);
+        x = ctx.BIG.smul(x2,x2);
+        x2 = ctx.BIG.smul(x,x);
         u[0] = new ctx.BIG(e);
         u[0].mod(x2);
         u[1] = new ctx.BIG(e);
@@ -456,10 +455,10 @@ var PAIR256 = function(ctx) {
             u[3].copy(ctx.BIG.modneg(u[3], q));
             u[5].copy(ctx.BIG.modneg(u[5], q));
             u[7].copy(ctx.BIG.modneg(u[7], q));
-			u[9].copy(ctx.BIG.modneg(u[9],q));
-			u[11].copy(ctx.BIG.modneg(u[11],q));
-			u[13].copy(ctx.BIG.modneg(u[13],q));
-			u[15].copy(ctx.BIG.modneg(u[15],q));
+            u[9].copy(ctx.BIG.modneg(u[9],q));
+            u[11].copy(ctx.BIG.modneg(u[11],q));
+            u[13].copy(ctx.BIG.modneg(u[13],q));
+            u[15].copy(ctx.BIG.modneg(u[15],q));
 
         }
 
@@ -517,7 +516,7 @@ var PAIR256 = function(ctx) {
 
         if (ctx.ROM_CURVE.USE_GS_G2) {
             Q = [];
-			F = ctx.ECP8.frob_constants();
+            F = ctx.ECP8.frob_constants();
 
             q = new ctx.BIG(0);
             q.rcopy(ctx.ROM_CURVE.CURVE_Order);
@@ -586,7 +585,7 @@ var PAIR256 = function(ctx) {
                     u[i].copy(t);
                     g[i].conj();
                 }
-                u[i].norm();                
+                u[i].norm();
             }
 
             r = ctx.FP48.pow16(g, u);
@@ -599,3 +598,7 @@ var PAIR256 = function(ctx) {
 
     return PAIR256;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.PAIR256 = PAIR256;
+}

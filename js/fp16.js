@@ -22,6 +22,7 @@
 /* FP16 elements are of the form a+ib, where i is sqrt(sqrt(-1+sqrt(-1)))  */
 
 var FP16 = function(ctx) {
+    "use strict";
 
     /* general purpose constructor */
     var FP16 = function(c, d) {
@@ -41,7 +42,7 @@ var FP16 = function(ctx) {
             this.b.reduce();
         },
 
-       /* normalise all components of this mod Modulus */
+        /* normalise all components of this mod Modulus */
         norm: function() {
             this.a.norm();
             this.b.norm();
@@ -121,9 +122,10 @@ var FP16 = function(ctx) {
 
         /* this=-this */
         neg: function() {
-			this.norm();
             var m = new ctx.FP8(this.a), //m.copy(this.a);
                 t = new ctx.FP8(0);
+
+            this.norm();
 
             m.add(this.b);
             m.neg();
@@ -161,17 +163,17 @@ var FP16 = function(ctx) {
             this.add(m);
         },
 
-       /* this*=s where s is FP8 */
+        /* this*=s where s is FP8 */
         pmul: function(s) {
             this.a.mul(s);
             this.b.mul(s);
         },
 
-/* this*=s where s is FP2 */
-		qmul: function(s) {
-			this.a.qmul(s);
-			this.b.qmul(s);
-		},
+        /* this*=s where s is FP2 */
+        qmul: function(s) {
+            this.a.qmul(s);
+            this.b.qmul(s);
+        },
 
         /* this*=c where s is int */
         imul: function(c) {
@@ -214,7 +216,7 @@ var FP16 = function(ctx) {
 
         /* this*=y */
         mul: function(y) {
-           
+
             var t1 = new ctx.FP8(this.a), //t1.copy(this.a)
                 t2 = new ctx.FP8(this.b), //t2.copy(this.b)
                 t3 = new ctx.FP8(0),
@@ -273,34 +275,34 @@ var FP16 = function(ctx) {
 
         /* this*=i where i = sqrt(-1+sqrt(-1)) */
         times_i: function() {
-            var s = new ctx.FP8(this.b), 
+            var s = new ctx.FP8(this.b),
                 t = new ctx.FP8(this.a);
 
             s.times_i();
-			this.b.copy(t);
+            this.b.copy(t);
 
             this.a.copy(s);
             this.norm();
         },
 
-		times_i2: function() {
-			this.a.times_i();
-			this.b.times_i();
-		},
+        times_i2: function() {
+            this.a.times_i();
+            this.b.times_i();
+        },
 
-		times_i4: function() {
-			this.a.times_i2();
-			this.b.times_i2();
-		},
+        times_i4: function() {
+            this.a.times_i2();
+            this.b.times_i2();
+        },
 
 
         /* this=this^q using Frobenius, where q is Modulus */
         frob: function(f) {
-			var ff=new ctx.FP2(f); ff.sqr(); ff.norm();
+            var ff=new ctx.FP2(f); ff.sqr(); ff.norm();
             this.a.frob(ff);
             this.b.frob(ff);
             this.b.qmul(f);
-			this.b.times_i();
+            this.b.times_i();
         },
 
         /* this=this^e */
@@ -567,3 +569,7 @@ var FP16 = function(ctx) {
 
     return FP16;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.FP16 = FP16;
+}

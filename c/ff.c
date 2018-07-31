@@ -33,7 +33,7 @@ static int invmod256(int a)
     t1<<=1;
     U=t1+1;
 
-// i=2
+    // i=2
     b=a&3;
     t1=U*b;
     t1>>=2;
@@ -46,7 +46,7 @@ static int invmod256(int a)
     t1<<=2;
     U+=t1;
 
-// i=4
+    // i=4
     b=a&15;
     t1=U*b;
     t1>>=4;
@@ -89,7 +89,7 @@ void BIG_XXX_invmod2m(BIG_XXX a)
         BIG_XXX_norm(t1);
         BIG_XXX_smul(b,t1,U);
         BIG_XXX_copy(t1,b);  // (t1+b)*U
-        BIG_XXX_mod2m(t1,i);				// bottom i bits of (t1+b)*U
+        BIG_XXX_mod2m(t1,i);                // bottom i bits of (t1+b)*U
 
         BIG_XXX_one(b);
         BIG_XXX_shl(b,i);
@@ -104,15 +104,6 @@ void BIG_XXX_invmod2m(BIG_XXX a)
     BIG_XXX_norm(a);
     BIG_XXX_mod2m(a,BIGBITS_XXX);
 }
-
-/*
-void FF_rcopy(BIG x[],const BIG y[],int n)
-{
-	int i;
-	for (i=0;i<n;i++)
-		BIG_rcopy(x[i],y[i]);
-}
-*/
 
 /* x=y */
 void FF_WWW_copy(BIG_XXX x[],BIG_XXX y[],int n)
@@ -254,16 +245,6 @@ static void FF_WWW_rinc(BIG_XXX z[],int zp,BIG_XXX y[],int yp,int n)
     for (i=0; i<n; i++)
         BIG_XXX_add(z[zp+i],z[zp+i],y[yp+i]);
 }
-
-/* recursive sub */
-/*
-static void FF_rsub(BIG z[],int zp,BIG x[],int xp,BIG y[],int yp,int n)
-{
-	int i;
-	for (i=0;i<n;i++)
-		BIG_sub(z[zp+i],x[xp+i],y[yp+i]);
-}
-*/
 
 /* recursive dec */
 static void FF_WWW_rdec(BIG_XXX z[],int zp,BIG_XXX y[],int yp,int n)
@@ -494,7 +475,7 @@ static void FF_WWW_karmul_upper(BIG_XXX z[],BIG_XXX x[],BIG_XXX y[],BIG_XXX t[],
     FF_WWW_rdec(t,0,z,n,n);              /* t=t-a1b1  */
     FF_WWW_rinc(z,nd2,z,0,nd2);   /* z[nd2-n]+=l(a0b0) = h(a0b0)+l(t)-l(a1b1)  */
     FF_WWW_rdec(z,nd2,t,0,nd2);   /* z[nd2-n]=h(a0b0)+l(t)-l(a1b1)-l(t-a1b1)=h(a0b0) */
-    FF_WWW_rnorm(z,0,-n);					/* a0b0 now in z - truncate it */
+    FF_WWW_rnorm(z,0,-n);                    /* a0b0 now in z - truncate it */
     FF_WWW_rdec(t,0,z,0,n);         /* (a0+a1)(b0+b1) - a0b0 */
     FF_WWW_rinc(z,nd2,t,0,n);
 
@@ -509,8 +490,8 @@ void FF_WWW_mul(BIG_XXX z[],BIG_XXX x[],BIG_XXX y[],int n)
 #else
     BIG_XXX t[2*n];
 #endif
-//	FF_norm(x,n); /* change here */
-//	FF_norm(y,n); /* change here */
+    // FF_norm(x,n); /* change here */
+    // FF_norm(y,n); /* change here */
     FF_WWW_karmul(z,0,x,0,y,0,t,0,n);
 }
 
@@ -522,8 +503,8 @@ static void FF_WWW_lmul(BIG_XXX z[],BIG_XXX x[],BIG_XXX y[],int n)
 #else
     BIG_XXX t[2*n];
 #endif
-//	FF_norm(x,n); /* change here */
-//	FF_norm(y,n); /* change here */
+    // FF_norm(x,n); /* change here */
+    // FF_norm(y,n); /* change here */
     FF_WWW_karmul_lower(z,0,x,0,y,0,t,0,n);
 }
 
@@ -562,7 +543,7 @@ void FF_WWW_sqr(BIG_XXX z[],BIG_XXX x[],int n)
 #else
     BIG_XXX t[2*n];
 #endif
-//	FF_norm(x,n); /* change here */
+    // FF_norm(x,n);  /* change here */
     FF_WWW_karsqr(z,0,x,0,t,0,n);
 }
 
@@ -1055,7 +1036,6 @@ int FF_WWW_cfactor(BIG_XXX w[],sign32 s,int n)
     FF_WWW_copy(x,w,n);
     FF_WWW_norm(x,n);
 
-//	if (FF_parity(x)==0) return 1;
     do
     {
         FF_WWW_sub(x,x,y,n);

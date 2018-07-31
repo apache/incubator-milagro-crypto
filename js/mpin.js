@@ -20,6 +20,7 @@
 /* MPIN API Functions */
 
 var MPIN = function(ctx) {
+    "use strict";
 
     var MPIN = {
         BAD_PARAMS: -11,
@@ -338,7 +339,7 @@ var MPIN = function(ctx) {
 
             P.add(Q);
 
-            P.toBytes(R);
+            P.toBytes(R,false);
 
             return 0;
         },
@@ -401,7 +402,7 @@ var MPIN = function(ctx) {
             R = R.pinmul(factor, facbits);
             P.sub(R);
 
-            P.toBytes(TOKEN);
+            P.toBytes(TOKEN,false);
 
             return 0;
         },
@@ -422,14 +423,14 @@ var MPIN = function(ctx) {
             R = R.pinmul(factor, facbits);
             P.add(R);
 
-            P.toBytes(TOKEN);
+            P.toBytes(TOKEN,false);
 
             return 0;
         },
 
         /* Extract Server Secret SST=S*Q where Q is fixed generator in G2 and S is master secret */
         GET_SERVER_SECRET: function(S, SST) {
-			var s,Q;
+            var s,Q;
 
             Q = ctx.ECP2.generator();
 
@@ -472,7 +473,7 @@ var MPIN = function(ctx) {
                 P = ctx.ECP.mapit(G);
             }
 
-            ctx.PAIR.G1mul(P, x).toBytes(W);
+            ctx.PAIR.G1mul(P, x).toBytes(W,false);
 
             return 0;
         },
@@ -490,7 +491,7 @@ var MPIN = function(ctx) {
                 s = ctx.BIG.fromBytes(S);
 
             P = ctx.PAIR.G1mul(P, s);
-            P.toBytes(CTT);
+            P.toBytes(CTT,false);
 
             return 0;
         },
@@ -538,7 +539,7 @@ var MPIN = function(ctx) {
 
                 if (xID != null) {
                     P = ctx.PAIR.G1mul(P, x);
-                    P.toBytes(xID);
+                    P.toBytes(xID,false);
                     W = ctx.PAIR.G1mul(W, x);
                     P.add(W);
                 } else {
@@ -547,16 +548,16 @@ var MPIN = function(ctx) {
                 }
 
                 if (xCID != null) {
-                    P.toBytes(xCID);
+                    P.toBytes(xCID,false);
                 }
             } else {
                 if (xID != null) {
                     P = ctx.PAIR.G1mul(P, x);
-                    P.toBytes(xID);
+                    P.toBytes(xID,false);
                 }
             }
 
-            T.toBytes(SEC);
+            T.toBytes(SEC,false);
 
             return 0;
         },
@@ -581,8 +582,8 @@ var MPIN = function(ctx) {
 
             P = ctx.PAIR.G1mul(P, px);
             P.neg();
-            P.toBytes(SEC);
-            //ctx.PAIR.G1mul(P,px).toBytes(SEC);
+            P.toBytes(SEC,false);
+            //ctx.PAIR.G1mul(P,px).toBytes(SEC,false);
 
             return 0;
         },
@@ -593,15 +594,15 @@ var MPIN = function(ctx) {
                 P = ctx.ECP.mapit(h),
                 R;
 
-            P.toBytes(HID);
+            P.toBytes(HID,false);
             if (date !== 0) {
-                //if (HID!=null) P.toBytes(HID);
+                //if (HID!=null) P.toBytes(HID,false);
                 h = this.hashit(sha, date, h);
                 R = ctx.ECP.mapit(h);
                 P.add(R);
-                P.toBytes(HTID);
+                P.toBytes(HTID,false);
             }
-            //else P.toBytes(HID);
+            //else P.toBytes(HID,false);
         },
 
         /* Implement step 1 of MPin protocol on server side. Pa is the client public key in case of DVS, otherwise must be set to null */
@@ -609,7 +610,7 @@ var MPIN = function(ctx) {
             var Q, sQ, R, y, P, g;
 
             if (typeof Pa === "undefined" || Pa == null) {
-				Q = ctx.ECP2.generator();
+                Q = ctx.ECP2.generator();
 
             } else {
                 Q = ctx.ECP2.fromBytes(Pa);
@@ -1033,7 +1034,7 @@ var MPIN = function(ctx) {
         */
         GET_DVS_KEYPAIR: function(rng, Z, Pa) {
             var r = new ctx.BIG(0),
-                z, A, B, QX, QY, Q;
+                z, Q;
 
             r.rcopy(ctx.ROM_CURVE.CURVE_Order);
 
@@ -1056,3 +1057,7 @@ var MPIN = function(ctx) {
 
     return MPIN;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.MPIN = MPIN;
+}

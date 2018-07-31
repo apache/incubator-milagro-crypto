@@ -18,7 +18,11 @@
 */
 
 /* AMCL BIG number class */
-var BIG = function(ctx) {
+var BIG,
+    DBIG;
+
+BIG = function(ctx) {
+    "use strict";
 
     /* General purpose Constructor */
     var BIG = function(x) {
@@ -1191,7 +1195,8 @@ var BIG = function(ctx) {
 };
 
 /* AMCL double length DBIG number class */
-var DBIG = function(ctx) {
+DBIG = function(ctx) {
+    "use strict";
 
     /* constructor */
     var DBIG = function(x) {
@@ -1520,3 +1525,10 @@ var DBIG = function(ctx) {
 
     return DBIG;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports = {
+        BIG: BIG,
+        DBIG: DBIG
+    };
+}

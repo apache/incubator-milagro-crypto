@@ -18,8 +18,12 @@
 */
 
 /* RSA API Functions */
+var RSA,
+    rsa_private_key,
+    rsa_public_key;
 
-var RSA = function(ctx) {
+RSA = function(ctx) {
+    "use strict";
 
     var RSA = {
         RFS: ctx.BIG.MODBYTES * ctx.FF.FFLEN,
@@ -485,7 +489,8 @@ var RSA = function(ctx) {
     return RSA;
 };
 
-var rsa_private_key = function(ctx) {
+rsa_private_key = function(ctx) {
+    "use strict";
 
     var rsa_private_key = function(n) {
         this.p = new ctx.FF(n);
@@ -498,7 +503,8 @@ var rsa_private_key = function(ctx) {
     return rsa_private_key;
 };
 
-var rsa_public_key = function(ctx) {
+rsa_public_key = function(ctx) {
+    "use strict";
 
     var rsa_public_key = function(m) {
         this.e = 0;
@@ -507,3 +513,11 @@ var rsa_public_key = function(ctx) {
 
     return rsa_public_key;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports = {
+        RSA: RSA,
+        rsa_public_key: rsa_public_key,
+        rsa_private_key: rsa_private_key
+    };
+}

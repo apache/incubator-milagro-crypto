@@ -49,7 +49,6 @@ void OCT_output_string(octet *w)
         ch=w->val[i];
         printf("%c",ch);
     }
-    /*  printf("\n"); */
 }
 
 /* Convert C string to octet format - truncates if no room  */
@@ -266,7 +265,6 @@ void OCT_frombase64(octet *w,char *b)
 {
     int i,j,k,pads,len=(int)strlen(b);
     int c,ch[4],ptr[3];
-    /* int lead=1; */
     j=k=0;
     while (j<len && k<w->max)
     {
@@ -293,9 +291,7 @@ void OCT_frombase64(octet *w,char *b)
         for (i=0; i<3-pads && k<w->max; i++)
         {
             /* don't put in leading zeros */
-            /* if (lead && ptr[i]==0) continue; */
             w->val[k++]=ptr[i];
-            /* lead=0; */
         }
 
     }

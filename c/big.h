@@ -18,7 +18,7 @@
 */
 
 /**
- * @file big.h
+ * @file big_XXX.h
  * @author Mike Scott
  * @brief BIG Header File
  *
@@ -475,17 +475,6 @@ extern void BIG_XXX_random(BIG_XXX x,csprng *r);
 	@param r A pointer to a Cryptographically Secure Random Number Generator
  */
 extern void BIG_XXX_randomnum(BIG_XXX x,BIG_XXX n,csprng *r);
-/**	brief  return NAF (Non-Adjacent-Form) value as +/- 1, 3 or 5, inputs must be normalised
- *
-	Given x and 3*x extracts NAF value from given bit position, and returns number of bits processed, and number of trailing zeros detected if any
-	param x BIG number
-	param x3 BIG number, three times x
-	param i bit position
-	param nbs pointer to integer returning number of bits processed
-	param nzs pointer to integer returning number of trailing 0s
-	return + or - 1, 3 or 5
-*/
-
 /**	@brief  Calculate x=y*z mod n
  *
 	Slow method for modular multiplication

@@ -20,6 +20,7 @@
 /* NewHope API high-level functions  */
 
 var NHS = function(ctx) {
+    "use strict";
 
     var NHS = {
 
@@ -195,7 +196,7 @@ var NHS = function(ctx) {
                 n <<= 8;
                 n += hash[j + 3] & 0xff;
                 j += 4;
-				poly[i]=NHS.nres(n);
+                poly[i]=NHS.nres(n);
                 //poly[i] = NHS.modmul(n, NHS.ONE); // reduce 31-bit random number mod q
             }
         },
@@ -299,15 +300,15 @@ var NHS = function(ctx) {
             }
         },
 
-		redc_it: function(p) {
-			var i;
+        redc_it: function(p) {
+            var i;
             for (i = 0; i < NHS.DEGREE; i++) {
                 p[i] = NHS.redc(p[i]);
             }
         },
 
-		nres_it: function(p) {
-			var i;
+        nres_it: function(p) {
+            var i;
             for (i = 0; i < NHS.DEGREE; i++) {
                 p[i] = NHS.nres(p[i]);
             }
@@ -396,7 +397,7 @@ var NHS = function(ctx) {
             NHS.poly_add(b, b, e);
             NHS.poly_hard_reduce(b);
 
-			NHS.redc_it(b);
+            NHS.redc_it(b);
             NHS.pack(b, array);
 
             for (i = 0; i < 32; i++) {
@@ -462,7 +463,7 @@ var NHS = function(ctx) {
             NHS.Encode(key, k);
 
             NHS.unpack(array, c);
-			NHS.nres_it(c);
+            NHS.nres_it(c);
 
             NHS.poly_mul(c, c, sd);
             NHS.intt(c);
@@ -482,7 +483,7 @@ var NHS = function(ctx) {
                 KEY[i] = key[i];
             }
 
-			NHS.redc_it(u);
+            NHS.redc_it(u);
             NHS.pack(u, array);
 
             for (i = 0; i < 1792; i++) {
@@ -509,7 +510,7 @@ var NHS = function(ctx) {
             }
 
             NHS.unpack(array, k);
-			NHS.nres_it(k);
+            NHS.nres_it(k);
 
             for (i = 0; i < 384; i++) {
                 cc[i] = UC[i + 1792];
@@ -562,3 +563,7 @@ var NHS = function(ctx) {
 
     return NHS;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.NHS = NHS;
+}

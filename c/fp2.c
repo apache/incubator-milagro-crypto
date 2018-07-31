@@ -134,7 +134,6 @@ void FP2_YYY_neg(FP2_YYY *w,FP2_YYY *x)
 {
     /* Just one neg! */
     FP_YYY m,t;
-//    FP2_YYY_norm(x);
     FP_YYY_add(&m,&(x->a),&(x->b));
     FP_YYY_neg(&m,&m);
     FP_YYY_add(&t,&m,&(x->b));
@@ -148,7 +147,6 @@ void FP2_YYY_neg(FP2_YYY *w,FP2_YYY *x)
 void FP2_YYY_conj(FP2_YYY *w,FP2_YYY *x)
 {
     FP_YYY_copy(&(w->a),&(x->a));
-//	BIG_XXX_norm(x->b);
     FP_YYY_neg(&(w->b),&(x->b));
     FP_YYY_norm(&(w->b));
 }
@@ -219,7 +217,7 @@ void FP2_YYY_mul(FP2_YYY *w,FP2_YYY *x,FP2_YYY *y)
     BIG_XXX_rcopy(p,Modulus_YYY);
     BIG_XXX_dsucopy(pR,p);
 
-// reduce excesses of a and b as required (so product < pR)
+    // reduce excesses of a and b as required (so product < pR)
 
     if ((sign64)(x->a.XES+x->b.XES)*(y->a.XES+y->b.XES)>(sign64)FEXCESS_YYY)
     {
@@ -240,7 +238,7 @@ void FP2_YYY_mul(FP2_YYY *w,FP2_YYY *x,FP2_YYY *y)
 
     BIG_XXX_mul(E,C,D);
     BIG_XXX_dadd(F,A,B);
-    BIG_XXX_dsub(B,pR,B); //
+    BIG_XXX_dsub(B,pR,B);
 
     BIG_XXX_dadd(A,A,B);    // A<pR? Not necessarily, but <2pR
     BIG_XXX_dsub(E,E,F);    // E<pR ? Yes
@@ -286,7 +284,6 @@ void FP2_YYY_rawoutput(FP2_YYY *w)
 /* SU= 128 */
 void FP2_YYY_inv(FP2_YYY *w,FP2_YYY *x)
 {
-    BIG_XXX m,b;
     FP_YYY w1,w2;
 
     FP2_YYY_norm(x);
@@ -294,13 +291,12 @@ void FP2_YYY_inv(FP2_YYY *w,FP2_YYY *x)
     FP_YYY_sqr(&w2,&(x->b));
     FP_YYY_add(&w1,&w1,&w2);
 
-	FP_YYY_inv(&w1,&w1);
+    FP_YYY_inv(&w1,&w1);
 
     FP_YYY_mul(&(w->a),&(x->a),&w1);
     FP_YYY_neg(&w1,&w1);
     FP_YYY_norm(&w1);
     FP_YYY_mul(&(w->b),&(x->b),&w1);
-//	FP2_YYY_norm(w);
 }
 
 
@@ -321,7 +317,6 @@ void FP2_YYY_mul_ip(FP2_YYY *w)
     FP_YYY z;
     FP2_YYY t;
 
-//   FP2_YYY_norm(w);
     FP2_YYY_copy(&t,w);
 
     FP_YYY_copy(&z,&(w->a));
@@ -329,7 +324,7 @@ void FP2_YYY_mul_ip(FP2_YYY *w)
     FP_YYY_copy(&(w->b),&z);
 
     FP2_YYY_add(w,&t,w);
-//    Output NOT normed, so use with care
+    // Output NOT normed, so use with care
 }
 
 
@@ -394,7 +389,6 @@ void FP2_YYY_pow(FP2_YYY *r,FP2_YYY* a,BIG_XXX b)
 
 int FP2_YYY_sqrt(FP2_YYY *w,FP2_YYY *u)
 {
-    BIG_XXX b;
     FP_YYY w1,w2;
     FP2_YYY_copy(w,u);
     if (FP2_YYY_iszilch(w)) return 1;
@@ -426,26 +420,10 @@ int FP2_YYY_sqrt(FP2_YYY *w,FP2_YYY *u)
     FP_YYY_copy(&(w->a),&w2);
     FP_YYY_add(&w2,&w2,&w2);
 
-	FP_YYY_inv(&w2,&w2);
+    FP_YYY_inv(&w2,&w2);
 
     FP_YYY_mul(&(w->b),&(w->b),&w2);
     return 1;
-}
-
-/* New stuff for ECp4 support */
-
-/* Input MUST be normed */
-void FP2_YYY_times_i(FP2_YYY *w)
-{
-    FP_YYY z;
-
- //   FP2_norm(w);
-
-    FP_YYY_copy(&z,&(w->a));
-    FP_YYY_neg(&(w->a),&(w->b));
-    FP_YYY_copy(&(w->b),&z);
-
-//    Output NOT normed, so use with care
 }
 
 /*

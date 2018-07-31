@@ -20,6 +20,7 @@
 /* MPIN API Functions */
 
 var MPIN192 = function(ctx) {
+    "use strict";
 
     var MPIN192 = {
         BAD_PARAMS: -11,
@@ -164,7 +165,7 @@ var MPIN192 = function(ctx) {
             return R;
         },
 
-       /* Hash number (optional) and string to point on curve */
+        /* Hash number (optional) and string to point on curve */
         hashit: function(sha, n, B) {
             var R = [],
                 H, W, i, len;
@@ -356,7 +357,7 @@ var MPIN192 = function(ctx) {
 
             P.add(Q);
 
-            P.toBytes(R);
+            P.toBytes(R,false);
 
             return 0;
         },
@@ -419,7 +420,7 @@ var MPIN192 = function(ctx) {
             R = R.pinmul(factor, facbits);
             P.sub(R);
 
-            P.toBytes(TOKEN);
+            P.toBytes(TOKEN,false);
 
             return 0;
         },
@@ -440,14 +441,14 @@ var MPIN192 = function(ctx) {
             R = R.pinmul(factor, facbits);
             P.add(R);
 
-            P.toBytes(TOKEN);
+            P.toBytes(TOKEN,false);
 
             return 0;
         },
 
         /* Extract Server Secret SST=S*Q where Q is fixed generator in G2 and S is master secret */
         GET_SERVER_SECRET: function(S, SST) {
-			var s,Q;
+            var s,Q;
 
             Q = ctx.ECP4.generator();
 
@@ -490,7 +491,7 @@ var MPIN192 = function(ctx) {
                 P = ctx.ECP.mapit(G);
             }
 
-            ctx.PAIR192.G1mul(P, x).toBytes(W);
+            ctx.PAIR192.G1mul(P, x).toBytes(W,false);
 
             return 0;
         },
@@ -508,7 +509,7 @@ var MPIN192 = function(ctx) {
                 s = ctx.BIG.fromBytes(S);
 
             P = ctx.PAIR192.G1mul(P, s);
-            P.toBytes(CTT);
+            P.toBytes(CTT,false);
 
             return 0;
         },
@@ -556,7 +557,7 @@ var MPIN192 = function(ctx) {
 
                 if (xID != null) {
                     P = ctx.PAIR192.G1mul(P, x);
-                    P.toBytes(xID);
+                    P.toBytes(xID,false);
                     W = ctx.PAIR192.G1mul(W, x);
                     P.add(W);
                 } else {
@@ -565,16 +566,16 @@ var MPIN192 = function(ctx) {
                 }
 
                 if (xCID != null) {
-                    P.toBytes(xCID);
+                    P.toBytes(xCID,false);
                 }
             } else {
                 if (xID != null) {
                     P = ctx.PAIR192.G1mul(P, x);
-                    P.toBytes(xID);
+                    P.toBytes(xID,false);
                 }
             }
 
-            T.toBytes(SEC);
+            T.toBytes(SEC,false);
 
             return 0;
         },
@@ -599,8 +600,8 @@ var MPIN192 = function(ctx) {
 
             P = ctx.PAIR192.G1mul(P, px);
             P.neg();
-            P.toBytes(SEC);
-            //ctx.PAIR192.G1mul(P,px).toBytes(SEC);
+            P.toBytes(SEC,false);
+            //ctx.PAIR192.G1mul(P,px).toBytes(SEC,false);
 
             return 0;
         },
@@ -611,15 +612,15 @@ var MPIN192 = function(ctx) {
                 P = ctx.ECP.mapit(h),
                 R;
 
-            P.toBytes(HID);
+            P.toBytes(HID,false);
             if (date !== 0) {
-                //if (HID!=null) P.toBytes(HID);
+                //if (HID!=null) P.toBytes(HID,false);
                 h = this.hashit(sha, date, h);
                 R = ctx.ECP.mapit(h);
                 P.add(R);
-                P.toBytes(HTID);
+                P.toBytes(HTID,false);
             }
-            //else P.toBytes(HID);
+            //else P.toBytes(HID,false);
         },
 
         /* Implement step 1 of MPin protocol on server side. Pa is the client public key in case of DVS, otherwise must be set to null */
@@ -627,7 +628,7 @@ var MPIN192 = function(ctx) {
             var Q, sQ, R, y, P, g;
 
             if (typeof Pa === "undefined" || Pa == null) {
-				Q = ctx.ECP4.generator();
+                Q = ctx.ECP4.generator();
 
             } else {
                 Q = ctx.ECP4.fromBytes(Pa);
@@ -788,7 +789,7 @@ var MPIN192 = function(ctx) {
             return 0;
         },
 
-       /* One pass MPIN Client - DVS signature. Message must be null in case of One pass MPIN. */
+        /* One pass MPIN Client - DVS signature. Message must be null in case of One pass MPIN. */
         CLIENT: function(sha, date, CLIENT_ID, rng, X, pin, TOKEN, SEC, xID, xCID, PERMIT, TimeValue, Y, Message) {
             var rtn = 0,
                 M = [],
@@ -824,7 +825,7 @@ var MPIN192 = function(ctx) {
             return 0;
         },
 
-       /* One pass MPIN Server */
+        /* One pass MPIN Server */
         SERVER: function(sha, date, HID, HTID, Y, SST, xID, xCID, mSEC, E, F, CID, TimeValue, Message, Pa) {
             var rtn = 0,
                 M = [],
@@ -955,7 +956,7 @@ var MPIN192 = function(ctx) {
             g1.mul(g2);
 
             c = g1.compow(z, r);
- 
+
             t = this.mpin_hash(sha, c, W);
 
             for (i = 0; i < ctx.ECP.AESKEY; i++) {
@@ -1018,9 +1019,9 @@ var MPIN192 = function(ctx) {
             return 0;
         },
 
-       GET_DVS_KEYPAIR: function(rng, Z, Pa) {
+        GET_DVS_KEYPAIR: function(rng, Z, Pa) {
             var r = new ctx.BIG(0),
-                z, A, B, QX, QY, Q;
+                z, Q;
 
             r.rcopy(ctx.ROM_CURVE.CURVE_Order);
 
@@ -1044,3 +1045,6 @@ var MPIN192 = function(ctx) {
     return MPIN192;
 };
 
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.MPIN192 = MPIN192;
+}

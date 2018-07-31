@@ -65,7 +65,7 @@ static void sirand(csprng* rng,unsign32 seed)
     rng->ira[0]^=seed;
     for (i=1; i<NK; i++)
     {
-        /* fill initialisation vector */
+        /* fill initialization vector */
         in=(NV*i)%NK;
         rng->ira[in]^=m;      /* note XOR */
         t=m;
@@ -120,7 +120,6 @@ void RAND_seed(csprng *rng,int rawlen,char *raw)
             b[1]=digest[4*i+1];
             b[2]=digest[4*i+2];
             b[3]=digest[4*i+3];
-            //	printf("%08x\n",pack(b));
             sirand(rng,pack(b));
         }
     }

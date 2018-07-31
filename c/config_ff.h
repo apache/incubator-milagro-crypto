@@ -18,7 +18,7 @@
 */
 
 /**
- * @file config_ff.h
+ * @file config_ff_WWW.h
  * @author Mike Scott
  * @brief COnfig FF Header File
  *

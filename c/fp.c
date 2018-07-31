@@ -293,12 +293,6 @@ int tdadd=0,rdadd=0,tdneg=0,rdneg=0;
 void FP_YYY_mul(FP_YYY *r,FP_YYY *a,FP_YYY *b)
 {
     DBIG_XXX d;
-//    chunk ea,eb;
-//    BIG_XXX_norm(a);
-//    BIG_XXX_norm(b);
-//    ea=EXCESS_YYY(a->g);
-//    eb=EXCESS_YYY(b->g);
-
 
     if ((sign64)a->XES*b->XES>(sign64)FEXCESS_YYY)
     {
@@ -350,28 +344,11 @@ void FP_YYY_imul(FP_YYY *r,FP_YYY *a,int c)
         // don't want to do this - only a problem for Montgomery modulus and larger constants
         BIG_XXX_zero(k);
         BIG_XXX_inc(k,c);
-		BIG_XXX_norm(k);
+        BIG_XXX_norm(k);
         FP_YYY_nres(&f,k);
         FP_YYY_mul(r,a,&f);
     }
 #endif
-    /*
-        if (c<=NEXCESS_XXX && a->XES*c <= FEXCESS_YYY)
-    	{
-            BIG_XXX_imul(r->g,a->g,c);
-    		r->XES=a->XES*c;
-    		FP_YYY_norm(r);
-    	}
-        else
-        {
-                BIG_XXX_pxmul(d,a->g,c);
-
-                BIG_XXX_rcopy(m,Modulus_YYY);
-    			BIG_XXX_dmod(r->g,d,m);
-                //FP_YYY_mod(r->g,d);                /// BIG problem here! Too slow for PM, How to do fast for Monty?
-    			r->XES=2;
-        }
-    */
     if (s)
     {
         FP_YYY_neg(r,r);
@@ -384,10 +361,6 @@ void FP_YYY_imul(FP_YYY *r,FP_YYY *a,int c)
 void FP_YYY_sqr(FP_YYY *r,FP_YYY *a)
 {
     DBIG_XXX d;
-//    chunk ea;
-//    BIG_XXX_norm(a);
-//    ea=EXCESS_YYY(a->g);
-
 
     if ((sign64)a->XES*a->XES>(sign64)FEXCESS_YYY)
     {
@@ -422,9 +395,7 @@ void FP_YYY_add(FP_YYY *r,FP_YYY *a,FP_YYY *b)
 void FP_YYY_sub(FP_YYY *r,FP_YYY *a,FP_YYY *b)
 {
     FP_YYY n;
-//	BIG_XXX_norm(b);
     FP_YYY_neg(&n,b);
-//	BIG_XXX_norm(n);
     FP_YYY_add(r,a,&n);
 }
 
@@ -492,7 +463,6 @@ void FP_YYY_div2(FP_YYY *r,FP_YYY *a)
     BIG_XXX m;
     BIG_XXX_rcopy(m,Modulus_YYY);
     FP_YYY_copy(r,a);
-//    BIG_XXX_norm(a);
     if (BIG_XXX_parity(a->g)==0)
     {
 
@@ -509,19 +479,11 @@ void FP_YYY_div2(FP_YYY *r,FP_YYY *a)
 /* set w=1/x */
 void FP_YYY_inv(FP_YYY *w,FP_YYY *x)
 {
-
-	BIG_XXX m2;
-	BIG_XXX_rcopy(m2,Modulus_YYY);
-	BIG_XXX_dec(m2,2);
-	BIG_XXX_norm(m2);
-	FP_YYY_pow(w,x,m2);
-
-/*
-    BIG_XXX m,b;
-    BIG_XXX_rcopy(m,Modulus_YYY);
-    FP_YYY_redc(b,x);
-    BIG_XXX_invmodp(b,b,m);
-    FP_YYY_nres(w,b); */
+    BIG_XXX m2;
+    BIG_XXX_rcopy(m2,Modulus_YYY);
+    BIG_XXX_dec(m2,2);
+    BIG_XXX_norm(m2);
+    FP_YYY_pow(w,x,m2);
 }
 
 /* SU=8 */
@@ -535,41 +497,17 @@ void FP_YYY_one(FP_YYY *n)
 
 /* Set r=a^b mod Modulus */
 /* SU= 136 */
-/*
 void FP_YYY_pow(FP_YYY *r,FP_YYY *a,BIG_XXX b)
 {
-    BIG_XXX z,zilch;
-    FP_YYY w;
-    int bt;
-    BIG_XXX_zero(zilch);
+    sign8 w[1+(NLEN_XXX*BASEBITS_XXX+3)/4];
+    FP_YYY tb[16];
+    BIG_XXX t;
+    int i,nb;
 
+    FP_YYY_norm(a);
     BIG_XXX_norm(b);
-    BIG_XXX_copy(z,b);
-    FP_YYY_copy(&w,a);
-    FP_YYY_one(r);
-    while(1)
-    {
-        bt=BIG_XXX_parity(z);
-        BIG_XXX_fshr(z,1);
-        if (bt) FP_YYY_mul(r,r,&w);
-        if (BIG_XXX_comp(z,zilch)==0) break;
-        FP_YYY_sqr(&w,&w);
-    }
-    FP_YYY_reduce(r);
-}
-*/
-
-void FP_YYY_pow(FP_YYY *r,FP_YYY *a,BIG_XXX b)
-{
-	sign8 w[1+(NLEN_XXX*BASEBITS_XXX+3)/4];
-	FP_YYY tb[16];
-	BIG_XXX t;
-	int i,nb;
-
-	FP_YYY_norm(a);
-    BIG_XXX_norm(b);
-	BIG_XXX_copy(t,b);
-	nb=1+(BIG_XXX_nbits(t)+3)/4;
+    BIG_XXX_copy(t,b);
+    nb=1+(BIG_XXX_nbits(t)+3)/4;
     /* convert exponent to 4-bit window */
     for (i=0; i<nb; i++)
     {
@@ -577,22 +515,22 @@ void FP_YYY_pow(FP_YYY *r,FP_YYY *a,BIG_XXX b)
         BIG_XXX_dec(t,w[i]);
         BIG_XXX_norm(t);
         BIG_XXX_fshr(t,4);
-    }	
+    }
 
-	FP_YYY_one(&tb[0]);
-	FP_YYY_copy(&tb[1],a);
-	for (i=2;i<16;i++)
-		FP_YYY_mul(&tb[i],&tb[i-1],a);
-	
-	FP_YYY_copy(r,&tb[w[nb-1]]);
+    FP_YYY_one(&tb[0]);
+    FP_YYY_copy(&tb[1],a);
+    for (i=2; i<16; i++)
+        FP_YYY_mul(&tb[i],&tb[i-1],a);
+
+    FP_YYY_copy(r,&tb[w[nb-1]]);
     for (i=nb-2; i>=0; i--)
     {
-		FP_YYY_sqr(r,r);
-		FP_YYY_sqr(r,r);
-		FP_YYY_sqr(r,r);
-		FP_YYY_sqr(r,r);
-		FP_YYY_mul(r,r,&tb[w[i]]);
-	}
+        FP_YYY_sqr(r,r);
+        FP_YYY_sqr(r,r);
+        FP_YYY_sqr(r,r);
+        FP_YYY_sqr(r,r);
+        FP_YYY_mul(r,r,&tb[w[i]]);
+    }
     FP_YYY_reduce(r);
 }
 
