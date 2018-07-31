@@ -18,7 +18,7 @@
 */
 
 /**
- * @file fp4.h
+ * @file fp4_YYY.h
  * @author Mike Scott
  * @brief FP4 Header File
  *
@@ -267,7 +267,6 @@ extern void FP4_YYY_xtr_pow2(FP4_YYY *r,FP4_YYY *c,FP4_YYY *d,FP4_YYY *e,FP4_YYY
  */
 extern void FP4_YYY_cmove(FP4_YYY *x,FP4_YYY *y,int s);
 
-
 /**	@brief Calculate square root of an FP4
  *
 	Square root
@@ -302,4 +301,3 @@ extern void FP4_YYY_div_2i(FP4_YYY *x);
 extern void FP4_YYY_div2(FP4_YYY *x,FP4_YYY *y);
 
 #endif
-

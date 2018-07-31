@@ -18,7 +18,7 @@ under the License.
 */
 
 /**
- * @file mpin.h
+ * @file mpin_ZZZ.h
  * @author Mike Scott
  * @brief M-Pin Header file
  *
@@ -35,17 +35,14 @@ under the License.
 
 #define PGS_ZZZ MODBYTES_XXX  /**< MPIN Group Size */
 #define PFS_ZZZ MODBYTES_XXX  /**< MPIN Field Size */
-//#define PAS_ZZZ 16            /**< MPIN Symmetric Key Size */
 
 #define MPIN_OK             0   /**< Function completed without error */
 #define MPIN_INVALID_POINT  -14	/**< Point is NOT on the curve */
 #define MPIN_BAD_PIN        -19 /**< Bad PIN number entered */
 
-#define MPIN_PAS 16          /**< MPIN Symmetric Key Size */
-#define MAXPIN 10000         /**< max PIN */
-#define PBLEN 14             /**< max length of PIN in bits */
-
-//#define HASH_TYPE_MPIN_ZZZ SHA256   /**< Choose Hash function */
+#define MPIN_PAS 16           /**< MPIN Symmetric Key Size */
+#define MAXPIN 10000  /**< max PIN */
+#define PBLEN  14   /**< max length of PIN in bits */
 
 #define MESSAGE_SIZE 256        /**< Signature message size  */
 #define M_SIZE_ZZZ (MESSAGE_SIZE+2*PFS_ZZZ+1)   /**< Signature message size and G1 size */
@@ -121,6 +118,7 @@ int MPIN_ZZZ_EXTRACT_PIN(int h,octet *ID,int pin,octet *CS);
 	@return 0 or an error code
  */
 int MPIN_ZZZ_CLIENT(int h,int d,octet *ID,csprng *R,octet *x,int pin,octet *T,octet *V,octet *U,octet *UT,octet *TP, octet* MESSAGE, int t, octet *y);
+
 /**	@brief Perform first pass of the client side of the 3-pass version of the M-Pin protocol
  *
 	If Time Permits are disabled, set d = 0, and UT is not generated and can be set to NULL.
@@ -140,6 +138,7 @@ int MPIN_ZZZ_CLIENT(int h,int d,octet *ID,csprng *R,octet *x,int pin,octet *T,oc
 	@return 0 or an error code
  */
 int MPIN_ZZZ_CLIENT_1(int h,int d,octet *ID,csprng *R,octet *x,int pin,octet *T,octet *S,octet *U,octet *UT,octet *TP);
+
 /**	@brief Generate a random group element
  *
 	@param R is a pointer to a cryptographically secure random number generator
@@ -147,6 +146,7 @@ int MPIN_ZZZ_CLIENT_1(int h,int d,octet *ID,csprng *R,octet *x,int pin,octet *T,
 	@return 0 or an error code
  */
 int MPIN_ZZZ_RANDOM_GENERATE(csprng *R,octet *S);
+
 /**	@brief Perform second pass of the client side of the 3-pass version of the M-Pin protocol
  *
 	@param x an input, a locally generated random number
@@ -155,6 +155,7 @@ int MPIN_ZZZ_RANDOM_GENERATE(csprng *R,octet *S);
 	@return 0 or an error code
  */
 int MPIN_ZZZ_CLIENT_2(octet *x,octet *y,octet *V);
+
 /**	@brief Perform server side of the one-pass version of the M-Pin protocol
  *
 	If Time Permits are disabled, set d = 0, and UT and HTID are not generated and can be set to NULL.
@@ -178,6 +179,7 @@ int MPIN_ZZZ_CLIENT_2(octet *x,octet *y,octet *V);
 	@return 0 or an error code
  */
 int MPIN_ZZZ_SERVER(int h,int d,octet *HID,octet *HTID,octet *y,octet *SS,octet *U,octet *UT,octet *V,octet *E,octet *F,octet *ID,octet *MESSAGE, int t, octet *Pa);
+
 /**	@brief Perform first pass of the server side of the 3-pass version of the M-Pin protocol
  *
  	@param h is the hash type
@@ -188,6 +190,7 @@ int MPIN_ZZZ_SERVER(int h,int d,octet *HID,octet *HTID,octet *y,octet *SS,octet 
 	@return 0 or an error code
  */
 void MPIN_ZZZ_SERVER_1(int h,int d,octet *ID,octet *HID,octet *HTID);
+
 /**	@brief Perform third pass on the server side of the 3-pass version of the M-Pin protocol
  *
 	If Time Permits are disabled, set d = 0, and UT and HTID are not needed and can be set to NULL.
@@ -207,6 +210,7 @@ void MPIN_ZZZ_SERVER_1(int h,int d,octet *ID,octet *HID,octet *HTID);
 	@return 0 or an error code
  */
 int MPIN_ZZZ_SERVER_2(int d,octet *HID,octet *HTID,octet *y,octet *SS,octet *U,octet *UT,octet *V,octet *E,octet *F,octet *Pa);
+
 /**	@brief Add two members from the group G1
  *
 	@param Q1 an input member of G1
@@ -215,6 +219,7 @@ int MPIN_ZZZ_SERVER_2(int d,octet *HID,octet *HTID,octet *y,octet *SS,octet *U,o
 	@return 0 or an error code
  */
 int MPIN_ZZZ_RECOMBINE_G1(octet *Q1,octet *Q2,octet *Q);
+
 /**	@brief Add two members from the group G2
  *
 	@param P1 an input member of G2
@@ -223,6 +228,7 @@ int MPIN_ZZZ_RECOMBINE_G1(octet *Q1,octet *Q2,octet *Q);
 	@return 0 or an error code
  */
 int MPIN_ZZZ_RECOMBINE_G2(octet *P1,octet *P2,octet *P);
+
 /**	@brief Use Kangaroos to find PIN error
  *
 	@param E a member of the group GT
@@ -230,6 +236,7 @@ int MPIN_ZZZ_RECOMBINE_G2(octet *P1,octet *P2,octet *P);
 	@return 0 if Kangaroos failed, or the PIN error e
  */
 int MPIN_ZZZ_KANGAROO(octet *E,octet *F);
+
 /**	@brief Encoding of a Time Permit to make it indistinguishable from a random string
  *
 	@param R is a pointer to a cryptographically secure random number generator
@@ -237,6 +244,7 @@ int MPIN_ZZZ_KANGAROO(octet *E,octet *F);
 	@return 0 or an error code
  */
 int MPIN_ZZZ_ENCODING(csprng *R,octet *TP);
+
 /**	@brief Encoding of an obfuscated Time Permit
  *
 	@param TP is the input obfuscated time permit, restored on output
@@ -254,6 +262,7 @@ int MPIN_ZZZ_DECODING(octet *TP);
 	@return 0 or an error code
  */
 int MPIN_ZZZ_GET_G1_MULTIPLE(csprng *R,int type,octet *x,octet *G,octet *W);
+
 /**	@brief Find a random multiple of a point in G1
  *
 	@param R is a pointer to a cryptographically secure random number generator
@@ -273,6 +282,7 @@ int MPIN_ZZZ_GET_G2_MULTIPLE(csprng *R,int type,octet *x,octet *G,octet *W);
 	@return 0 or an error code
  */
 int MPIN_ZZZ_GET_CLIENT_SECRET(octet *S,octet *ID,octet *CS);
+
 /**	@brief Create a Time Permit in G1 from a master secret and the client ID
  *
   	@param h is the hash type
@@ -283,6 +293,7 @@ int MPIN_ZZZ_GET_CLIENT_SECRET(octet *S,octet *ID,octet *CS);
 	@return 0 or an error code
  */
 int MPIN_ZZZ_GET_CLIENT_PERMIT(int h,int d,octet *S,octet *ID,octet *TP);
+
 /**	@brief Create a server secret in G2 from a master secret
  *
 	@param S is an input master secret
@@ -290,7 +301,6 @@ int MPIN_ZZZ_GET_CLIENT_PERMIT(int h,int d,octet *S,octet *ID,octet *TP);
 	@return 0 or an error code
  */
 int MPIN_ZZZ_GET_SERVER_SECRET(octet *S,octet *SS);
-/* int MPIN_TEST_PAIRING(octet *,octet *); */
 
 /* For M-Pin Full */
 /**	@brief Precompute values for use by the client side of M-Pin Full
@@ -303,6 +313,7 @@ int MPIN_ZZZ_GET_SERVER_SECRET(octet *S,octet *SS);
 	@return 0 or an error code
  */
 int MPIN_ZZZ_PRECOMPUTE(octet *T,octet *ID,octet *CP,octet *g1,octet *g2);
+
 /**	@brief Calculate Key on Server side for M-Pin Full
  *
 	Uses UT internally for the key calculation, unless not available in which case U is used
@@ -318,6 +329,7 @@ int MPIN_ZZZ_PRECOMPUTE(octet *T,octet *ID,octet *CP,octet *g1,octet *g2);
 	@return 0 or an error code
  */
 int MPIN_ZZZ_SERVER_KEY(int h,octet *Z,octet *SS,octet *w,octet *p,octet *I,octet *U,octet *UT,octet *K);
+
 /**	@brief Calculate Key on Client side for M-Pin Full
  *
   	@param h is the hash type

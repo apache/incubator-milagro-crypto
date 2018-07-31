@@ -178,7 +178,7 @@ int MPIN_ZZZ_DECODING(octet *D)
         map(&W,u,su);
         map(&P,v,sv);
         ECP_ZZZ_add(&P,&W);
-        ECP_ZZZ_toOctet(D,&P);
+        ECP_ZZZ_toOctet(D,&P,false);
     }
 
     return res;
@@ -197,7 +197,7 @@ int MPIN_ZZZ_RECOMBINE_G1(octet *R1,octet *R2,octet *R)
     if (res==0)
     {
         ECP_ZZZ_add(&P,&T);
-        ECP_ZZZ_toOctet(R,&P);
+        ECP_ZZZ_toOctet(R,&P,false);
     }
     return res;
 }
@@ -256,7 +256,7 @@ int MPIN_ZZZ_EXTRACT_FACTOR(int sha,octet *CID,int factor,int facbits,octet *TOK
         ECP_ZZZ_pinmul(&R,factor,facbits);
         ECP_ZZZ_sub(&P,&R);
 
-        ECP_ZZZ_toOctet(TOKEN,&P);
+        ECP_ZZZ_toOctet(TOKEN,&P,false);
     }
     return res;
 }
@@ -278,7 +278,7 @@ int MPIN_ZZZ_RESTORE_FACTOR(int sha,octet *CID,int factor,int facbits,octet *TOK
         ECP_ZZZ_pinmul(&R,factor,facbits);
         ECP_ZZZ_add(&P,&R);
 
-        ECP_ZZZ_toOctet(TOKEN,&P);
+        ECP_ZZZ_toOctet(TOKEN,&P,false);
     }
     return res;
 }
@@ -300,7 +300,7 @@ int MPIN_ZZZ_CLIENT_2(octet *X,octet *Y,octet *SEC)
         //	BIG_XXX_sub(px,r,px);
         PAIR_ZZZ_G1mul(&P,px);
         ECP_ZZZ_neg(&P);
-        ECP_ZZZ_toOctet(SEC,&P);
+        ECP_ZZZ_toOctet(SEC,&P,false);
     }
     return res;
 }
@@ -342,7 +342,7 @@ int MPIN_ZZZ_GET_G1_MULTIPLE(csprng *RNG,int type,octet *X,octet *G,octet *W)
     if (res==0)
     {
         PAIR_ZZZ_G1mul(&P,x);
-        ECP_ZZZ_toOctet(W,&P);
+        ECP_ZZZ_toOctet(W,&P,false);
     }
     return res;
 }
@@ -443,7 +443,7 @@ int MPIN_ZZZ_CLIENT_1(int sha,int date,octet *CLIENT_ID,csprng *RNG,octet *X,int
             if (xID!=NULL)
             {
                 PAIR_ZZZ_G1mul(&P,x);				// P=x.H(ID)
-                ECP_ZZZ_toOctet(xID,&P);  // xID
+                ECP_ZZZ_toOctet(xID,&P,false);  // xID
                 PAIR_ZZZ_G1mul(&W,x);               // W=x.H(T|ID)
                 ECP_ZZZ_add(&P,&W);
             }
@@ -452,20 +452,20 @@ int MPIN_ZZZ_CLIENT_1(int sha,int date,octet *CLIENT_ID,csprng *RNG,octet *X,int
                 ECP_ZZZ_add(&P,&W);
                 PAIR_ZZZ_G1mul(&P,x);
             }
-            if (xCID!=NULL) ECP_ZZZ_toOctet(xCID,&P);  // U
+            if (xCID!=NULL) ECP_ZZZ_toOctet(xCID,&P,false);  // U
         }
         else
         {
             if (xID!=NULL)
             {
                 PAIR_ZZZ_G1mul(&P,x);				// P=x.H(ID)
-                ECP_ZZZ_toOctet(xID,&P);  // xID
+                ECP_ZZZ_toOctet(xID,&P,false);  // xID
             }
         }
     }
 
     if (res==0)
-        ECP_ZZZ_toOctet(SEC,&T);  // V
+        ECP_ZZZ_toOctet(SEC,&T,false);  // V
 
     return res;
 }
@@ -515,7 +515,7 @@ int MPIN_ZZZ_GET_CLIENT_PERMIT(int sha,int date,octet *S,octet *CID,octet *CTT)
     PAIR_ZZZ_G1mul(&P,s);
 //printf("OP= "); ECP_ZZZ_output(&P); printf("\n");
 //
-    ECP_ZZZ_toOctet(CTT,&P);
+    ECP_ZZZ_toOctet(CTT,&P,false);
     return 0;
 }
 
@@ -537,11 +537,11 @@ void MPIN_ZZZ_SERVER_1(int sha,int date,octet *CID,octet *HID,octet *HTID)
     ECP_ZZZ_mapit(&P,&H);
 #endif
 
-    ECP_ZZZ_toOctet(HID,&P);  // new
+    ECP_ZZZ_toOctet(HID,&P,false);  // new
 
     if (date)
     {
-        //	if (HID!=NULL) ECP_ZZZ_toOctet(HID,&P);
+        //	if (HID!=NULL) ECP_ZZZ_toOctet(HID,&P,false);
 #ifdef USE_ANONYMOUS
         mhashit(sha,date,CID,&H);
 #else
@@ -549,9 +549,9 @@ void MPIN_ZZZ_SERVER_1(int sha,int date,octet *CID,octet *HID,octet *HTID)
 #endif
         ECP_ZZZ_mapit(&R,&H);
         ECP_ZZZ_add(&P,&R);
-        ECP_ZZZ_toOctet(HTID,&P);
+        ECP_ZZZ_toOctet(HTID,&P,false);
     }
-    //else ECP_ZZZ_toOctet(HID,&P);
+    //else ECP_ZZZ_toOctet(HID,&P,false);
 
 }
 
@@ -581,17 +581,19 @@ int MPIN_ZZZ_SERVER_2(int date,octet *HID,octet *HTID,octet *Y,octet *SST,octet 
 
     if (res==0)
     {
-        if (date)
+       if (date)
         {
-            BIG_XXX_fromBytes(px,&(xCID->val[1]));
-            BIG_XXX_fromBytes(py,&(xCID->val[PFS_ZZZ+1]));
+            //BIG_XXX_fromBytes(px,&(xCID->val[1]));
+            //BIG_XXX_fromBytes(py,&(xCID->val[PFS_ZZZ+1]));
+			if (!ECP_ZZZ_fromOctet(&R,xCID))  res=MPIN_INVALID_POINT;
         }
         else
         {
-            BIG_XXX_fromBytes(px,&(xID->val[1]));
-            BIG_XXX_fromBytes(py,&(xID->val[PFS_ZZZ+1]));
+            //BIG_XXX_fromBytes(px,&(xID->val[1]));
+            //BIG_XXX_fromBytes(py,&(xID->val[PFS_ZZZ+1]));
+			if (!ECP_ZZZ_fromOctet(&R,xID))  res=MPIN_INVALID_POINT;
         }
-        if (!ECP_ZZZ_set(&R,px,py)) res=MPIN_INVALID_POINT; // x(A+AT)
+        //if (!ECP_ZZZ_set(&R,px,py)) res=MPIN_INVALID_POINT; // x(A+AT)
     }
     if (res==0)
     {

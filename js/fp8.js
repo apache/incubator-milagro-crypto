@@ -22,6 +22,7 @@
 /* FP8 elements are of the form a+ib, where i is sqrt(sqrt(-1+sqrt(-1)))  */
 
 var FP8 = function(ctx) {
+    "use strict";
 
     /* general purpose constructor */
     var FP8 = function(c, d) {
@@ -41,7 +42,7 @@ var FP8 = function(ctx) {
             this.b.reduce();
         },
 
-       /* normalise all components of this mod Modulus */
+        /* normalise all components of this mod Modulus */
         norm: function() {
             this.a.norm();
             this.b.norm();
@@ -121,7 +122,7 @@ var FP8 = function(ctx) {
 
         /* this=-this */
         neg: function() {
-			this.norm();
+            this.norm();
             var m = new ctx.FP4(this.a), //m.copy(this.a);
                 t = new ctx.FP4(0);
 
@@ -166,7 +167,7 @@ var FP8 = function(ctx) {
             this.add(x);
         },
 
-       /* this*=s where s is FP4 */
+        /* this*=s where s is FP4 */
         pmul: function(s) {
             this.a.mul(s);
             this.b.mul(s);
@@ -277,28 +278,28 @@ var FP8 = function(ctx) {
 
         /* this*=i where i = sqrt(-1+sqrt(-1)) */
         times_i: function() {
-            var s = new ctx.FP4(this.b), 
+            var s = new ctx.FP4(this.b),
                 t = new ctx.FP4(this.a);
 
             s.times_i();
-			this.b.copy(t);
+            this.b.copy(t);
 
             this.a.copy(s);
             this.norm();
         },
 
-		times_i2: function() {
-			this.a.times_i();
-			this.b.times_i();
-		},
+        times_i2: function() {
+            this.a.times_i();
+            this.b.times_i();
+        },
 
         /* this=this^q using Frobenius, where q is Modulus */
         frob: function(f) {
-			var ff=new ctx.FP2(f); ff.sqr(); ff.mul_ip(); ff.norm();
+            var ff=new ctx.FP2(f); ff.sqr(); ff.mul_ip(); ff.norm();
             this.a.frob(ff);
             this.b.frob(ff);
             this.b.pmul(f);
-			this.b.times_i();
+            this.b.times_i();
         },
 
         /* this=this^e */
@@ -561,97 +562,100 @@ var FP8 = function(ctx) {
             return r;
         },
 
-/* New stuff for ecp4.js */
+        /* New stuff for ecp4.js */
 
-		div2: function() {
-			a.div2();
-			b.div2();
-		},
-		
-		div_i: function() {
-			var u=new ctx.FP4(this.a);
-			var v=new ctx.FP4(this.b);
-			u.div_i();
-			this.a.copy(v);
-			this.b.copy(u);
-		},
+        div2: function() {
+            this.a.div2();
+            this.b.div2();
+        },
 
-		div_i2: function() {
-			this.a.div_i();
-			this.b.div_i();
-		},
+        div_i: function() {
+            var u=new ctx.FP4(this.a),
+                v=new ctx.FP4(this.b);
+            u.div_i();
+            this.a.copy(v);
+            this.b.copy(u);
+        },
 
-		div_2i: function() {
-			var u=new ctx.FP4(this.a);
-			var v=new ctx.FP4(this.b);
-			u.div_2i();
-			v.add(v); v.norm();
-			this.a.copy(v);
-			this.b.copy(u);
-		},
+        div_i2: function() {
+            this.a.div_i();
+            this.b.div_i();
+        },
 
-		qmul: function(s) {
-			this.a.pmul(s);
-			this.b.pmul(s);
-		},
+        div_2i: function() {
+            var u=new ctx.FP4(this.a),
+                v=new ctx.FP4(this.b);
+            u.div_2i();
+            v.add(v); v.norm();
+            this.a.copy(v);
+            this.b.copy(u);
+        },
 
-		tmul: function(s) {
-			this.a.qmul(s);
-			this.b.qmul(s);
-		},
+        qmul: function(s) {
+            this.a.pmul(s);
+            this.b.pmul(s);
+        },
 
-		sqrt: function() {
-			if (this.iszilch()) return true;
-			var wa=new ctx.FP4(this.a);
-			var ws=new ctx.FP4(this.b);
-			var wt=new ctx.FP4(this.a);
-			if (ws.iszilch())
-			{
-				if (wt.sqrt())
-				{
-					this.a.copy(wt);
-					this.b.zero();
-				} else {
-					wt.div_i();
-					wt.sqrt();
-					this.b.copy(wt);
-					this.a.zero();
-				}
-				return true;
-			}
+        tmul: function(s) {
+            this.a.qmul(s);
+            this.b.qmul(s);
+        },
 
-			ws.sqr();
-			wa.sqr();
-			ws.times_i();
-			ws.norm();
-			wa.sub(ws);
+        sqrt: function() {
+            if (this.iszilch()) {
+                return true;
+            }
+            var wa=new ctx.FP4(this.a),
+                ws=new ctx.FP4(this.b),
+                wt=new ctx.FP4(this.a);
+            if (ws.iszilch()) {
+                if (wt.sqrt()) {
+                    this.a.copy(wt);
+                    this.b.zero();
+                } else {
+                    wt.div_i();
+                    wt.sqrt();
+                    this.b.copy(wt);
+                    this.a.zero();
+                }
+                return true;
+            }
 
-			ws.copy(wa);
-			if (!ws.sqrt()) {
-				return false;
-			}
+            ws.sqr();
+            wa.sqr();
+            ws.times_i();
+            ws.norm();
+            wa.sub(ws);
 
-			wa.copy(wt); wa.add(ws); wa.norm(); wa.div2();
+            ws.copy(wa);
+            if (!ws.sqrt()) {
+                return false;
+            }
 
-			if (!wa.sqrt()) {
-				wa.copy(wt); wa.sub(ws); wa.norm(); wa.div2();
-				if (!wa.sqrt()) {
-					return false;
-				}
-			}
-			wt.copy(this.b);
-			ws.copy(wa); ws.add(wa);
-			ws.inverse();
+            wa.copy(wt); wa.add(ws); wa.norm(); wa.div2();
 
-			wt.mul(ws);
-			this.a.copy(wa);
-			this.b.copy(wt);
+            if (!wa.sqrt()) {
+                wa.copy(wt); wa.sub(ws); wa.norm(); wa.div2();
+                if (!wa.sqrt()) {
+                    return false;
+                }
+            }
+            wt.copy(this.b);
+            ws.copy(wa); ws.add(wa);
+            ws.inverse();
 
-			return true;
-		}
+            wt.mul(ws);
+            this.a.copy(wa);
+            this.b.copy(wt);
+
+            return true;
+        }
 
     };
 
     return FP8;
 };
 
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.FP8 = FP8;
+}

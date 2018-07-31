@@ -131,7 +131,6 @@ static void PAIR_ZZZ_line(FP12_YYY *v,ECP2_ZZZ *A,ECP2_ZZZ *B,FP_YYY *Qx,FP_YYY 
     }
 
     FP12_YYY_from_FP4s(v,&a,&b,&c);
-//	FP12_YYY_norm(v);
 }
 
 /* Optimal R-ate pairing r=e(P,Q) */
@@ -174,9 +173,6 @@ void PAIR_ZZZ_ate(FP12_YYY *r,ECP2_ZZZ *P,ECP_ZZZ *Q)
     BIG_XXX_pmul(n3,n,3);
     BIG_XXX_norm(n3);
 
-//    ECP2_ZZZ_affine(P);
-//    ECP_ZZZ_affine(Q);
-
     FP_YYY_copy(&Qx,&(Q->x));
     FP_YYY_copy(&Qy,&(Q->y));
 
@@ -190,7 +186,6 @@ void PAIR_ZZZ_ate(FP12_YYY *r,ECP2_ZZZ *P,ECP_ZZZ *Q)
         FP12_YYY_sqr(r,r);
         PAIR_ZZZ_line(&lv,&A,&A,&Qx,&Qy);
         FP12_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-        //bt=BIG_XXX_bit(n,i);
         bt=BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i);
         if (bt==1)
         {
@@ -205,21 +200,10 @@ void PAIR_ZZZ_ate(FP12_YYY *r,ECP2_ZZZ *P,ECP_ZZZ *Q)
             FP12_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
             ECP2_ZZZ_neg(P);
         }
-
-//       FP12_YYY_sqr(r,r);
     }
 
-//    PAIR_ZZZ_line(&lv,&A,&A,&Qx,&Qy);
-//    FP12_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-
-//   if (BIG_XXX_parity(n))
-//   {
-    //      PAIR_ZZZ_line(&lv,&A,P,&Qx,&Qy);
-    //     FP12_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-    //}
-
 #if SIGN_OF_X_ZZZ==NEGATIVEX
-	FP12_YYY_conj(r,r);
+    FP12_YYY_conj(r,r);
 #endif
 
     /* R-ate fixup required for BN curves */
@@ -228,7 +212,6 @@ void PAIR_ZZZ_ate(FP12_YYY *r,ECP2_ZZZ *P,ECP_ZZZ *Q)
     ECP2_ZZZ_frob(&KA,&X);
 #if SIGN_OF_X_ZZZ==NEGATIVEX
     ECP2_ZZZ_neg(&A);
-//    FP12_YYY_conj(r,r);
 #endif
     PAIR_ZZZ_line(&lv,&A,&KA,&Qx,&Qy);
     FP12_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
@@ -300,7 +283,6 @@ void PAIR_ZZZ_double_ate(FP12_YYY *r,ECP2_ZZZ *P,ECP_ZZZ *Q,ECP2_ZZZ *R,ECP_ZZZ 
         FP12_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
 
         bt=BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i);
-        //bt=BIG_XXX_bit(n,i);
         if (bt==1)
         {
             PAIR_ZZZ_line(&lv,&A,P,&Qx,&Qy);
@@ -322,36 +304,17 @@ void PAIR_ZZZ_double_ate(FP12_YYY *r,ECP2_ZZZ *P,ECP_ZZZ *Q,ECP2_ZZZ *R,ECP_ZZZ 
             FP12_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
             ECP2_ZZZ_neg(R);
         }
-
-        //FP12_YYY_sqr(r,r);
-
     }
-
-    // PAIR_ZZZ_line(&lv,&A,&A,&Qx,&Qy);
-    // FP12_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-
-    // PAIR_ZZZ_line(&lv,&B,&B,&Sx,&Sy);
-    // FP12_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-
-    // if (BIG_XXX_parity(n))
-    // {
-    //     PAIR_ZZZ_line(&lv,&A,P,&Qx,&Qy);
-    //     FP12_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-
-    //     PAIR_ZZZ_line(&lv,&B,R,&Sx,&Sy);
-    //     FP12_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-    // }
 
     /* R-ate fixup required for BN curves */
 
 #if SIGN_OF_X_ZZZ==NEGATIVEX
-	FP12_YYY_conj(r,r);
+    FP12_YYY_conj(r,r);
 #endif
 
 #if PAIRING_FRIENDLY_ZZZ==BN
 
 #if SIGN_OF_X_ZZZ==NEGATIVEX
-    //FP12_YYY_conj(r,r);
     ECP2_ZZZ_neg(&A);
     ECP2_ZZZ_neg(&B);
 #endif
@@ -459,8 +422,7 @@ void PAIR_ZZZ_fexp(FP12_YYY *r)
     FP12_YYY_mul(r,&y3); // r=r*y3
     FP12_YYY_reduce(r);
 #else
-// Ghamman & Fouotsa Method
-
+    // Ghamman & Fouotsa Method
     FP12_YYY_usqr(&y0,r);
     FP12_YYY_pow(&y1,&y0,x);
 #if SIGN_OF_X_ZZZ==NEGATIVEX
@@ -515,86 +477,6 @@ void PAIR_ZZZ_fexp(FP12_YYY *r)
     FP12_YYY_mul(&y1,&y2);
     FP12_YYY_copy(r,&y1);
     FP12_YYY_reduce(r);
-
-// Aranha et al method as described by Ghamman & Fouotsa
-    /*
-    	FP12_YYY_usqr(&y0,r);  // t0=f^2
-    	FP12_YYY_conj(&y3,&y0); // t0=f^-2
-    	FP12_YYY_pow(&t0,r,x); // t5=f^u
-    	FP12_YYY_usqr(&y1,&t0); // t1=t5^2
-    	FP12_YYY_mul(&y3,&t0); // t3=t0*t5
-
-    	FP12_YYY_pow(&y0,&y3,x);
-
-    	FP12_YYY_pow(&y2,&y0,x);
-
-    	FP12_YYY_pow(&y4,&y2,x);
-
-    	FP12_YYY_mul(&y4,&y1);
-    	FP12_YYY_pow(&y1,&y4,x);
-    	FP12_YYY_conj(&y3,&y3);
-    	FP12_YYY_mul(&y1,&y3);
-    	FP12_YYY_mul(&y1,r);
-
-    	FP12_YYY_conj(&y3,r);
-    	FP12_YYY_mul(&y0,r);
-    	FP12_YYY_frob(&y0,&X); FP12_YYY_frob(&y0,&X); FP12_YYY_frob(&y0,&X);
-
-    	FP12_YYY_mul(&y4,&y3);
-    	FP12_YYY_frob(&y4,&X);
-
-    	FP12_YYY_mul(&t0,&y2);
-    	FP12_YYY_frob(&t0,&X); FP12_YYY_frob(&t0,&X);
-
-    	FP12_YYY_mul(&t0,&y0);
-    	FP12_YYY_mul(&t0,&y4);
-    	FP12_YYY_mul(&t0,&y1);
-    	FP12_YYY_copy(r,&t0);
-    	FP12_YYY_reduce(r);*/
-
-//-----------------------------------
-    /*
-    	FP12_YYY_copy(&y0,r);						// y0=r;
-    	FP12_YYY_copy(&y1,r);						// y1=r;
-    	FP12_YYY_copy(&t0,r); FP12_YYY_frob(&t0,&X);	// t0=Frobenius(r,X,1);
-    	FP12_YYY_conj(&y3,&t0); FP12_YYY_mul(&y1,&y3);	// y1*=inverse(t0);
-    	FP12_YYY_frob(&t0,&X); FP12_YYY_frob(&t0,&X);	// t0=Frobenius(t0,X,2);
-    	FP12_YYY_mul(&y1,&t0);						// y1*=t0;
-
-    	FP12_YYY_pow(r,r,x);						// r=pow(r,x);
-    	FP12_YYY_conj(&y3,r); FP12_YYY_mul(&y1,&y3);	// y1*=inverse(r);
-    	FP12_YYY_copy(&t0,r); FP12_YYY_frob(&t0,&X);	// t0=Frobenius(r,X,1);
-    	FP12_YYY_mul(&y0,&t0);						// y0*=t0;
-    	FP12_YYY_frob(&t0,&X);						// t0=Frobenius(t0,X,1);
-    	FP12_YYY_mul(&y1,&t0);						// y1*=t0;
-    	FP12_YYY_frob(&t0,&X);						// t0=Frobenius(t0,X,1);
-    	FP12_YYY_conj(&y3,&t0); FP12_YYY_mul(&y0,&y3);	// y0*=inverse(t0);
-
-    	FP12_YYY_pow(r,r,x);						// r=pow(r,x);
-    	FP12_YYY_mul(&y0,r);						// y0*=r;
-    	FP12_YYY_copy(&t0,r); FP12_YYY_frob(&t0,&X); FP12_YYY_frob(&t0,&X); // t0=Frobenius(r,X,2);
-    	FP12_YYY_conj(&y3,&t0); FP12_YYY_mul(&y0,&y3);	// y0*=inverse(t0);
-    	FP12_YYY_frob(&t0,&X);						// t0=Frobenius(t0,X,1);
-    	FP12_YYY_mul(&y1,&t0);						// y1*=t0;
-
-    	FP12_YYY_pow(r,r,x);						// r=pow(r,x);			// r^x3
-    	FP12_YYY_copy(&t0,r); FP12_YYY_frob(&t0,&X);	// t0=Frobenius(r,X,1);
-    	FP12_YYY_conj(&y3,&t0); FP12_YYY_mul(&y0,&y3);	// y0*=inverse(t0);
-    	FP12_YYY_frob(&t0,&X);						// t0=Frobenius(t0,X,1);
-    	FP12_YYY_mul(&y1,&t0);						// y1*=t0;
-
-    	FP12_YYY_pow(r,r,x);						// r=pow(r,x);			// r^x4
-    	FP12_YYY_conj(&y3,r); FP12_YYY_mul(&y0,&y3);	// y0*=inverse(r);
-    	FP12_YYY_copy(&t0,r); FP12_YYY_frob(&t0,&X);	// t0=Frobenius(r,X,1);
-    	FP12_YYY_mul(&y1,&t0);						//y1*=t0;
-
-    	FP12_YYY_pow(r,r,x);						// r=pow(r,x);			// r^x5
-    	FP12_YYY_mul(&y1,r);						// y1*=r;
-
-    	FP12_YYY_usqr(&y0,&y0);						// r=y0*y0*y1;
-    	FP12_YYY_mul(&y0,&y1);
-    	FP12_YYY_copy(r,&y0);
-    	FP12_YYY_reduce(r); */
 #endif
 }
 
@@ -610,7 +492,6 @@ static void glv(BIG_XXX u[2],BIG_XXX e)
     for (i=0; i<2; i++)
     {
         BIG_XXX_rcopy(t,CURVE_W_ZZZ[i]);
-//BIG_XXX_norm(t); BIG_XXX_norm(e);
         BIG_XXX_mul(d,t,e);
         BIG_XXX_ddiv(v[i],d,q);
         BIG_XXX_zero(u[i]);
@@ -658,7 +539,6 @@ static void gs(BIG_XXX u[4],BIG_XXX e)
     for (i=0; i<4; i++)
     {
         BIG_XXX_rcopy(t,CURVE_WB_ZZZ[i]);
-//BIG_XXX_norm(t); BIG_XXX_norm(e);
         BIG_XXX_mul(d,t,e);
         BIG_XXX_ddiv(v[i],d,q);
         BIG_XXX_zero(u[i]);
@@ -690,7 +570,6 @@ static void gs(BIG_XXX u[4],BIG_XXX e)
     }
     BIG_XXX_copy(u[3],w);
 
-    /*  */
 #if SIGN_OF_X_ZZZ==NEGATIVEX
     BIG_XXX_modneg(u[1],u[1],q);
     BIG_XXX_modneg(u[3],u[3],q);
@@ -773,19 +652,12 @@ void PAIR_ZZZ_G2mul(ECP2_ZZZ *P,BIG_XXX e)
 
 
     ECP2_ZZZ_affine(P);
-
-//printf("PPz= "); FP2_YYY_output(&(P->z)); printf("\n");
-
-//printf("f= "); FP2_YYY_output(&X); printf("\n");
-
     ECP2_ZZZ_copy(&Q[0],P);
     for (i=1; i<4; i++)
     {
         ECP2_ZZZ_copy(&Q[i],&Q[i-1]);
         ECP2_ZZZ_frob(&Q[i],&X);
     }
-//printf("Q[0]= "); ECP2_ZZZ_output(&Q[0]); printf("\n");
-//printf("Q[1]= "); ECP2_ZZZ_output(&Q[1]); printf("\n");
     for (i=0; i<4; i++)
     {
         np=BIG_XXX_nbits(u[i]);
@@ -796,13 +668,8 @@ void PAIR_ZZZ_G2mul(ECP2_ZZZ *P,BIG_XXX e)
             BIG_XXX_copy(u[i],x);
             ECP2_ZZZ_neg(&Q[i]);
         }
-        BIG_XXX_norm(u[i]);        
+        BIG_XXX_norm(u[i]);
     }
-
-
-//printf("Q[2]= "); ECP2_ZZZ_output(&Q[2]); printf("\n");
-//printf("Q[3]= "); ECP2_ZZZ_output(&Q[3]); printf("\n");
-//exit(0);
 
     ECP2_ZZZ_mul4(P,Q,u);
 
@@ -854,46 +721,6 @@ void PAIR_ZZZ_GTpow(FP12_YYY *f,BIG_XXX e)
     FP12_YYY_pow(f,f,e);
 #endif
 }
-
-/* test group membership test - no longer needed */
-/* with GT-Strong curve, now only check that m!=1, conj(m)*m==1, and m.m^{p^4}=m^{p^2} */
-
-/*
-int PAIR_ZZZ_GTmember(FP12_YYY *m)
-{
-	BIG_XXX a,b;
-	FP2_YYY X;
-	FP12_YYY r,w;
-	if (FP12_YYY_isunity(m)) return 0;
-	FP12_YYY_conj(&r,m);
-	FP12_YYY_mul(&r,m);
-	if (!FP12_YYY_isunity(&r)) return 0;
-
-	BIG_XXX_rcopy(a,CURVE_Fra);
-	BIG_XXX_rcopy(b,CURVE_Frb);
-	FP2_YYY_from_BIGs(&X,a,b);
-
-
-	FP12_YYY_copy(&r,m); FP12_YYY_frob(&r,&X); FP12_YYY_frob(&r,&X);
-	FP12_YYY_copy(&w,&r); FP12_YYY_frob(&w,&X); FP12_YYY_frob(&w,&X);
-	FP12_YYY_mul(&w,m);
-
-
-#ifndef GT_STRONG
-	if (!FP12_YYY_equals(&w,&r)) return 0;
-
-	BIG_XXX_rcopy(a,CURVE_Bnx);
-
-	FP12_YYY_copy(&r,m); FP12_YYY_pow(&w,&r,a); FP12_YYY_pow(&w,&w,a);
-	FP12_YYY_sqr(&r,&w); FP12_YYY_mul(&r,&w); FP12_YYY_sqr(&r,&r);
-
-	FP12_YYY_copy(&w,m); FP12_YYY_frob(&w,&X);
- #endif
-
-	return FP12_YYY_equals(&w,&r);
-}
-
-*/
 
 
 #ifdef HAS_MAIN
@@ -948,7 +775,6 @@ int main()
     FP4_YYY t,c,cp,cpm1,cpm2;
     FP2_YYY x,y,X;
 
-
     BIG_XXX_rcopy(a,CURVE_Fra);
     BIG_XXX_rcopy(b,CURVE_Frb);
     FP2_YYY_from_BIGs(&X,a,b);
@@ -964,7 +790,6 @@ int main()
     ECP_ZZZ_output(&Q);
     printf("\n");
 
-//	BIG_XXX_rcopy(r,CURVE_Order); BIG_XXX_dec(r,7); BIG_XXX_norm(r);
     BIG_XXX_rcopy(xa,CURVE_Pxa);
     BIG_XXX_rcopy(xb,CURVE_Pxb);
     BIG_XXX_rcopy(ya,CURVE_Pya);
@@ -983,12 +808,8 @@ int main()
 
     for (i=0; i<1000; i++ )
     {
-
         PAIR_ZZZ_ate(&g,&P,&Q);
         PAIR_ZZZ_fexp(&g);
-
-//	PAIR_ZZZ_GTpow(&g,xa);
-
     }
     printf("g= ");
     FP12_YYY_output(&g);

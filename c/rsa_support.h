@@ -46,7 +46,7 @@ extern int PKCS15(int h,octet *M,octet *W);
 	@param R is a pointer to a cryptographically secure random number generator
 	@param P are input encoding parameter string (could be NULL)
 	@param F is the output encoding, ready for RSA encryption
-	@return 1 if OK, else 0
+	@return 0 if OK, else 1
  */
 extern int	OAEP_ENCODE(int h,octet *M,csprng *R,octet *P,octet *F);
 /**	@brief OAEP unpadding of a message after RSA decryption
@@ -55,7 +55,7 @@ extern int	OAEP_ENCODE(int h,octet *M,csprng *R,octet *P,octet *F);
 	@param h is the hash type
 	@param P are input encoding parameter string (could be NULL)
 	@param F is input padded message, unpadded on output
-	@return 1 if OK, else 0
+	@return 0 if OK, else 1
  */
 extern int  OAEP_DECODE(int h,octet *P,octet *F);
 

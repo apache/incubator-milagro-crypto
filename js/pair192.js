@@ -18,6 +18,7 @@
 */
 
 var PAIR192 = function(ctx) {
+    "use strict";
 
     var PAIR192 = {
         /* Line function */
@@ -126,8 +127,8 @@ var PAIR192 = function(ctx) {
 
         /* Optimal R-ate pairing */
         ate: function(P, Q) {
-            var fa, fb, f, x, n, n3, K, lv,
-                Qx, Qy, A, r, nb,
+            var x, n, n3, lv,
+                Qx, Qy, A, r, nb, bt,
                 i;
 
             x = new ctx.BIG(0);
@@ -149,13 +150,13 @@ var PAIR192 = function(ctx) {
             A.copy(P);
             nb = n3.nbits();
 
-            for (var i = nb - 2; i >= 1; i--) {
+            for (i = nb - 2; i >= 1; i--) {
                 r.sqr();
                 lv = PAIR192.line(A, A, Qx, Qy);
 
                 r.smul(lv,ctx.ECP.SEXTIC_TWIST);
 
-                var bt=n3.bit(i)-n.bit(i);
+                bt=n3.bit(i)-n.bit(i);
 
                 if (bt == 1) {
                     lv = PAIR192.line(A, P, Qx, Qy);
@@ -169,17 +170,16 @@ var PAIR192 = function(ctx) {
                 }
             }
 
-			if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX)
-			{
-				r.conj();
-			}
+            if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX) {
+                r.conj();
+            }
 
             return r;
         },
 
         /* Optimal R-ate double pairing e(P,Q).e(R,S) */
         ate2: function(P, Q, R, S) {
-            var fa, fb, f, x, n, n3, K, lv,
+            var x, n, n3, lv,
                 Qx, Qy, Sx, Sy, A, B, r, nb, bt,
                 i;
 
@@ -206,7 +206,7 @@ var PAIR192 = function(ctx) {
             B.copy(R);
             nb = n3.nbits();
 
-            for (var i = nb - 2; i >= 1; i--) {
+            for (i = nb - 2; i >= 1; i--) {
                 r.sqr();
                 lv = PAIR192.line(A, A, Qx, Qy);
                 r.smul(lv,ctx.ECP.SEXTIC_TWIST);
@@ -233,18 +233,17 @@ var PAIR192 = function(ctx) {
                 }
             }
 
-			if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX)
-			{
-				r.conj();
-			}
+            if (ctx.ECP.SIGN_OF_X == ctx.ECP.NEGATIVEX) {
+                r.conj();
+            }
 
             return r;
         },
 
         /* final exponentiation - keep separate for multi-pairings and to avoid thrashing stack */
         fexp: function(m) {
-            var fa, fb, f, x, r, lv;
-			var t0,t1,t2,t3,t4,t5,t6,t7;
+            var fa, fb, f, x, r, lv,
+                t0,t1,t2,t3,t4,t5,t6,t7;
 
             fa = new ctx.BIG(0);
             fa.rcopy(ctx.ROM_FIELD.Fra);
@@ -267,72 +266,72 @@ var PAIR192 = function(ctx) {
 
             /* Hard part of final exp */
             // Ghamman & Fouotsa Method
-			t7=new ctx.FP24(r); t7.usqr();
-			t1=t7.pow(x);
+            t7=new ctx.FP24(r); t7.usqr();
+            t1=t7.pow(x);
 
-			x.fshr(1);
-			t2=t1.pow(x);
-			x.fshl(1);
+            x.fshr(1);
+            t2=t1.pow(x);
+            x.fshl(1);
 
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t1.conj();
-			}
-			t3=new ctx.FP24(t1); t3.conj();
-			t2.mul(t3);
-			t2.mul(r);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t1.conj();
+            }
+            t3=new ctx.FP24(t1); t3.conj();
+            t2.mul(t3);
+            t2.mul(r);
 
-			t3=t2.pow(x);
-			t4=t3.pow(x);
-			t5=t4.pow(x);
+            t3=t2.pow(x);
+            t4=t3.pow(x);
+            t5=t4.pow(x);
 
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t3.conj(); t5.conj();
-			}
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t3.conj(); t5.conj();
+            }
 
-			t3.frob(f,6); t4.frob(f,5);
-			t3.mul(t4);
+            t3.frob(f,6); t4.frob(f,5);
+            t3.mul(t4);
 
-			t6=t5.pow(x);
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t6.conj();
-			}
+            t6=t5.pow(x);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t6.conj();
+            }
 
-			t5.frob(f,4);
-			t3.mul(t5);
+            t5.frob(f,4);
+            t3.mul(t5);
 
-			t0=new ctx.FP24(t2); t0.conj();
-			t6.mul(t0);
+            t0=new ctx.FP24(t2); t0.conj();
+            t6.mul(t0);
 
-			t5.copy(t6);
-			t5.frob(f,3);
+            t5.copy(t6);
+            t5.frob(f,3);
 
-			t3.mul(t5);
-			t5=t6.pow(x);
-			t6=t5.pow(x);
+            t3.mul(t5);
+            t5=t6.pow(x);
+            t6=t5.pow(x);
 
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t5.conj();
-			}
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t5.conj();
+            }
 
-			t0.copy(t5);
-			t0.frob(f,2);
-			t3.mul(t0);
-			t0.copy(t6);
-			t0.frob(f,1);
+            t0.copy(t5);
+            t0.frob(f,2);
+            t3.mul(t0);
+            t0.copy(t6);
+            t0.frob(f,1);
 
-			t3.mul(t0);
-			t5=t6.pow(x);
+            t3.mul(t0);
+            t5=t6.pow(x);
 
-			if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
-				t5.conj();
-			}
-			t2.frob(f,7);
+            if (ctx.ECP.SIGN_OF_X==ctx.ECP.NEGATIVEX) {
+                t5.conj();
+            }
+            t2.frob(f,7);
 
-			t5.mul(t7);
-			t3.mul(t2);
-			t3.mul(t5);
+            t5.mul(t7);
+            t3.mul(t2);
+            t3.mul(t5);
 
-			r.mul(t3);
+            r.mul(t3);
 
             r.reduce();
 
@@ -343,15 +342,15 @@ var PAIR192 = function(ctx) {
     /* GLV method */
     PAIR192.glv = function(e) {
         var u = [],
-        t, q, v, d, x, x2, i, j;
+            q, x, x2;
 
-// -(x^2).P = (Beta.x,y)
+        // -(x^2).P = (Beta.x,y)
         q = new ctx.BIG(0);
         q.rcopy(ctx.ROM_CURVE.CURVE_Order);
         x = new ctx.BIG(0);
         x.rcopy(ctx.ROM_CURVE.CURVE_Bnx);
         x2 = ctx.BIG.smul(x, x);
-		x = ctx.BIG.smul(x2,x2);
+        x = ctx.BIG.smul(x2,x2);
         u[0] = new ctx.BIG(e);
         u[0].mod(x);
         u[1] = new ctx.BIG(e);
@@ -440,7 +439,7 @@ var PAIR192 = function(ctx) {
 
         if (ctx.ROM_CURVE.USE_GS_G2) {
             Q = [];
-			F = ctx.ECP4.frob_constants();
+            F = ctx.ECP4.frob_constants();
 
             q = new ctx.BIG(0);
             q.rcopy(ctx.ROM_CURVE.CURVE_Order);
@@ -509,7 +508,7 @@ var PAIR192 = function(ctx) {
                     u[i].copy(t);
                     g[i].conj();
                 }
-                u[i].norm();                
+                u[i].norm();
             }
 
             r = ctx.FP24.pow8(g, u);
@@ -522,3 +521,7 @@ var PAIR192 = function(ctx) {
 
     return PAIR192;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.PAIR192 = PAIR192;
+}

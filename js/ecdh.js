@@ -18,6 +18,7 @@
 */
 
 var ECDH = function(ctx) {
+    "use strict";
 
     var ECDH = {
 
@@ -60,7 +61,7 @@ var ECDH = function(ctx) {
 
             for (i = 0; i < len; i++) {
                 ch = b[i];
-				//s += String.fromCharCode(ch);
+                //s += String.fromCharCode(ch);
                 s += ((ch >>> 4) & 15).toString(16);
                 s += (ch & 15).toString(16);
             }
@@ -109,7 +110,7 @@ var ECDH = function(ctx) {
 
             W = [];
 
-            len = ctx.BIG.MODBYTES;
+            len = pad; // ctx.BIG.MODBYTES;
 
             if (sha >= len) {
                 for (i = 0; i < len; i++) {
@@ -432,11 +433,10 @@ var ECDH = function(ctx) {
 
         KEY_PAIR_GENERATE: function(RNG, S, W) {
             var res = 0,
-                r, gx, gy, s,
-                G, WP;
-            //      var T=[];
+                r, s, G, WP;
+            // var T=[];
 
-			G = ctx.ECP.generator();
+            G = ctx.ECP.generator();
 
             r = new ctx.BIG(0);
             r.rcopy(ctx.ROM_CURVE.CURVE_Order);
@@ -450,15 +450,15 @@ var ECDH = function(ctx) {
                 // for (var i=0;i<this.EGS;i++) S[i]=T[i];
             }
 
-            //if (ROM.AES_S>0)
-            //{
+            // if (ROM.AES_S>0)
+            // {
             //  s.mod2m(2*ROM.AES_S);
-            //}
+            // }
 
             s.toBytes(S);
 
             WP = G.mul(s);
-            WP.toBytes(W);
+            WP.toBytes(W,false);  // To use point compression on public keys, change to true 
 
             return res;
         },
@@ -535,12 +535,12 @@ var ECDH = function(ctx) {
 
         ECPSP_DSA: function(sha, RNG, S, F, C, D) {
             var T = [],
-                i, gx, gy, r, s, f, c, d, u, vx, w,
+                i, r, s, f, c, d, u, vx, w,
                 G, V, B;
 
             B = this.hashit(sha, F, 0, null, ctx.BIG.MODBYTES);
 
-			G = ctx.ECP.generator();
+            G = ctx.ECP.generator();
 
             r = new ctx.BIG(0);
             r.rcopy(ctx.ROM_CURVE.CURVE_Order);
@@ -554,11 +554,11 @@ var ECDH = function(ctx) {
 
             do {
                 u = ctx.BIG.randomnum(r, RNG);
-                w = ctx.BIG.randomnum(r, RNG);
-                //if (ROM.AES_S>0)
-                //{
+                w = ctx.BIG.randomnum(r, RNG);  /* side channel masking */
+                // if (ROM.AES_S>0)
+                // {
                 //  u.mod2m(2*ROM.AES_S);
-                //}
+                // }
                 V.copy(G);
                 V = V.mul(u);
                 vx = V.getX();
@@ -590,12 +590,12 @@ var ECDH = function(ctx) {
         ECPVP_DSA: function(sha, W, F, C, D) {
             var B = [],
                 res = 0,
-                r, gx, gy, f, c, d, h2,
+                r, f, c, d, h2,
                 G, WP, P;
 
             B = this.hashit(sha, F, 0, null, ctx.BIG.MODBYTES);
 
- 			G = ctx.ECP.generator();
+            G = ctx.ECP.generator();
 
             r = new ctx.BIG(0);
             r.rcopy(ctx.ROM_CURVE.CURVE_Order);
@@ -755,3 +755,7 @@ var ECDH = function(ctx) {
 
     return ECDH;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.ECDH = ECDH;
+}

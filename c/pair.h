@@ -18,7 +18,7 @@
 */
 
 /**
- * @file pair.h
+ * @file pair_ZZZ.h
  * @author Mike Scott
  * @brief PAIR Header File
  *

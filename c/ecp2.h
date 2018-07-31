@@ -18,7 +18,7 @@
 */
 
 /**
- * @file ecp2.h
+ * @file ecp2_ZZZ.h
  * @author Mike Scott
  * @brief ECP2 Header File
  *
@@ -36,7 +36,6 @@
 
 typedef struct
 {
-//    int inf; /**< Infinity Flag */
     FP2_YYY x;   /**< x-coordinate of point */
     FP2_YYY y;   /**< y-coordinate of point */
     FP2_YYY z;   /**< z-coordinate of point */

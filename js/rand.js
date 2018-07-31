@@ -29,6 +29,7 @@
 /* Marsaglia & Zaman Random number generator constants */
 
 var RAND = function(ctx) {
+    "use strict";
 
     var RAND = function() {
         /* Cryptographically strong pseudo-random number generator */
@@ -181,3 +182,7 @@ var RAND = function(ctx) {
 
     return RAND;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.RAND = RAND;
+}

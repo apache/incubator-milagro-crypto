@@ -18,7 +18,7 @@
 */
 
 /**
- * @file ecp.h
+ * @file ecp_ZZZ.h
  * @author Mike Scott
  * @brief ECP Header File
  *
@@ -51,7 +51,6 @@ extern const BIG_XXX CURVE_Pxb_ZZZ; /**< imaginary part of x-coordinate of gener
 extern const BIG_XXX CURVE_Pya_ZZZ; /**< real part of y-coordinate of generator point in group G2 */
 extern const BIG_XXX CURVE_Pyb_ZZZ; /**< imaginary part of y-coordinate of generator point in group G2 */
 
-
 /*** needed for BLS24 curves ***/
 
 extern const BIG_XXX CURVE_Pxaa_ZZZ; /**< real part of x-coordinate of generator point in group G2 */
@@ -62,6 +61,7 @@ extern const BIG_XXX CURVE_Pyaa_ZZZ; /**< real part of y-coordinate of generator
 extern const BIG_XXX CURVE_Pyab_ZZZ; /**< imaginary part of y-coordinate of generator point in group G2 */
 extern const BIG_XXX CURVE_Pyba_ZZZ; /**< real part of y-coordinate of generator point in group G2 */
 extern const BIG_XXX CURVE_Pybb_ZZZ; /**< imaginary part of y-coordinate of generator point in group G2 */
+
 
 /*** needed for BLS48 curves ***/
 
@@ -104,8 +104,6 @@ extern const BIG_XXX CURVE_BB_ZZZ[4][4]; /**< BN curve constant for GS decomposi
 
 typedef struct
 {
-//    int inf; /**< Infinity Flag - not needed for Edwards representation */
-
     FP_YYY x; /**< x-coordinate of point */
 #if CURVETYPE_ZZZ!=MONTGOMERY
     FP_YYY y; /**< y-coordinate of point. Not needed for Montgomery representation */
@@ -259,10 +257,11 @@ extern void ECP_ZZZ_rawoutput(ECP_ZZZ * P);
  *
 	The octet string is created in the standard form 04|x|y, except for Montgomery curve in which case it is 06|x
 	Here x (and y) are the x and y coordinates in big-endian base 256 form.
+	@param c compression required, true or false
 	@param S output octet string
 	@param P ECP instance to be converted to an octet string
  */
-extern void ECP_ZZZ_toOctet(octet *S,ECP_ZZZ *P);
+extern void ECP_ZZZ_toOctet(octet *S,ECP_ZZZ *P,bool c);
 /**	@brief Creates an ECP point from an octet string
  *
 	The octet string is in the standard form 0x04|x|y, except for Montgomery curve in which case it is 0x06|x

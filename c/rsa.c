@@ -38,7 +38,6 @@ void RSA_WWW_KEY_PAIR(csprng *RNG,sign32 e,rsa_private_key_WWW *PRIV,rsa_public_
 
         for (;;)
         {
-
             FF_WWW_random(PRIV->p,RNG,HFLEN_WWW);
             while (FF_WWW_lastbits(PRIV->p,2)!=3) FF_WWW_inc(PRIV->p,1,HFLEN_WWW);
             while (!FF_WWW_prime(PRIV->p,RNG,HFLEN_WWW))
@@ -64,7 +63,6 @@ void RSA_WWW_KEY_PAIR(csprng *RNG,sign32 e,rsa_private_key_WWW *PRIV,rsa_public_
 
             break;
         }
-
     }
     else
     {
@@ -138,7 +136,6 @@ void RSA_WWW_DECRYPT(rsa_private_key_WWW *PRIV,octet *G,octet *F)
 
     FF_WWW_skpow(jp,jp,PRIV->dp,PRIV->p,HFLEN_WWW);
     FF_WWW_skpow(jq,jq,PRIV->dq,PRIV->q,HFLEN_WWW);
-
 
     FF_WWW_zero(g,FFLEN_WWW);
     FF_WWW_copy(g,jp,HFLEN_WWW);

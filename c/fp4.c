@@ -110,11 +110,9 @@ void FP4_YYY_neg(FP4_YYY *w,FP4_YYY *x)
 {
     /* Just one field neg */
     FP2_YYY m,t;
-	FP4_YYY_norm(x);
+    FP4_YYY_norm(x);
     FP2_YYY_add(&m,&(x->a),&(x->b));
-//	FP2_YYY_norm(&m);
     FP2_YYY_neg(&m,&m);
-//    FP2_YYY_norm(&m);
     FP2_YYY_add(&t,&m,&(x->b));
     FP2_YYY_add(&(w->b),&m,&(x->a));
     FP2_YYY_copy(&(w->a),&t);
@@ -302,7 +300,6 @@ void FP4_YYY_times_i(FP4_YYY *w)
     FP_YYY z;
     FP2_YYY s,t;
 
-//    FP4_YYY_norm(w);
     FP2_YYY_copy(&t,&(w->b));
 
     FP2_YYY_copy(&s,&t);
@@ -359,7 +356,6 @@ void FP4_YYY_xtr_A(FP4_YYY *r,FP4_YYY *w,FP4_YYY *x,FP4_YYY *y,FP4_YYY *z)
     FP4_YYY t1,t2;
 
     FP4_YYY_copy(r,x);
-//FP4_YYY_norm(y);
     FP4_YYY_sub(&t1,w,y);
     FP4_YYY_norm(&t1);
     FP4_YYY_pmul(&t1,&t1,&(r->a));
@@ -680,7 +676,6 @@ void FP4_YYY_div_2i(FP4_YYY *f)
 }
 
 #endif
-
 
 /*
 int main(){

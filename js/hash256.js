@@ -18,6 +18,7 @@
 */
 
 var HASH256 = function() {
+    "use strict";
 
     var HASH256 = function() {
         this.length = [];
@@ -195,3 +196,7 @@ var HASH256 = function() {
 
     return HASH256;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.HASH256 = HASH256;
+}

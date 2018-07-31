@@ -21,6 +21,7 @@
 /* AMCL mod p functions */
 
 var FP = function(ctx) {
+    "use strict";
 
     /* General purpose Constructor */
     var FP = function(x) {
@@ -309,7 +310,7 @@ var FP = function(ctx) {
 
         /* this=1/this mod Modulus */
         inverse: function() {
-/*
+            /*
             var p = new ctx.BIG(0),
                 r = this.redc();
 
@@ -318,12 +319,13 @@ var FP = function(ctx) {
             this.f.copy(r);
 
             return this.nres(); */
-			
-			var m2=new ctx.BIG(0);
-			m2.rcopy(ctx.ROM_FIELD.Modulus);
-			m2.dec(2); m2.norm();
-			this.copy(this.pow(m2));
-			return this;
+
+            var m2=new ctx.BIG(0);
+
+            m2.rcopy(ctx.ROM_FIELD.Modulus);
+            m2.dec(2); m2.norm();
+            this.copy(this.pow(m2));
+            return this;
 
         },
 
@@ -339,43 +341,42 @@ var FP = function(ctx) {
             return false;
         },
 
-       /* return this^e mod Modulus */
+        /* return this^e mod Modulus */
         pow: function(e) {
-			var i,w=[];
-			var tb=[];
-			var t=new ctx.BIG(e);
-			t.norm();
-			var nb= 1 + Math.floor((t.nbits() + 3) / 4);
+            var i,w=[],
+                tb=[],
+                t=new ctx.BIG(e),
+                nb, lsbs, r;
 
-			for (i=0;i<nb;i++)
-			{
-				var lsbs=t.lastbits(4);
-				t.dec(lsbs);
-				t.norm();
-				w[i]=lsbs;
-				t.fshr(4);
-			}
-			tb[0]=new FP(1);
-			tb[1]=new FP(this);
-			for (i=2;i<16;i++)
-			{
-				tb[i]=new FP(tb[i-1]); 
-				tb[i].mul(this);
-			}
-			var r=new FP(tb[w[nb-1]]);
-			for (i=nb-2;i>=0;i--)
-			{
-				r.sqr();
-				r.sqr();
-				r.sqr();
-				r.sqr();
-				r.mul(tb[w[i]]);
-			}
-			r.reduce();
+            t.norm();
+            nb= 1 + Math.floor((t.nbits() + 3) / 4);
+
+            for (i=0;i<nb;i++) {
+                lsbs=t.lastbits(4);
+                t.dec(lsbs);
+                t.norm();
+                w[i]=lsbs;
+                t.fshr(4);
+            }
+            tb[0]=new FP(1);
+            tb[1]=new FP(this);
+            for (i=2;i<16;i++) {
+                tb[i]=new FP(tb[i-1]);
+                tb[i].mul(this);
+            }
+            r=new FP(tb[w[nb-1]]);
+            for (i=nb-2;i>=0;i--) {
+                r.sqr();
+                r.sqr();
+                r.sqr();
+                r.sqr();
+                r.mul(tb[w[i]]);
+            }
+            r.reduce();
             return r;
         },
 
-        /* return this^e mod Modulus 
+        /* return this^e mod Modulus
         pow: function(e) {
             var bt,
                 r = new FP(1),
@@ -553,3 +554,7 @@ var FP = function(ctx) {
 
     return FP;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.FP = FP;
+}

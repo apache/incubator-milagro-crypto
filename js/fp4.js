@@ -22,6 +22,7 @@
 /* FP4 elements are of the form a+ib, where i is sqrt(-1+sqrt(-1))  */
 
 var FP4 = function(ctx) {
+    "use strict";
 
     /* general purpose constructor */
     var FP4 = function(c, d) {
@@ -121,7 +122,7 @@ var FP4 = function(ctx) {
 
         /* this=-this */
         neg: function() {
-			this.norm();
+            this.norm();
             var m = new ctx.FP2(this.a), //m.copy(this.a);
                 t = new ctx.FP2(0);
 
@@ -180,7 +181,7 @@ var FP4 = function(ctx) {
 
         /* this*=this */
         sqr: function() {
-            //      this.norm();
+            // this.norm();
 
             var t1 = new ctx.FP2(this.a), //t1.copy(this.a)
                 t2 = new ctx.FP2(this.b), //t2.copy(this.b)
@@ -214,7 +215,7 @@ var FP4 = function(ctx) {
 
         /* this*=y */
         mul: function(y) {
-            //      this.norm();
+            // this.norm();
 
             var t1 = new ctx.FP2(this.a), //t1.copy(this.a)
                 t2 = new ctx.FP2(this.b), //t2.copy(this.b)
@@ -235,7 +236,7 @@ var FP4 = function(ctx) {
             t3.copy(t1);
             t3.neg();
             t4.add(t3);
-            //      t4.norm(); // ??
+            // t4.norm(); // ??
 
             // t4.sub(t1);
 
@@ -554,86 +555,90 @@ var FP4 = function(ctx) {
             return r;
         },
 
-/* New stuff for ecp4.js */
+        /* New stuff for ecp4.js */
 
-		div2: function() {
-			a.div2();
-			b.div2();
-		},
-		
-		div_i: function() {
-			var u=new ctx.FP2(this.a);
-			var v=new ctx.FP2(this.b);
-			u.div_ip();
-			this.a.copy(v);
-			this.b.copy(u);
-		},
+        div2: function() {
+            this.a.div2();
+            this.b.div2();
+        },
 
-		div_2i: function() {
-			var u=new ctx.FP2(this.a);
-			var v=new ctx.FP2(this.b);
-			u.div_ip2();
-			v.add(v); v.norm();
-			this.a.copy(v);
-			this.b.copy(u);
-		},
+        div_i: function() {
+            var u=new ctx.FP2(this.a),
+                v=new ctx.FP2(this.b);
+            u.div_ip();
+            this.a.copy(v);
+            this.b.copy(u);
+        },
 
-		qmul: function(s) {
-			this.a.pmul(s);
-			this.b.pmul(s);
-		},
+        div_2i: function() {
+            var u=new ctx.FP2(this.a),
+                v=new ctx.FP2(this.b);
+            u.div_ip2();
+            v.add(v); v.norm();
+            this.a.copy(v);
+            this.b.copy(u);
+        },
 
-		sqrt: function() {
-			if (this.iszilch()) return true;
-			var wa=new ctx.FP2(this.a);
-			var ws=new ctx.FP2(this.b);
-			var wt=new ctx.FP2(this.a);
-			if (ws.iszilch())
-			{
-				if (wt.sqrt())
-				{
-					this.a.copy(wt);
-					this.b.zero();
-				} else {
-					wt.div_ip();
-					wt.sqrt();
-					this.b.copy(wt);
-					this.a.zero();
-				}
-				return true;
-			}
+        qmul: function(s) {
+            this.a.pmul(s);
+            this.b.pmul(s);
+        },
 
-			ws.sqr();
-			wa.sqr();
-			ws.mul_ip();
-			ws.norm();
-			wa.sub(ws);
+        sqrt: function() {
+            if (this.iszilch()) {
+                return true;
+            }
+            var wa=new ctx.FP2(this.a),
+                ws=new ctx.FP2(this.b),
+                wt=new ctx.FP2(this.a);
+            if (ws.iszilch()) {
+                if (wt.sqrt()) {
+                    this.a.copy(wt);
+                    this.b.zero();
+                } else {
+                    wt.div_ip();
+                    wt.sqrt();
+                    this.b.copy(wt);
+                    this.a.zero();
+                }
+                return true;
+            }
 
-			ws.copy(wa);
-			if (!ws.sqrt()) {
-				return false;
-			}
+            ws.sqr();
+            wa.sqr();
+            ws.mul_ip();
+            ws.norm();
+            wa.sub(ws);
 
-			wa.copy(wt); wa.add(ws); wa.norm(); wa.div2();
+            ws.copy(wa);
+            if (!ws.sqrt()) {
+                return false;
+            }
 
-			if (!wa.sqrt()) {
-				wa.copy(wt); wa.sub(ws); wa.norm(); wa.div2();
-				if (!wa.sqrt()) {
-					return false;
-				}
-			}
-			wt.copy(this.b);
-			ws.copy(wa); ws.add(wa);
-			ws.inverse();
+            wa.copy(wt); wa.add(ws); wa.norm(); wa.div2();
 
-			wt.mul(ws);
-			this.a.copy(wa);
-			this.b.copy(wt);
+            if (!wa.sqrt()) {
+                wa.copy(wt); wa.sub(ws); wa.norm(); wa.div2();
+                if (!wa.sqrt()) {
+                    return false;
+                }
+            }
+            wt.copy(this.b);
+            ws.copy(wa); ws.add(wa);
+            ws.inverse();
 
-			return true;
-		}
+            wt.mul(ws);
+            this.a.copy(wa);
+            this.b.copy(wt);
+
+            return true;
+        }
 
     };
 
     return FP4;
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports.FP4 = FP4;
+}
