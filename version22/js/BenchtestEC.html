@@ -1,0 +1,162 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>JavaScript Elliptic Curve Benchtest</title>
+</head>
+<body>
+<h1>JavaScript Benchmark ECC and RSA</h1>
+<script type="text/javascript" src="DBIG.js"></script>
+<script type="text/javascript" src="BIG.js"></script>
+<script type="text/javascript" src="FP.js"></script>
+<script type="text/javascript" src="ROM.js"></script>
+<script type="text/javascript" src="FF.js"></script>
+<script type="text/javascript" src="ECP.js"></script>
+<script type="text/javascript" src="RSA.js"></script>
+<script type="text/javascript" src="HASH256.js"></script>
+<script type="text/javascript" src="RAND.js"></script>
+<script>
+/* test driver and function exerciser ECC functions */
+		var i,j;
+		var result;
+		var MIN_ITERS=10;
+		var MIN_TIME=10;
+		var pub=new rsa_public_key(ROM.FFLEN);
+		var priv=new rsa_private_key(ROM.HFLEN);
+		var fail=false;
+
+		var RAW=[];
+		var M=[];
+		var C=[];
+		var P=[];
+
+		var rng=new RAND();
+
+		rng.clean();
+		for (i=0;i<100;i++) RAW[i]=i;
+
+		rng.seed(100,RAW);
+
+		if (ROM.CURVETYPE==ROM.WEIERSTRASS)
+		{
+			window.document.write("Weierstrass parameterization "+ "<br>");
+		}		
+		if (ROM.CURVETYPE==ROM.EDWARDS)
+		{
+			window.document.write("Edwards parameterization"+ "<br>");
+		}
+		if (ROM.CURVETYPE==ROM.MONTGOMERY)
+		{
+			window.document.write("Montgomery parameterization"+ "<br>");
+		}
+
+		if (ROM.MODTYPE==ROM.PSEUDO_MERSENNE)
+		{
+			window.document.write("Pseudo-Mersenne Modulus"+ "<br>");
+		}
+		if (ROM.MODTYPE==ROM.MONTGOMERY_FRIENDLY)
+		{
+			window.document.write("Montgomery friendly Modulus"+ "<br>");
+		}
+		if (ROM.MODTYPE==ROM.GENERALISED_MERSENNE)
+		{
+			window.document.write("Generalised-Mersenne Modulus"+ "<br>");
+		}
+		if (ROM.MODTYPE==ROM.NOT_SPECIAL)
+		{
+			window.document.write("Not special Modulus"+ "<br>");
+		}
+
+		window.document.write("Modulus size "+ROM.MODBITS+ " bits"+ "<br>"); 
+		window.document.write(ROM.CHUNK + " bit build"+ "<br>"); 
+		var r,gx,gy,s;
+		var G,WP;
+		var res=0;
+
+		G=new ECP(0);
+
+		gx=new BIG(0); gx.rcopy(ROM.CURVE_Gx);
+
+		if (ROM.CURVETYPE!=ROM.MOMTGOMERY)
+		{
+			gy=new BIG(0); gy.rcopy(ROM.CURVE_Gy);
+			G.setxy(gx,gy);
+		}
+		else G.setx(gx);
+
+		r=new BIG(0); r.rcopy(ROM.CURVE_Order);
+		s=BIG.randomnum(r,rng);
+			
+		WP=G.mul(r);
+		if (!WP.is_infinity())
+		{
+			alert("FAILURE - rG!=O");
+			fail=true;
+		}
+		var elapsed;
+		var start = performance.now();
+		iterations=0;
+		do {
+			WP=G.mul(s);
+			iterations++;
+			elapsed=(performance.now()-start);
+		} while (elapsed<MIN_TIME*1000 || iterations<MIN_ITERS);
+		dur=elapsed/iterations;
+		window.document.write("EC  mul - " + iterations + " iterations  ");
+		window.document.write(dur.toFixed(2) + " ms per iteration"+ "<br>");
+
+		window.document.write("Generating " +ROM.FFLEN*ROM.BIGBITS + " - bit RSA public/private key pair"+ "<br>");
+
+		MIN_ITERS=1;
+		start = performance.now();
+		iterations=0;
+		do {
+			RSA.KEY_PAIR(rng,65537,priv,pub);
+			iterations++;
+			elapsed=(performance.now()-start);
+		} while (elapsed<MIN_TIME*1000 || iterations<MIN_ITERS);
+		dur=elapsed/iterations;
+		window.document.write("RSA gen - " + iterations + " iteration  ");
+		window.document.write(dur.toFixed(2) + " ms per iteration"+ "<br>");
+
+		MIN_ITERS=10;
+
+		for (i=0;i<RSA.RFS;i++) M[i]=(i%128);
+
+		start = performance.now();
+		iterations=0;
+		do {
+			RSA.ENCRYPT(pub,M,C);
+			iterations++;
+			elapsed=(performance.now()-start);
+		} while (elapsed<MIN_TIME*1000 || iterations<MIN_ITERS);
+		dur=elapsed/iterations;
+		window.document.write("RSA enc - " + iterations + " iterations  ");
+		window.document.write(dur.toFixed(2) + " ms per iteration"+ "<br>");
+
+		start = performance.now();
+		iterations=0;
+		do {
+			RSA.DECRYPT(priv,C,P);
+			iterations++;
+			elapsed=(performance.now()-start);
+		} while (elapsed<MIN_TIME*1000 || iterations<MIN_ITERS);
+		dur=elapsed/iterations;
+		window.document.write("RSA dec - " + iterations + " iterations  ");
+		window.document.write(dur.toFixed(2) + " ms per iteration"+ "<br>");
+
+		var cmp=true;
+		for (i=0;i<RSA.RFS;i++)
+		{
+			if (P[i]!=M[i]) cmp=false;
+		}
+
+		if (!cmp)
+		{
+			alert("FAILURE - RSA decryption");
+			fail=true;
+		}
+		if (!fail) window.document.write("All tests pass"+ "<br>");
+
+</script>
+</body>
+</html>

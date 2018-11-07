@@ -1,0 +1,24 @@
+[package]
+name = "amcl"
+version = "0.1.2"
+authors = [
+  "Vyacheslav Gudkov <vyacheslav.gudkov@dsr-company.com>",
+  "Evgeniy Razinkov <evgeniy.razinkov@dsr-company.com.ru>"
+  ]
+
+description = "The Apache Milagro Cryptographic Library(version 2.2)"
+license = "Apache-2.0"
+repository = "https://github.com/MRJCrunch/amcl"
+[lib]
+name = "amcl"
+path = "src/lib.rs"
+
+[features]
+default = ["BLS383"]
+Ed25519 = []
+GOLDILOCKS = []
+BN254 = []
+BLS383 = []
+BLS455 = []
+
+[dependencies]
