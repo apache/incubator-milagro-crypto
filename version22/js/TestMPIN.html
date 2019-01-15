@@ -1,0 +1,330 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>JavaScript Test MPIN</title>
+</head>
+<body>
+<h1>JavaScript Test MPIN Example</h1>
+<script type="text/javascript" src="DBIG.js"></script>
+<script type="text/javascript" src="BIG.js"></script>
+<script type="text/javascript" src="FP.js"></script>
+<script type="text/javascript" src="ROM.js"></script>
+<script type="text/javascript" src="UInt64.js"></script>
+<script type="text/javascript" src="HASH256.js"></script>
+<script type="text/javascript" src="HASH384.js"></script>
+<script type="text/javascript" src="HASH512.js"></script>
+<script type="text/javascript" src="RAND.js"></script>
+<script type="text/javascript" src="AES.js"></script>
+<script type="text/javascript" src="GCM.js"></script>
+<script type="text/javascript" src="ECP.js"></script>
+<script type="text/javascript" src="FP2.js"></script>
+<script type="text/javascript" src="ECP2.js"></script>
+<script type="text/javascript" src="FP4.js"></script>
+<script type="text/javascript" src="FP12.js"></script>
+<script type="text/javascript" src="PAIR.js"></script>
+<script type="text/javascript" src="MPIN.js"></script>
+
+<script>
+/* test driver and function exerciser for MPIN API Functions */
+
+		var i,res;
+		var result;
+
+		var EGS=MPIN.EGS;
+		var EFS=MPIN.EFS;
+		var EAS=16;
+
+		var sha=MPIN.HASH_TYPE;
+
+		var rng=new RAND();
+		rng.clean();
+
+		var RAW=[];
+		for (i=0;i<100;i++) RAW[i]=i+1;
+		rng.seed(100,RAW);
+
+		var G1S=2*EFS+1; /* Group 1 Size */
+		var G2S=4*EFS; /* Group 2 Size */
+
+		var S=[];
+		var SST=[];
+		var TOKEN = [];
+		var PERMIT = [];
+		var SEC = [];
+		var xID = [];
+		var xCID = [];
+		var X= [];
+		var Y= [];
+		var E=[];
+		var F=[];
+		var HCID=[];
+		var HID=[];
+		var HTID=[];
+
+		var G1=[];
+		var G2=[];
+		var R=[];
+		var Z=[];
+		var W=[];
+		var T=[];
+		var CK=[];
+		var SK=[];
+
+		var HSID=[];
+
+/* Set configuration */
+		var PERMITS=true;
+		var PINERROR=true;
+		var FULL=true;
+    var ONE_PASS=false;
+    var TIME_FUNCTIONS=false;
+    var total_time=0;
+    var nIter=100
+/*
+    var PR=[];
+ pin=parseInt(prompt("Enter PIN= "));
+    window.document.write("Test Pairing" + "<br>");
+    for (i=0;i<100;i++)
+      MPIN.TEST_PAIR(PR);
+    window.document.write("Pairing= "+MPIN.bytestostring(PR) + "<br>");
+
+  pin=parseInt(prompt("Enter PIN= "));
+*/
+
+/* Trusted Authority set-up */
+		MPIN.RANDOM_GENERATE(rng,S);
+		window.document.write("Master Secret s: 0x"+MPIN.bytestostring(S) + "<br>");
+ 
+ /* Create Client Identity */
+ 		var IDstr = "testUser@miracl.com";
+		var CLIENT_ID = MPIN.stringtobytes(IDstr);  
+		HCID=MPIN.HASH_ID(sha,CLIENT_ID);  /* Either Client or TA calculates Hash(ID) - you decide! */
+		
+		window.document.write("Client ID= "+MPIN.bytestostring(CLIENT_ID) + "<br>");
+
+/* Client and Server are issued secrets by DTA */
+		MPIN.GET_SERVER_SECRET(S,SST);
+		window.document.write("Server Secret SS: 0x"+MPIN.bytestostring(SST) + "<br>");
+
+		MPIN.GET_CLIENT_SECRET(S,HCID,TOKEN);
+		window.document.write("Client Secret CS: 0x"+MPIN.bytestostring(TOKEN) + "<br>");     
+	
+/* Client extracts PIN from secret to create Token */
+		var pin=1234;
+	window.document.write("Client extracts PIN= "+pin + "<br>"); 
+		var rtn=MPIN.EXTRACT_PIN(sha,CLIENT_ID,pin,TOKEN);
+		if (rtn != 0)
+			window.document.write("Failed to extract PIN " + "<br>");  
+
+		window.document.write("Client Token TK: 0x"+MPIN.bytestostring(TOKEN) + "<br>");        
+
+		if (FULL)
+		{
+			MPIN.PRECOMPUTE(TOKEN,HCID,G1,G2);
+		}
+
+		var date;
+		if (PERMITS)
+		{
+			date=MPIN.today();
+/* Client gets "Time Token" permit from DTA */ 	
+			MPIN.GET_CLIENT_PERMIT(sha,date,S,HCID,PERMIT);
+			window.document.write("Time Permit TP: 0x"+MPIN.bytestostring(PERMIT) + "<br>");   
+
+/* This encoding makes Time permit look random - Elligator squared */
+			MPIN.ENCODING(rng,PERMIT);
+			window.document.write("Encoded Time Permit TP: 0x"+MPIN.bytestostring(PERMIT) + "<br>");   
+			MPIN.DECODING(PERMIT);
+			window.document.write("Decoded Time Permit TP: 0x"+MPIN.bytestostring(PERMIT) + "<br>");   
+		}
+		else date=0;
+
+
+		pin=parseInt(prompt("Enter PIN= "));
+
+/* Set date=0 and PERMIT=null if time permits not in use
+
+Client First pass: Inputs CLIENT_ID, optional RNG, pin, TOKEN and PERMIT. Output xID = x.H(CLIENT_ID) and re-combined secret SEC
+If PERMITS are is use, then date!=0 and PERMIT is added to secret and xCID = x.(H(CLIENT_ID)+H_T(date|H(CLIENT_ID)))
+Random value x is supplied externally if RNG=null, otherwise generated and passed out by RNG
+
+If Time Permits OFF set xCID = null, HTID=null and use xID and HID only
+If Time permits are ON, AND pin error detection is required then all of xID, xCID, HID and HTID are required
+If Time permits are ON, AND pin error detection is NOT required, set xID=null, HID=null and use xCID and HTID only.
+
+
+*/
+		var pxID=xID;
+		var pxCID=xCID;
+		var pHID=HID;
+		var pHTID=HTID;
+		var pE=E;
+		var pF=F;
+		var pPERMIT=PERMIT;
+		var prHID;
+
+		if (date!=0)
+		{
+			prHID=pHTID;
+			if (!PINERROR)
+			{
+				pxID=null;
+			//	pHID=null;
+			}
+		}
+		else
+		{
+			prHID=pHID;
+			pPERMIT=null;
+			pxCID=null;
+			pHTID=null;
+		}
+		if (!PINERROR)
+		{
+			pE=null;
+			pF=null;
+		}
+
+                if (ONE_PASS)
+                {
+                  window.document.write("MPIN Single Pass " + "<br>");   
+                  timeValue = MPIN.GET_TIME();
+                  window.document.write("Epoch " + timeValue + "<br>");   
+                  if (TIME_FUNCTIONS)
+                  {
+                   var start = new Date().getTime();
+                   for (i = 0; i < nIter; ++i) {
+                     rtn=MPIN.CLIENT(sha,date,CLIENT_ID,rng,X,pin,TOKEN,SEC,pxID,pxCID,pPERMIT,timeValue,Y);
+                   }
+                   var end = new Date().getTime();
+                   var t1 = end - start;
+                   total_time = total_time + t1;
+                   var iter_time = t1 / nIter;
+                   var iter_per_sec = nIter / (t1 / 1000);
+                   window.document.write("MPIN.CLIENT: time " + t1 + "ms iteration time " + iter_time + "ms iterations per second " + iter_per_sec + "<br>");   
+                  }
+                  else
+                  {
+                    rtn=MPIN.CLIENT(sha,date,CLIENT_ID,rng,X,pin,TOKEN,SEC,pxID,pxCID,pPERMIT,timeValue,Y);
+                  }
+		  if (rtn != 0)
+                    window.document.write("FAILURE: CLIENT rtn: " + rtn + "<br>");   
+
+                  if (FULL)
+		  {
+                    if (TIME_FUNCTIONS)
+                    {
+                     var start = new Date().getTime();
+                     for (i = 0; i < nIter; ++i) {
+                        HCID=MPIN.HASH_ID(sha,CLIENT_ID);
+                        MPIN.GET_G1_MULTIPLE(rng,1,R,HCID,Z); 
+                     }
+                     var end = new Date().getTime();
+                     var t2 = end - start;
+                     total_time = total_time + t2;
+                     var iter_time = t2 / nIter;
+                     var iter_per_sec = nIter / (t2 / 1000);
+                     window.document.write("MPIN.GET_G1_MULTIPLE: time " + t2 + "ms iteration time " + iter_time + "ms iterations per second " + iter_per_sec + "<br>");   
+                    }
+                    else
+                    {
+                      HCID=MPIN.HASH_ID(sha,CLIENT_ID);
+                      MPIN.GET_G1_MULTIPLE(rng,1,R,HCID,Z);  /* Also Send Z=r.ID to Server, remember random r */
+                    }
+                  }
+
+                  rtn=MPIN.SERVER(sha,date,pHID,pHTID,Y,SST,pxID,pxCID,SEC,pE,pF,CLIENT_ID,timeValue);
+                  if (rtn != 0)
+                    window.document.write("FAILURE: SERVER rtn: " + rtn+ "<br>");  
+
+                  if (FULL)
+                  {
+					HSID=MPIN.HASH_ID(sha,CLIENT_ID);
+                    MPIN.GET_G1_MULTIPLE(rng,0,W,prHID,T);  /* Also send T=w.ID to client, remember random w  */
+                  }
+                }
+                else 
+                {
+                  window.document.write("MPIN Multi Pass " + "<br>");   
+                  rtn=MPIN.CLIENT_1(sha,date,CLIENT_ID,rng,X,pin,TOKEN,SEC,pxID,pxCID,pPERMIT);
+  		  if (rtn != 0)
+  			window.document.write("FAILURE: CLIENT_1 rtn: " + rtn + "<br>");   
+  
+  		  if (FULL)
+  		  {
+  			HCID=MPIN.HASH_ID(sha,CLIENT_ID);
+  			MPIN.GET_G1_MULTIPLE(rng,1,R,HCID,Z);  /* Also Send Z=r.ID to Server, remember random r */
+  		  }
+    
+                  /* Server calculates H(ID) and H(T|H(ID)) (if time permits enabled), and maps them to points on the curve HID and HTID resp. */
+    		  MPIN.SERVER_1(sha,date,CLIENT_ID,pHID,pHTID);
+    
+                  /* Server generates Random number Y and sends it to Client */
+    		  MPIN.RANDOM_GENERATE(rng,Y);
+    
+    		  if (FULL)
+    		  {
+					HSID=MPIN.HASH_ID(sha,CLIENT_ID);
+    				MPIN.GET_G1_MULTIPLE(rng,0,W,prHID,T);  /* Also send T=w.ID to client, remember random w  */
+    		  }
+    
+                  /* Client Second Pass: Inputs Client secret SEC, x and y. Outputs -(x+y)*SEC */
+    		  rtn=MPIN.CLIENT_2(X,Y,SEC);
+    		  if (rtn != 0)
+    		    window.document.write("FAILURE: CLIENT_2 rtn: " + rtn + "<br>");  
+                    /* Server Second pass. Inputs hashed client id, random Y, -(x+y)*SEC, xID and xCID and Server secret SST. E and F help kangaroos to find error. */
+                    /* If PIN error not required, set E and F = NULL */
+    		  rtn=MPIN.SERVER_2(date,pHID,pHTID,Y,SST,pxID,pxCID,SEC,pE,pF);
+    
+    		  if (rtn != 0)
+    			window.document.write("FAILURE: SERVER_1 rtn: " + rtn+ "<br>");  
+    
+                }
+    		  
+
+                if (rtn == this.MPIN.BAD_PIN)
+    		{
+    		  window.document.write("Server says - Bad Pin. I don't know you. Feck off." + "<br>"); 
+    		  if (PINERROR)
+    		  {
+    		    var err=MPIN.KANGAROO(E,F);
+    		    if (err!=0) window.document.write("(Client PIN is out by "+err + ")<br>");
+    		  }
+                }
+    		else 
+    		{
+    		  window.document.write("Server says - PIN is good! You really are "+IDstr + "<br>"); 
+    		  if (FULL)
+    		  {
+                    if (TIME_FUNCTIONS)
+                    {
+                     var start = new Date().getTime();
+                     for (i = 0; i < nIter; ++i) {
+                       MPIN.CLIENT_KEY(sha,G1,G2,pin,R,X,T,CK);
+                     }
+                     var end = new Date().getTime();
+                     var t3 = end - start;
+                     total_time = total_time + t3;
+                     var iter_time = t3 / nIter;
+                     var iter_per_sec = nIter / (t3 / 1000);
+                     window.document.write("MPIN.CLIENT_KEY: time " + t1 + "ms iteration time " + iter_time + "ms iterations per second " + iter_per_sec + "<br>");   
+                    }
+                    else
+                    {
+						H=MPIN.HASH_ALL(sha,HCID,pxID,pxCID,SEC,Y,Z,T);
+						MPIN.CLIENT_KEY(sha,G1,G2,pin,R,X,H,T,CK);
+                    }
+    		    window.document.write("Client Key =  0x"+MPIN.bytestostring(CK) + "<br>");    
+					H=MPIN.HASH_ALL(sha,HSID,pxID,pxCID,SEC,Y,Z,T);
+                    MPIN.SERVER_KEY(sha,Z,SST,W,H,pHID,pxID,pxCID,SK);
+                    window.document.write("Server Key =  0x"+MPIN.bytestostring(SK) + "<br>");    
+    		  }
+                }
+         //       var iter_time = total_time / nIter;
+         //       var iter_per_sec = nIter / (total_time / 1000);
+         //       window.document.write("CLIENT: total time " + total_time + "ms iteration time " + iter_time + "ms iterations per second " + iter_per_sec + "<br>");   
+
+    
+</script>
+</body>
+</html>

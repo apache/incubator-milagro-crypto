@@ -1,0 +1,115 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>JavaScript Test RSA</title>
+</head>
+<body>
+<h1>JavaScript Test RSA Example</h1>
+<script type="text/javascript" src="ROM.js"></script>
+<script type="text/javascript" src="DBIG.js"></script>
+<script type="text/javascript" src="BIG.js"></script>
+<script type="text/javascript" src="UInt64.js"></script>
+<script type="text/javascript" src="HASH256.js"></script>
+<script type="text/javascript" src="HASH384.js"></script>
+<script type="text/javascript" src="HASH512.js"></script>
+<script type="text/javascript" src="RAND.js"></script>
+<script type="text/javascript" src="FF.js"></script>
+<script type="text/javascript" src="RSA.js"></script>
+
+
+<script>
+/* test driver and function exerciser for RSA API Functions */
+
+	var i,j=0,res;
+	var result;
+
+	var RFS=RSA.RFS;
+	var sha=RSA.HASH_TYPE;
+
+	var message="Hello World\n";
+
+	var pub=new rsa_public_key(ROM.FFLEN);
+	var priv=new rsa_private_key(ROM.HFLEN);
+
+	var ML=[];
+	var C=[];
+	var S=[];
+	var RAW=[];
+	
+	var rng=new RAND();
+	rng.clean();
+
+	for (i=0;i<100;i++) RAW[i]=i;
+	rng.seed(100,RAW);
+
+	var start,end,time;
+	start=new Date().getTime();
+	window.document.write("Generating public/private key pair (slow!)  <br>");
+	RSA.KEY_PAIR(rng,65537,priv,pub);
+	end=new Date().getTime();
+	time=end-start;
+	window.document.write("Time in ms= "+time+"<br>");
+
+	var M=RSA.stringtobytes(message);  
+	window.document.write("Encrypting test string <br>");
+
+	var E=RSA.OAEP_ENCODE(sha,M,rng,null); /* OAEP encode message m to e  */
+	window.document.write("Encoding= 0x" + RSA.bytestohex(E) + "<br>");  
+
+	window.document.write("Public key= 0x"+pub.n.toString() + "<br>"); 
+
+	start=new Date().getTime();	
+	RSA.ENCRYPT(pub,E,C);     /* encrypt encoded message */
+	end=new Date().getTime();	
+	time=end-start;
+	window.document.write("Time in ms= "+time+"<br>");
+
+	window.document.write("Ciphertext= 0x" + RSA.bytestohex(C) + "<br>");  
+
+	window.document.write("Decrypting test string <br>");
+	start=new Date().getTime();	
+	RSA.DECRYPT(priv,C,ML); 
+	end=new Date().getTime();
+	time=end-start;
+	window.document.write("Time in ms= "+time+"<br>");
+
+	var cmp=true;
+	if (E.length!=ML.length) cmp=false;
+	else
+	{
+		for (var j=0;j<E.length;j++)
+			if (E[j]!=ML[j]) cmp=false;
+	}
+	if (cmp) window.document.write("Decryption is OK <br>");
+	else window.document.write("Decryption Failed <br>");
+
+	var MS=RSA.OAEP_DECODE(sha,null,ML); /* OAEP decode message  */
+	window.document.write("Decoding= 0x" + RSA.bytestohex(MS) + "<br>");  
+
+	window.document.write("message= "+RSA.bytestostring(MS) + "<br>");  
+
+
+	window.document.write("Signing message <br>");
+	RSA.PKCS15(sha,M,C);
+
+	RSA.DECRYPT(priv,C,S); /* create signature in S */ 
+
+	window.document.write("Signature= 0x" + RSA.bytestohex(S) + "<br>");  
+
+	RSA.ENCRYPT(pub,S,ML); 
+
+	cmp=true;
+	if (C.length!=ML.length) cmp=false;
+	else
+	{
+		for (var j=0;j<C.length;j++)
+			if (C[j]!=ML[j]) cmp=false;
+	}
+	if (cmp) window.document.write("Signature is valid <br>");
+	else window.document.write("Signature is INVALID <br>");
+
+	RSA.PRIVATE_KEY_KILL(priv);
+
+</script>
+</body>
+</html>

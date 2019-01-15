@@ -1,0 +1,22 @@
+
+gcc -std=c99 -c -O3 big.c
+gcc -std=c99 -c -O3 fp.c
+gcc -std=c99 -c -O3 ecp.c
+gcc -std=c99 -c -O3 hash.c
+gcc -std=c99 -c -O3 rand.c
+gcc -std=c99 -c -O3 aes.c
+gcc -std=c99 -c -O3 gcm.c
+gcc -std=c99 -c -O3 oct.c
+gcc -std=c99 -c -O3 rom.c
+
+gcc -std=c99 -c -O3 ff.c
+
+rm amcl.a
+ar rc amcl.a big.o fp.o ecp.o hash.o ff.o
+ar r amcl.a rand.o aes.o gcm.o oct.o rom.o
+
+gcc -std=c99 -O3 testecdh.c ecdh.c randapi.c amcl.a -o testecdh
+gcc -std=c99 -O3 testrsa.c rsa.c randapi.c amcl.a -o testrsa
+gcc -std=c99 -O3 benchtest_ec.c rsa.c amcl.a -o benchtest_ec
+
+rm *.o

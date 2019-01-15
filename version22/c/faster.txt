@@ -1,0 +1,25 @@
+We assume than optimizing compilers will unwind loops at every opportunity. 
+
+But sometimes they don't. So time-critical code will run faster if we step
+in and unwind complex loops for the compiler.
+
+Once the architecture and ECC/RSA support is decided upon (that is amcl.h 
+and arch.h are settled), then compile and execute the program faster.c like 
+this (using MinGW port of GCC as an example), in the same directory as 
+arch.h and amcl.h
+
+gcc -O2 -std=c99 faster.c -o faster.exe
+faster > t.txt
+
+Now extract the code fragments from t.txt and insert them where indicated
+into big.c
+
+Finally make sure that
+
+#define UNWOUND
+
+appears somewhere in amcl.h
+
+Finally build the library as normal, and maybe get a 50% speed-up!
+If there is no significant improvement, don't use this method!
+

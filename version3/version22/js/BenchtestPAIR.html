@@ -1,0 +1,226 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>JavaScript PAIRing Benchtest</title>
+</head>
+<body>
+<h1>JavaScript Benchmark Pairings</h1>
+<script type="text/javascript" src="DBIG.js"></script>
+<script type="text/javascript" src="BIG.js"></script>
+<script type="text/javascript" src="FP.js"></script>
+<script type="text/javascript" src="ROM.js"></script>
+<script type="text/javascript" src="UInt64.js"></script>
+<script type="text/javascript" src="HASH256.js"></script>
+<script type="text/javascript" src="HASH384.js"></script>
+<script type="text/javascript" src="HASH512.js"></script>
+<script type="text/javascript" src="RAND.js"></script>
+<script type="text/javascript" src="AES.js"></script>
+<script type="text/javascript" src="GCM.js"></script>
+<script type="text/javascript" src="ECP.js"></script>
+<script type="text/javascript" src="FP2.js"></script>
+<script type="text/javascript" src="ECP2.js"></script>
+<script type="text/javascript" src="FP4.js"></script>
+<script type="text/javascript" src="FP12.js"></script>
+<script type="text/javascript" src="PAIR.js"></script>
+
+<script>
+/* test driver and function exerciser for PAIRING Functions */
+
+		var i;
+		var result;
+		var MIN_ITERS=1;
+		var MIN_TIME=10;
+		var RAW=[];
+		var fail=false;
+		var G=new ECP(0);
+		var Q=new ECP2(0);
+
+		var rng=new RAND();
+		rng.clean();
+
+		for (i=0;i<100;i++) RAW[i]=i+1;
+		rng.seed(100,RAW);
+
+		if (ROM.CURVE_PAIRING_TYPE==ROM.BN_CURVE)
+		{
+			window.document.write("BN Pairing-Friendly Curve"+ "<br>");
+		}
+		if (ROM.CURVE_PAIRING_TYPE==ROM.BLS_CURVE)
+		{
+			window.document.write("BLS Pairing-Friendly Curve"+ "<br>");
+		}
+
+		window.document.write("Modulus size " + ROM.MODBITS + " bits"+ "<br>"); 
+		window.document.write(ROM.CHUNK + " bit build"+ "<br>"); 
+
+		var gx=new BIG(0); gx.rcopy(ROM.CURVE_Gx);	
+		var gy=new BIG(0); gy.rcopy(ROM.CURVE_Gy);
+		G.setxy(gx,gy);			
+
+		r=new BIG(0); r.rcopy(ROM.CURVE_Order);
+		s=BIG.randomnum(r,rng);
+
+		var P=PAIR.G1mul(G,r);
+
+		if (!P.is_infinity())
+		{
+			alert("FAILURE - rP!=O");
+			fail=true;
+		}	
+
+		var elapsed;
+		var start = performance.now();
+		iterations=0;
+		do {
+			P=PAIR.G1mul(G,s);
+			iterations++;
+			elapsed=(performance.now()-start);
+		} while (elapsed<MIN_TIME*1000 || iterations<MIN_ITERS);
+		dur=elapsed/iterations;
+		window.document.write("G1 mul -                " + iterations + " iterations  ");
+		window.document.write(dur.toFixed(2) + " ms per iteration"+ "<br>");
+
+		var A=new BIG(0);
+		var B=new BIG(0);
+		A.rcopy(ROM.CURVE_Pxa); B.rcopy(ROM.CURVE_Pxb);
+		var QX=new FP2(0); QX.bset(A,B);
+		A.rcopy(ROM.CURVE_Pya); B.rcopy(ROM.CURVE_Pyb);
+		var QY=new FP2(0); QY.bset(A,B);
+		Q.setxy(QX,QY);
+
+		W=PAIR.G2mul(Q,r);
+
+		if (!W.is_infinity())
+		{
+			alert("FAILURE - rQ!=O");
+			fail=true;
+		}
+
+		start = performance.now();
+		iterations=0;
+		do {
+			W=PAIR.G2mul(Q,s);
+			iterations++;
+			elapsed=(performance.now()-start);
+		} while (elapsed<MIN_TIME*1000 || iterations<MIN_ITERS);
+		dur=elapsed/iterations;
+		window.document.write("G2 mul -                " + iterations + " iteration  ");
+		window.document.write(dur.toFixed(2) + " ms per iteration"+ "<br>");
+
+		var w=PAIR.ate(Q,P);
+		w=PAIR.fexp(w);
+
+		var g=PAIR.GTpow(w,r);
+
+		if (!g.isunity())
+		{
+			alert("FAILURE - g^r!=1");
+			fail=true;
+		}
+
+		start = performance.now();
+		iterations=0;
+		do {
+			g=PAIR.GTpow(w,s);
+			iterations++;
+			elapsed=(performance.now()-start);
+		} while (elapsed<MIN_TIME*1000 || iterations<MIN_ITERS);
+		dur=elapsed/iterations;
+		window.document.write("GT pow -                " + iterations + " iteration  ");
+		window.document.write(dur.toFixed(2) + " ms per iteration"+ "<br>");
+
+		var fa=new BIG(0); fa.rcopy(ROM.CURVE_Fra);
+		var fb=new BIG(0); fb.rcopy(ROM.CURVE_Frb);
+		var f=new FP2(fa,fb); //f.bset(fa,fb);
+
+		q=new BIG(0); q.rcopy(ROM.Modulus);
+
+		var m=new BIG(q);
+		m.mod(r);
+
+		var a=new BIG(s);
+		a.mod(m);
+
+		var b=new BIG(s);
+		b.div(m);
+
+		g.copy(w);
+		var c=g.trace();
+
+		g.frob(f);
+		var cp=g.trace();
+
+		w.conj();
+		g.mul(w);
+		var cpm1=g.trace();
+		g.mul(w);
+		var cpm2=g.trace();
+
+		var cr;
+		start = performance.now();
+		iterations=0;
+		do {
+			cr=c.xtr_pow2(cp,cpm1,cpm2,a,b);
+			iterations++;
+			elapsed=(performance.now()-start);
+		} while (elapsed<MIN_TIME*1000 || iterations<MIN_ITERS);
+		dur=elapsed/iterations;
+		window.document.write("GT pow (compressed) -   " + iterations + " iteration  ");
+		window.document.write(dur.toFixed(2) + " ms per iteration"+ "<br>");
+
+		start = performance.now();
+		iterations=0;
+		do {
+			w=PAIR.ate(Q,P);
+			iterations++;
+			elapsed=(performance.now()-start);
+		} while (elapsed<MIN_TIME*1000 || iterations<MIN_ITERS);
+		dur=elapsed/iterations;
+		window.document.write("PAIRing ATE   -         " + iterations + " iteration  ");
+		window.document.write(dur.toFixed(2) + " ms per iteration"+ "<br>");
+
+		start = performance.now();
+		iterations=0;
+		do {
+			g=PAIR.fexp(w);
+			iterations++;
+			elapsed=(performance.now()-start);
+		} while (elapsed<MIN_TIME*1000 || iterations<MIN_ITERS);
+		dur=elapsed/iterations;
+		window.document.write("PAIRing FEXP -          " + iterations + " iteration  ");
+		window.document.write(dur.toFixed(2) + " ms per iteration"+ "<br>");
+
+		P.copy(G);
+		Q.copy(W);
+
+		P=PAIR.G1mul(P,s);
+		g=PAIR.ate(Q,P);
+		g=PAIR.fexp(g);
+
+		P.copy(G);
+		Q=PAIR.G2mul(Q,s);
+		w=PAIR.ate(Q,P);
+		w=PAIR.fexp(w);
+
+		if (!g.equals(w))
+		{
+			alert("FAILURE - e(sQ,p)!=e(Q,sP)");
+			fail=true;
+		}
+
+		Q.copy(W);
+		g=PAIR.ate(Q,P);
+		g=PAIR.fexp(g);
+		g=PAIR.GTpow(g,s);
+
+		if (!g.equals(w))
+		{
+			alert("FAILURE - e(sQ,p)!=e(Q,P)^s");
+			fail=true;
+		}
+
+		if (!fail) window.document.write("All tests pass"+ "<br>");
+
+</script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>JavaScript Test ECC</title>
+</head>
+<body>
+<h1>JavaScript Test ECC Example</h1>
+<script type="text/javascript" src="DBIG.js"></script>
+<script type="text/javascript" src="BIG.js"></script>
+<script type="text/javascript" src="FP.js"></script>
+<script type="text/javascript" src="ROM.js"></script>
+<script type="text/javascript" src="UInt64.js"></script>
+<script type="text/javascript" src="HASH256.js"></script>
+<script type="text/javascript" src="HASH384.js"></script>
+<script type="text/javascript" src="HASH512.js"></script>
+<script type="text/javascript" src="RAND.js"></script>
+<script type="text/javascript" src="AES.js"></script>
+<script type="text/javascript" src="GCM.js"></script>
+<script type="text/javascript" src="ECP.js"></script>
+<script type="text/javascript" src="ECDH.js"></script>
+
+<script>
+/* test driver and function exerciser for ECDH/ECIES/ECDSA API Functions */
+		var i,j=0,res;
+		var result;
+		var pp="M0ng00se";
+
+		var EGS=ECDH.EGS;
+		var EFS=ECDH.EFS;
+		var EAS=16;
+		var sha=ECDH.HASH_TYPE;
+
+		var S1=[];
+		var W0=[];
+		var W1=[];
+		var Z0=[];
+		var Z1=[];
+		var RAW=[];
+		var SALT=[];
+		var P1=[];
+		var P2=[];
+		var V=[];
+		var M=[];
+		var T=new Array(12);  // must specify required length
+		var CS=[];
+		var DS=[];
+
+		var rng=new RAND();
+
+		rng.clean();
+		for (i=0;i<100;i++) RAW[i]=i;
+
+		rng.seed(100,RAW);
+//for (j=0;j<100;j++)
+//{
+
+		for (i=0;i<8;i++) SALT[i]=(i+1);  // set Salt
+
+		window.document.write("Alice's Passphrase= " + pp + "<br>");
+
+		var PW=ECDH.stringtobytes(pp);
+/* private key S0 of size EGS bytes derived from Password and Salt */
+		var S0=ECDH.PBKDF2(sha,PW,SALT,1000,EGS);
+
+		window.document.write("Alice's private key= 0x"+ECDH.bytestostring(S0)+ "<br>");
+/* Generate Key pair S/W */
+		ECDH.KEY_PAIR_GENERATE(null,S0,W0); 
+
+		window.document.write("Alice's public key= 0x"+ECDH.bytestostring(W0)+ "<br>");
+
+		res=ECDH.PUBLIC_KEY_VALIDATE(true,W0);
+		if (res!=0)
+			alert("ECP Public Key is invalid!");
+/* Random private key for other party */
+		ECDH.KEY_PAIR_GENERATE(rng,S1,W1);
+
+		window.document.write("Servers private key= 0x"+ECDH.bytestostring(S1)+ "<br>");
+		window.document.write("Servers public key= 0x"+ECDH.bytestostring(W1)+ "<br>");
+
+		res=ECDH.PUBLIC_KEY_VALIDATE(true,W1);
+		if (res!=0)
+			alert("ECP Public Key is invalid!");
+			
+
+/* Calculate common key using DH - IEEE 1363 method */
+
+		ECDH.ECPSVDP_DH(S0,W1,Z0);
+		ECDH.ECPSVDP_DH(S1,W0,Z1);
+
+		var same=true;
+		for (i=0;i<ECDH.EFS;i++)
+			if (Z0[i]!=Z1[i]) same=false;
+
+		if (!same)
+			alert("*** ECPSVDP-DH Failed");
+
+		var KEY=ECDH.KDF2(sha,Z0,null,ECDH.EAS);
+
+		window.document.write("Alice's DH Key=  0x"+ECDH.bytestostring(KEY)+ "<br>");
+		window.document.write("Servers DH Key=  0x"+ECDH.bytestostring(KEY)+ "<br>");
+
+		if (ROM.CURVETYPE!=ROM.MONTGOMERY)
+		{
+			window.document.write("Testing ECIES"+ "<br>");
+
+			P1[0]=0x0; P1[1]=0x1; P1[2]=0x2; 
+			P2[0]=0x0; P2[1]=0x1; P2[2]=0x2; P2[3]=0x3; 
+
+			for (i=0;i<=16;i++) M[i]=i; 
+
+			var C=ECDH.ECIES_ENCRYPT(sha,P1,P2,rng,W1,M,V,T);
+
+			window.document.write("Ciphertext= "+ "<br>");
+			window.document.write("V= 0x"+ECDH.bytestostring(V)+ "<br>");
+			window.document.write("C= 0x"+ECDH.bytestostring(C)+ "<br>");
+			window.document.write("T= 0x"+ECDH.bytestostring(T)+ "<br>");
+
+
+			M=ECDH.ECIES_DECRYPT(sha,P1,P2,V,C,T,S1);
+			if (M.length==0)
+				alert("*** ECIES Decryption Failed ");
+			else window.document.write("Decryption succeeded"+ "<br>");
+
+			window.document.write("Message is 0x"+ECDH.bytestostring(M)+ "<br>");
+
+			window.document.write("Testing ECDSA"+ "<br>");
+
+			if (ECDH.ECPSP_DSA(sha,rng,S0,M,CS,DS)!=0)
+				alert("***ECDSA Signature Failed");
+		
+			window.document.write("Signature= "+ "<br>");
+			window.document.write("C= 0x"+ECDH.bytestostring(CS)+ "<br>");
+			window.document.write("D= 0x"+ECDH.bytestostring(DS)+ "<br>");
+
+			if (ECDH.ECPVP_DSA(sha,W0,M,CS,DS)!=0)
+				alert("***ECDSA Verification Failed");
+			else window.document.write("ECDSA Signature/Verification succeeded "+  "<br>");
+		}
+//}
+//window.document.write("Test Completed Successfully"+ "<br>");
+</script>
+</body>
+</html>
