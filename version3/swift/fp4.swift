@@ -112,6 +112,21 @@ public struct FP4 {
     {
         return a.equals(x.a) && b.equals(x.b)
     }
+    mutating func set_fp2s(_ c: FP2,_ d: FP2)
+    {
+        a.copy(c)
+        b.copy(d)
+    }
+    mutating func set_fp2(_ c: FP2)
+    {
+        a.copy(c)
+        b.zero()
+    }    
+    mutating func set_fp2h(_ c: FP2)
+    {
+        b.copy(c)
+        a.zero()
+    }      
     /* copy self=x */
     mutating func copy(_ x:FP4)
     {

@@ -24,7 +24,7 @@ use super::fp2::FP2;
 use super::fp4::FP4;
 use super::big::BIG;
 use types::{SexticTwist, SignOfX};
-use std::str::SplitWhitespace;
+//use std::str::SplitWhitespace;
 
 pub struct ECP4 {
     x: FP4,

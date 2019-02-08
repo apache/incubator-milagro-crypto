@@ -22,6 +22,8 @@
 #define SEXTIC_TWIST_ZZZ @ST@
 #define SIGN_OF_X_ZZZ @SX@
 
+#define ATE_BITS_ZZZ @AB@
+
 #endif
 
 #if CURVE_SECURITY_ZZZ == 128

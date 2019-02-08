@@ -25,13 +25,20 @@ use super::fp8::FP8;
 use super::big::BIG;
 use super::rom;
 use types::{SexticTwist};
-use std::str::SplitWhitespace;
+//use std::str::SplitWhitespace;
+
+pub const ZERO: usize=0;
+pub const ONE: usize=1;
+pub const SPARSER: usize=2;
+pub const SPARSE: usize=3;
+pub const DENSE: usize=4;
 
 #[derive(Copy, Clone)]
 pub struct FP24 {
     a: FP8,
     b: FP8,
     c: FP8,
+    stype: usize,
 }
 
 impl FP24 {
@@ -40,7 +47,16 @@ impl FP24 {
             a: FP8::new(),
             b: FP8::new(),
             c: FP8::new(),
+            stype: ZERO,
         }
+    }
+
+    pub fn settype(&mut self,t: usize)  {
+	self.stype = t;
+    }
+
+    pub fn gettype(&self) -> usize {
+        return self.stype;
     }
 
     pub fn new_int(a: isize) -> FP24 {
@@ -48,6 +64,11 @@ impl FP24 {
         f.a.copy(&FP8::new_int(a));
         f.b.zero();
         f.c.zero();
+	if a == 1 {
+	    f.stype=ONE;
+	} else {
+	    f.stype=SPARSER;
+	}
         return f;
     }
 
@@ -56,6 +77,7 @@ impl FP24 {
         f.a.copy(&x.a);
         f.b.copy(&x.b);
         f.c.copy(&x.c);
+	f.stype=x.stype;
         return f;
     }
 
@@ -64,6 +86,7 @@ impl FP24 {
         g.a.copy(d);
         g.b.copy(e);
         g.c.copy(f);
+	g.stype=DENSE;
         return g;
     }
 
@@ -72,6 +95,7 @@ impl FP24 {
         g.a.copy(d);
         g.b.zero();
         g.c.zero();
+	g.stype=SPARSER;
         return g;
     }
 
@@ -99,6 +123,9 @@ impl FP24 {
         self.a.cmove(&g.a, d);
         self.b.cmove(&g.b, d);
         self.c.cmove(&g.c, d);
+	let mut u=d as usize;
+	u=!(u-1);
+	self.stype^=(self.stype^g.stype)&u;
     }
 
     /* return 1 if b==c, no branching */
@@ -141,18 +168,21 @@ impl FP24 {
     }
 
     pub fn geta(&mut self) -> FP8 {
-        let f = FP8::new_copy(&self.a);
-        return f;
+        return self.a;
+//        let f = FP8::new_copy(&self.a);
+//        return f;
     }
 
     pub fn getb(&mut self) -> FP8 {
-        let f = FP8::new_copy(&self.b);
-        return f;
+        return self.b;
+//	let f = FP8::new_copy(&self.b);
+//        return f;
     }
 
     pub fn getc(&mut self) -> FP8 {
-        let f = FP8::new_copy(&self.c);
-        return f;
+        return self.c;
+//        let f = FP8::new_copy(&self.c);
+//        return f;
     }
 
     /* copy self=x */
@@ -160,6 +190,7 @@ impl FP24 {
         self.a.copy(&x.a);
         self.b.copy(&x.b);
         self.c.copy(&x.c);
+	self.stype=x.stype;
     }
 
     /* set self=1 */
@@ -167,6 +198,7 @@ impl FP24 {
         self.a.one();
         self.b.zero();
         self.c.zero();
+	self.stype=ONE;
     }
 
     /* this=conj(this) */
@@ -214,11 +246,15 @@ impl FP24 {
         self.c.dbl();
         self.b.add(&b);
         self.c.add(&c);
+        self.stype=DENSE;
         self.reduce();
     }
 
     /* Chung-Hasan SQR2 method from http://cacr.uwaterloo.ca/techreports/2006/cacr2006-24.pdf */
     pub fn sqr(&mut self) {
+        if self.stype==ONE {
+            return;
+        }
         let mut a = FP8::new_copy(&self.a);
         let mut b = FP8::new_copy(&self.b);
         let mut c = FP8::new_copy(&self.c);
@@ -253,6 +289,11 @@ impl FP24 {
         self.b.copy(&c);
         self.b.add(&d);
         self.c.add(&a);
+        if self.stype==SPARSER {
+            self.stype=SPARSE;
+        } else {
+            self.stype=DENSE;
+        }
         self.norm();
     }
 
@@ -324,114 +365,310 @@ impl FP24 {
         z3.times_i();
         self.a.copy(&z0);
         self.a.add(&z3);
+        self.stype=DENSE;
         self.norm();
     }
 
-    /* Special case of multiplication arises from special form of ATE pairing line function */
-    pub fn smul(&mut self, y: &FP24, twist: usize) {
-        if twist == SexticTwist::D_TYPE.into() {
-            let mut z0 = FP8::new_copy(&self.a);
-            let mut z2 = FP8::new_copy(&self.b);
-            let mut z3 = FP8::new_copy(&self.b);
-            let mut t0 = FP8::new();
-            let mut t1 = FP8::new_copy(&y.a);
-
+/* FP24 full multiplication w=w*y */
+/* Supports sparse multiplicands */
+/* Usually w is denser than y */
+    pub fn ssmul(&mut self, y: &FP24) {
+        if self.stype==ONE {
+            self.copy(&y);
+            return;
+        }
+        if y.stype==ONE {
+            return;
+        }
+        if y.stype>=SPARSE {
+            let mut z0=FP8::new_copy(&self.a);
+            let mut z1=FP8::new_int(0);
+            let mut z2=FP8::new_int(0);
+            let mut z3=FP8::new_int(0);
             z0.mul(&y.a);
-            z2.pmul(&y.b.real());
-            self.b.add(&self.a);
-            t1.padd(&y.b.real());
 
-            self.b.norm();
-            t1.norm();
+            if ecp::SEXTIC_TWIST==SexticTwist::M_TYPE {
+                if y.stype==SPARSE || self.stype==SPARSE {
 
-            self.b.mul(&t1);
-            z3.add(&self.c);
-            z3.norm();
-            z3.pmul(&y.b.real());
+                    let mut ga=FP4::new_int(0);
+		    let mut gb=FP4::new_int(0);
 
-            t0.copy(&z0);
-            t0.neg();
-            t1.copy(&z2);
-            t1.neg();
+                    gb.copy(&self.b.getb());
+                    gb.mul(&y.b.getb());
+                    ga.zero();
+                    if y.stype!=SPARSE {
+                        ga.copy(&self.b.getb());
+                        ga.mul(&y.b.geta());
+                    }
+                    if self.stype!=SPARSE {
+                        ga.copy(&self.b.geta());
+                        ga.mul(&y.b.getb());
+                    }
+		    z2.set_fp4s(&ga,&gb);
+                    z2.times_i();
+                } else {
+                    z2.copy(&self.b);
+                    z2.mul(&y.b);
+                }
+            } else { 
+               z2.copy(&self.b);
+               z2.mul(&y.b);
+            }
+            let mut t0=FP8::new_copy(&self.a);
+            let mut t1=FP8::new_copy(&y.a);
+            t0.add(&self.b); t0.norm();
+            t1.add(&y.b); t1.norm();
 
-            self.b.add(&t0);
+            z1.copy(&t0); z1.mul(&t1);
+            t0.copy(&self.b); t0.add(&self.c); t0.norm();
+            t1.copy(&y.b); t1.add(&y.c); t1.norm();
 
-            self.b.add(&t1);
+            z3.copy(&t0); z3.mul(&t1);
+
+            t0.copy(&z0); t0.neg();
+            t1.copy(&z2); t1.neg();
+ 
+            z1.add(&t0);
+            self.b.copy(&z1); self.b.add(&t1);
+
             z3.add(&t1);
             z2.add(&t0);
 
-            t0.copy(&self.a);
-            t0.add(&self.c);
-            t0.norm();
-            z3.norm();
-
-            t0.mul(&y.a);
-            self.c.copy(&z2);
-            self.c.add(&t0);
-
-            z3.times_i();
-            self.a.copy(&z0);
-            self.a.add(&z3);
-        }
-        if twist == SexticTwist::M_TYPE.into() {
-            let mut z0 = FP8::new_copy(&self.a);
-            let mut z1 = FP8::new();
-            let mut z2 = FP8::new();
-            let mut z3 = FP8::new();
-            let mut t0 = FP8::new_copy(&self.a);
-            let mut t1 = FP8::new();
-
-            z0.mul(&y.a);
-            t0.add(&self.b);
-            t0.norm();
-
-            z1.copy(&t0);
-            z1.mul(&y.a);
-            t0.copy(&self.b);
-            t0.add(&self.c);
-            t0.norm();
-
-            z3.copy(&t0);
-            z3.pmul(&y.c.getb());
-            z3.times_i();
-
-            t0.copy(&z0);
-            t0.neg();
-
-            z1.add(&t0);
-            self.b.copy(&z1);
-            z2.copy(&t0);
-
-            t0.copy(&self.a);
-            t0.add(&self.c);
-            t1.copy(&y.a);
-            t1.add(&y.c);
-
-            t0.norm();
-            t1.norm();
-
+            t0.copy(&self.a); t0.add(&self.c); t0.norm();
+            t1.copy(&y.a); t1.add(&y.c); t1.norm();
+	
             t0.mul(&t1);
             z2.add(&t0);
 
-            t0.copy(&self.c);
+            if ecp::SEXTIC_TWIST==SexticTwist::D_TYPE {
+                if y.stype==SPARSE || self.stype==SPARSE {
 
-            t0.pmul(&y.c.getb());
-            t0.times_i();
+                    let mut ga=FP4::new_int(0);
+		    let mut gb=FP4::new_int(0);
 
-            t1.copy(&t0);
-            t1.neg();
+                    ga.copy(&self.c.geta());
+                    ga.mul(&y.c.geta());
+                    gb.zero();
+                    if y.stype!=SPARSE {
+                        gb.copy(&self.c.geta());
+                        gb.mul(&y.c.getb());
+                    }
+                    if self.stype!=SPARSE {
+                        gb.copy(&self.c.getb());
+                        gb.mul(&y.c.geta());
+                    }
+		    t0.set_fp4s(&ga,&gb);
+                } else {
+                    t0.copy(&self.c);
+                    t0.mul(&y.c);
+                }
+            } else { 
+                t0.copy(&self.c);
+                t0.mul(&y.c);
+            }
+            t1.copy(&t0); t1.neg();
 
-            self.c.copy(&z2);
-            self.c.add(&t1);
+            self.c.copy(&z2); self.c.add(&t1);
             z3.add(&t1);
             t0.times_i();
             self.b.add(&t0);
             z3.norm();
             z3.times_i();
-            self.a.copy(&z0);
-            self.a.add(&z3);
+            self.a.copy(&z0); self.a.add(&z3);
+        } else {
+            if self.stype==SPARSER {
+                self.smul(&y);
+                return;
+            }
+            if ecp::SEXTIC_TWIST==SexticTwist::D_TYPE { // dense by sparser - 13m 
+                let mut z0=FP8::new_copy(&self.a);
+                let mut z2=FP8::new_copy(&self.b);
+                let mut z3=FP8::new_copy(&self.b);
+                let mut t0=FP8::new_int(0);
+                let mut t1=FP8::new_copy(&y.a);
+
+                z0.mul(&y.a);
+                z2.pmul(&y.b.geta());
+                self.b.add(&self.a);
+                t1.padd(&y.b.geta());
+
+                t1.norm();
+                self.b.norm();
+                self.b.mul(&t1);
+                z3.add(&self.c);
+                z3.norm();
+                z3.pmul(&y.b.geta());
+
+                t0.copy(&z0); t0.neg();
+                t1.copy(&z2); t1.neg();
+
+                self.b.add(&t0);
+
+                self.b.add(&t1);
+                z3.add(&t1);
+                z2.add(&t0);
+
+                t0.copy(&self.a); t0.add(&self.c); t0.norm();
+                z3.norm();
+                t0.mul(&y.a);
+                self.c.copy(&z2); self.c.add(&t0);
+
+                z3.times_i();
+                self.a.copy(&z0); self.a.add(&z3);
+            }
+            if ecp::SEXTIC_TWIST==SexticTwist::M_TYPE {
+
+                let mut z0 = FP8::new_copy(&self.a);
+                let mut z1 = FP8::new();
+                let mut z2 = FP8::new();
+                let mut z3 = FP8::new();
+                let mut t0 = FP8::new_copy(&self.a);
+                let mut t1 = FP8::new();
+	
+                z0.mul(&y.a);
+                t0.add(&self.b); t0.norm();
+
+                z1.copy(&t0); z1.mul(&y.a);
+                t0.copy(&self.b); t0.add(&self.c);
+                t0.norm();
+
+                z3.copy(&t0);
+                z3.pmul(&y.c.getb());
+                z3.times_i();
+
+                t0.copy(&z0); t0.neg();
+                z1.add(&t0);
+                self.b.copy(&z1);
+                z2.copy(&t0);
+
+                t0.copy(&self.a); t0.add(&self.c); t0.norm();
+                t1.copy(&y.a); t1.add(&y.c); t1.norm();
+
+                t0.mul(&t1);
+                z2.add(&t0);
+                t0.copy(&self.c);
+			
+                t0.pmul(&y.c.getb());
+                t0.times_i();
+                t1.copy(&t0); t1.neg();
+
+                self.c.copy(&z2); self.c.add(&t1);
+                z3.add(&t1);
+                t0.times_i();
+                self.b.add(&t0);
+                z3.norm();
+                z3.times_i();
+                self.a.copy(&z0); self.a.add(&z3);
+           }	
         }
+        self.stype=DENSE;
         self.norm();
+    }
+
+
+    /* Special case of multiplication arises from special form of ATE pairing line function */
+    pub fn smul(&mut self, y: &FP24) {
+        if ecp::SEXTIC_TWIST==SexticTwist::D_TYPE {	
+            let mut w1=FP4::new_copy(&self.a.geta());
+            let mut w2=FP4::new_copy(&self.a.getb());
+            let mut w3=FP4::new_copy(&self.b.geta());
+
+            w1.mul(&y.a.geta());
+            w2.mul(&y.a.getb());
+            w3.mul(&y.b.geta());
+
+            let mut ta=FP4::new_copy(&self.a.geta());
+            let mut tb=FP4::new_copy(&y.a.geta());
+            ta.add(&self.a.getb()); ta.norm();
+            tb.add(&y.a.getb()); tb.norm();
+            let mut tc=FP4::new_copy(&ta);
+            tc.mul(&tb);
+            let mut t=FP4::new_copy(&w1);
+            t.add(&w2);
+            t.neg();
+            tc.add(&t);
+
+            ta.copy(&self.a.geta()); ta.add(&self.b.geta()); ta.norm();
+            tb.copy(&y.a.geta()); tb.add(&y.b.geta()); tb.norm();
+            let mut td=FP4::new_copy(&ta);
+            td.mul(&tb);
+            t.copy(&w1);
+            t.add(&w3);
+            t.neg();
+            td.add(&t);
+
+            ta.copy(&self.a.getb()); ta.add(&self.b.geta()); ta.norm();
+            tb.copy(&y.a.getb()); tb.add(&y.b.geta()); tb.norm();
+            let mut te=FP4::new_copy(&ta);
+            te.mul(&tb);
+            t.copy(&w2);
+            t.add(&w3);
+            t.neg();
+            te.add(&t);
+
+            w2.times_i();
+            w1.add(&w2);
+
+	    self.a.set_fp4s(&w1,&tc);
+	    self.b.set_fp4s(&td,&te);
+	    self.c.set_fp4(&w3);
+
+            self.a.norm();
+            self.b.norm();
+        } else {
+            let mut w1=FP4::new_copy(&self.a.geta());
+            let mut w2=FP4::new_copy(&self.a.getb());
+            let mut w3=FP4::new_copy(&self.c.getb());
+
+            w1.mul(&y.a.geta());
+            w2.mul(&y.a.getb());
+            w3.mul(&y.c.getb());
+
+            let mut ta=FP4::new_copy(&self.a.geta());
+            let mut tb=FP4::new_copy(&y.a.geta());
+            ta.add(&self.a.getb()); ta.norm();
+            tb.add(&y.a.getb()); tb.norm();
+            let mut tc=FP4::new_copy(&ta);
+            tc.mul(&tb);
+            let mut t=FP4::new_copy(&w1);
+            t.add(&w2);
+            t.neg();
+            tc.add(&t);
+
+            ta.copy(&self.a.geta()); ta.add(&self.c.getb()); ta.norm();
+            tb.copy(&y.a.geta()); tb.add(&y.c.getb()); tb.norm();
+            let mut td=FP4::new_copy(&ta);
+            td.mul(&tb);
+            t.copy(&w1);
+            t.add(&w3);
+            t.neg();
+            td.add(&t);
+
+            ta.copy(&self.a.getb()); ta.add(&self.c.getb()); ta.norm();
+            tb.copy(&y.a.getb()); tb.add(&y.c.getb()); tb.norm();
+            let mut te=FP4::new_copy(&ta);
+            te.mul(&tb);
+            t.copy(&w2);
+            t.add(&w3);
+            t.neg();
+            te.add(&t);
+
+            w2.times_i();
+            w1.add(&w2);
+	    self.a.set_fp4s(&w1,&tc);
+
+            w3.times_i();
+            w3.norm();
+	    self.b.set_fp4h(&w3);
+
+            te.norm();
+            te.times_i();
+	    self.c.set_fp4s(&te,&td);
+
+            self.a.norm();
+            self.c.norm();
+	}
+	self.stype=SPARSE;
     }
 
     /* self=1/self */
@@ -479,6 +716,7 @@ impl FP24 {
         self.b.mul(&f3);
         self.c.copy(&f2);
         self.c.mul(&f3);
+        self.stype=DENSE;
     }
 
     /* self=self^p using Frobenius */
@@ -503,6 +741,7 @@ impl FP24 {
             self.c.times_i2();
             self.c.times_i2();
         }
+        self.stype=DENSE;
     }
 
     /* trace function */

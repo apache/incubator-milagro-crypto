@@ -234,6 +234,7 @@ pub const SH: usize = 14;
 pub const CURVETYPE: CurveType = CurveType::WEIERSTRASS;
 pub const CURVE_PAIRING_TYPE: CurvePairingType = CurvePairingType::BLS;
 pub const SEXTIC_TWIST: SexticTwist = SexticTwist::M_TYPE;
+pub const ATE_BITS: usize = 49;
 pub const SIGN_OF_X: SignOfX = SignOfX::POSITIVEX;
 pub const HASH_TYPE: usize = 48;
 pub const AESKEY: usize = 24;

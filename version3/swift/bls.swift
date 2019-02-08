@@ -82,7 +82,16 @@ public struct BLS
         let G=ECP2.generator()
         let PK=ECP2.fromBytes(W)
         D.neg()
-        var v=PAIR.ate2(G,D,PK,HM)
+
+// Use new multi-pairing mechanism 
+        var r=PAIR.initmp()
+        PAIR.another(&r,G,D)
+        PAIR.another(&r,PK,HM)
+        var v=PAIR.miller(r)
+
+//.. or alternatively
+//        var v=PAIR.ate2(G,D,PK,HM)
+
         v=PAIR.fexp(v)
     
         if v.isunity() {

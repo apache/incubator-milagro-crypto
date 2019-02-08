@@ -78,7 +78,16 @@ pub fn verify(sig: &[u8], m: &str, w: &[u8]) -> isize {
     let g = ECP8::generator();
     let pk = ECP8::frombytes(&w);
     d.neg();
-    let mut v = pair256::ate2(&g, &d, &pk, &hm);
+
+// Use new multi-pairing mechanism 
+    let mut r=pair256::initmp();
+    pair256::another(&mut r,&g,&d);
+    pair256::another(&mut r,&pk,&hm);
+    let mut v=pair256::miller(&r);
+
+//.. or alternatively
+//    let mut v = pair256::ate2(&g, &d, &pk, &hm);
+
     v = pair256::fexp(&v);
     if v.isunity() {
         return BLS_OK;

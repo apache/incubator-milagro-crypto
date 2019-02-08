@@ -21,6 +21,8 @@
 #define SEXTIC_TWIST_ZZZ @ST@
 #define SIGN_OF_X_ZZZ @SX@ 
 
+#define ATE_BITS_ZZZ @AB@
+
 #endif
 
 
@@ -38,7 +40,6 @@
 #define AESKEY_ZZZ 32 /**< Symmetric Key size - 256 bits */
 #define HASH_TYPE_ZZZ SHA512  /**< Hash type */
 #endif
-
 
 
 namespace ZZZ_BIG=XXX;

@@ -24,6 +24,7 @@ use super::fp2::FP2;
 use super::ecp4::ECP4;
 use super::fp4::FP4;
 use super::fp8::FP8;
+use super::fp24;
 use super::fp24::FP24;
 use super::big::BIG;
 use super::ecp;
@@ -79,7 +80,9 @@ fn linedbl(A: &mut ECP4, qx: &FP, qy: &FP) -> FP24 {
         c.times_i();
     }
     A.dbl();
-    return FP24::new_fp8s(&a, &b, &c);
+    let mut res= FP24::new_fp8s(&a, &b, &c);
+    res.settype(fp24::SPARSER);
+    return res;
 }
 
 #[allow(non_snake_case)]
@@ -127,18 +130,88 @@ fn lineadd(A: &mut ECP4, B: &ECP4, qx: &FP, qy: &FP) -> FP24 {
     }
 
     A.add(B);
-    return FP24::new_fp8s(&a, &b, &c);
+    let mut res= FP24::new_fp8s(&a, &b, &c);
+    res.settype(fp24::SPARSER);
+    return res;
+}
+
+/* prepare ate parameter, n=6u+2 (BN) or n=u (BLS), n3=3*n */
+#[allow(non_snake_case)]
+fn lbits(n3: &mut BIG,n: &mut BIG) -> usize {
+    n.copy(&BIG::new_ints(&rom::CURVE_BNX));
+    n3.copy(&n);
+    n3.pmul(3);
+    n3.norm();
+    return n3.nbits();
+}
+
+/* prepare for multi-pairing */
+pub fn initmp() -> [FP24; rom::ATE_BITS] {
+    let r: [FP24; rom::ATE_BITS] = [FP24::new_int(1); rom::ATE_BITS];
+    return r
+}
+
+/* basic Miller loop */
+pub fn miller(r:&[FP24]) -> FP24 {
+    let mut res=FP24::new_int(1);
+    for i in (1..rom::ATE_BITS).rev() {
+        res.sqr();
+        res.ssmul(&r[i]);
+    }
+
+    if ecp::SIGN_OF_X==SignOfX::NEGATIVEX {
+        res.conj();
+    }
+    res.ssmul(&r[0]);
+    return res;
+}
+
+/* Accumulate another set of line functions for n-pairing */
+#[allow(non_snake_case)]
+pub fn another(r:&mut [FP24],P1: &ECP4,Q1: &ECP) {
+    let mut n = BIG::new();
+    let mut n3 = BIG::new();
+    
+// P is needed in affine form for line function, Q for (Qx,Qy) extraction
+    let mut P = ECP4::new();
+    P.copy(P1);
+    P.affine();
+    let mut Q = ECP::new();
+    Q.copy(Q1);
+    Q.affine();
+
+    let qx = FP::new_copy(&Q.getpx());
+    let qy = FP::new_copy(&Q.getpy());
+    let mut A = ECP4::new();
+
+    A.copy(&P);
+    let mut NP = ECP4::new();
+    NP.copy(&P);
+    NP.neg();
+
+    let nb=lbits(&mut n3,&mut n);
+
+    for i in (1..nb-1).rev() {
+        let mut lv=linedbl(&mut A,&qx,&qy);
+
+	let bt=n3.bit(i)-n.bit(i);
+        if bt==1 {
+            let lv2=lineadd(&mut A,&P,&qx,&qy);
+            lv.smul(&lv2);
+        }
+        if bt==-1 {
+            let lv2=lineadd(&mut A,&NP,&qx,&qy);
+            lv.smul(&lv2);
+        }
+        r[i].ssmul(&lv);
+    }
 }
 
 #[allow(non_snake_case)]
 /* Optimal R-ate pairing */
 pub fn ate(P1: &ECP4, Q1: &ECP) -> FP24 {
-    let x = BIG::new_ints(&rom::CURVE_BNX);
-    let n = BIG::new_copy(&x);
-
-    let mut n3 = BIG::new_copy(&n);
-    n3.pmul(3);
-    n3.norm();
+    let mut n = BIG::new();
+    let mut n3 = BIG::new();
 
     let mut P = ECP4::new();
     P.copy(P1);
@@ -158,21 +231,23 @@ pub fn ate(P1: &ECP4, Q1: &ECP) -> FP24 {
     NP.copy(&P);
     NP.neg();
 
-    let nb = n3.nbits();
+    let nb=lbits(&mut n3,&mut n);
 
     for i in (1..nb - 1).rev() {
         r.sqr();
+
         let mut lv = linedbl(&mut A, &qx, &qy);
-        r.smul(&lv, ecp::SEXTIC_TWIST.into());
+
         let bt = n3.bit(i) - n.bit(i);
         if bt == 1 {
-            lv = lineadd(&mut A, &P, &qx, &qy);
-            r.smul(&lv, ecp::SEXTIC_TWIST.into());
+            let lv2 = lineadd(&mut A, &P, &qx, &qy);
+            lv.smul(&lv2);
         }
         if bt == -1 {
-            lv = lineadd(&mut A, &NP, &qx, &qy);
-            r.smul(&lv, ecp::SEXTIC_TWIST.into());
+            let lv2 = lineadd(&mut A, &NP, &qx, &qy);
+            lv.smul(&lv2);
         }
+        r.ssmul(&lv);
     }
 
     if ecp::SIGN_OF_X == SignOfX::NEGATIVEX {
@@ -185,12 +260,8 @@ pub fn ate(P1: &ECP4, Q1: &ECP) -> FP24 {
 #[allow(non_snake_case)]
 /* Optimal R-ate double pairing e(P,Q).e(R,S) */
 pub fn ate2(P1: &ECP4, Q1: &ECP, R1: &ECP4, S1: &ECP) -> FP24 {
-    let x = BIG::new_ints(&rom::CURVE_BNX);
-    let n = BIG::new_copy(&x);
-
-    let mut n3 = BIG::new_copy(&n);
-    n3.pmul(3);
-    n3.norm();
+    let mut n = BIG::new();
+    let mut n3 = BIG::new();
 
     let mut P = ECP4::new();
     P.copy(P1);
@@ -225,26 +296,26 @@ pub fn ate2(P1: &ECP4, Q1: &ECP, R1: &ECP4, S1: &ECP) -> FP24 {
     NR.copy(&R);
     NR.neg();
 
-    let nb = n3.nbits();
+    let nb=lbits(&mut n3,&mut n);
 
     for i in (1..nb - 1).rev() {
         r.sqr();
         let mut lv = linedbl(&mut A, &qx, &qy);
-        r.smul(&lv, ecp::SEXTIC_TWIST.into());
-        lv = linedbl(&mut B, &sx, &sy);
-        r.smul(&lv, ecp::SEXTIC_TWIST.into());
+        let lv2 = linedbl(&mut B, &sx, &sy);
+	lv.smul(&lv2);
+        r.ssmul(&lv);
         let bt = n3.bit(i) - n.bit(i);
         if bt == 1 {
             lv = lineadd(&mut A, &P, &qx, &qy);
-            r.smul(&lv, ecp::SEXTIC_TWIST.into());
-            lv = lineadd(&mut B, &R, &sx, &sy);
-            r.smul(&lv, ecp::SEXTIC_TWIST.into());
+            let lv2 = lineadd(&mut B, &R, &sx, &sy);
+	    lv.smul(&lv2);
+            r.ssmul(&lv);
         }
         if bt == -1 {
             lv = lineadd(&mut A, &NP, &qx, &qy);
-            r.smul(&lv, ecp::SEXTIC_TWIST.into());
-            lv = lineadd(&mut B, &NR, &sx, &sy);
-            r.smul(&lv, ecp::SEXTIC_TWIST.into());
+            let lv2 = lineadd(&mut B, &NR, &sx, &sy);
+	    lv.smul(&lv2);
+            r.ssmul(&lv);
         }
     }
 

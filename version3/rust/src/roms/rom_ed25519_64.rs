@@ -73,6 +73,7 @@ pub const SH: usize = 25;
 pub const CURVETYPE: CurveType = CurveType::EDWARDS;
 pub const CURVE_PAIRING_TYPE: CurvePairingType = CurvePairingType::NOT;
 pub const SEXTIC_TWIST: SexticTwist = SexticTwist::NOT;
+pub const ATE_BITS: usize = 0;
 pub const SIGN_OF_X: SignOfX = SignOfX::NOT;
 pub const HASH_TYPE: usize = 32;
 pub const AESKEY: usize = 16;

@@ -100,10 +100,19 @@ var BLS192 = function(ctx) {
 			var G=ctx.ECP4.generator();
 			var PK=ctx.ECP4.fromBytes(W);
 			D.neg();
-			var v=ctx.PAIR192.ate2(G,D,PK,HM);
+
+// Use new multi-pairing mechanism 
+			var r=ctx.PAIR192.initmp();
+			ctx.PAIR192.another(r,G,D);
+			ctx.PAIR192.another(r,PK,HM);
+			var v=ctx.PAIR192.miller(r);
+
+//.. or alternatively
+//			var v=ctx.PAIR192.ate2(G,D,PK,HM);
+			v=ctx.PAIR192.fexp(v);
 			if (v.isunity())
 				return this.BLS_OK;
-			return this.BLS_OK;
+			return this.BLS_FAIL;
 		}
     };
 

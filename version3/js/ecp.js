@@ -48,6 +48,7 @@ var ECP = function(ctx) {
     ECP.CURVE_PAIRING_TYPE = ctx.config["@PF"];
     ECP.SEXTIC_TWIST = ctx.config["@ST"];
     ECP.SIGN_OF_X = ctx.config["@SX"];
+    ECP.ATE_BITS = ctx.config["@AB"];
 
     ECP.HASH_TYPE = ctx.config["@HT"];
     ECP.AESKEY = ctx.config["@AK"];

@@ -133,7 +133,7 @@ def server(ID, Y, SS, U, V):
     TU.add(P)
     # TU.affine()
 
-    r = pair.double_miller(Q, TV, sQ, TU)
+    r = pair.double_ate(Q, TV, sQ, TU)
     r = pair.fexp(r)
 
     if r.isone():

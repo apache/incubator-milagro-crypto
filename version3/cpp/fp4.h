@@ -127,6 +127,7 @@ extern void FP4_sub(FP4 *x,FP4 *y,FP4 *z);
  */
 extern void FP4_pmul(FP4 *x,FP4 *y,FP2 *a);
 
+
 /**	@brief Multiplication of an FP4 by an FP
  *
 	@param x FP4 instance, on exit = y*a

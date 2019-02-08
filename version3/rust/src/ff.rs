@@ -29,7 +29,7 @@ use super::super::arch::DChunk;
 /* RSA/DH modulus length as multiple of BIGBITS */
 
 pub use super::rom::FFLEN;
-use std::str::SplitWhitespace;
+//use std::str::SplitWhitespace;
 
 pub const FF_BITS: usize = (big::BIGBITS * FFLEN); /* Finite Field Size in bits - must be 256.2^n */
 pub const HFLEN: usize = (FFLEN / 2); /* Useful for half-size RSA private key operations */

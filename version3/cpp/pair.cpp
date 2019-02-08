@@ -48,7 +48,7 @@ static void ZZZ::PAIR_line(FP12 *v,ECP2 *A,ECP2 *B,FP *Qx,FP *Qy)
 
 
 		FP2_copy(&YZ,&YY);		//FP2 YZ=new FP2(YY);        //Y 
-		FP2_mul(&YZ,&YZ,&ZZ);		//YZ.mul(ZZ);                //YZ
+		FP2_mul(&YZ,&YZ,&ZZ);	//YZ.mul(ZZ);                //YZ
 		FP2_sqr(&XX,&XX);		//XX.sqr();	               //X^2
 		FP2_sqr(&YY,&YY);		//YY.sqr();	               //Y^2
 		FP2_sqr(&ZZ,&ZZ);		//ZZ.sqr();			       //Z^2
@@ -57,8 +57,8 @@ static void ZZZ::PAIR_line(FP12 *v,ECP2 *A,ECP2 *B,FP *Qx,FP *Qy)
 		FP2_neg(&YZ,&YZ);		//YZ.neg(); 
 		FP2_norm(&YZ);			//YZ.norm();       //-4YZ
 
-		FP2_imul(&XX,&XX,6);					//6X^2
-		FP2_pmul(&XX,&XX,Qx);	               //6X^2.Xs
+		FP2_imul(&XX,&XX,6);				//6X^2
+		FP2_pmul(&XX,&XX,Qx);	            //6X^2.Xs
 
 		FP2_imul(&ZZ,&ZZ,3*CURVE_B_I);	//3Bz^2 
 
@@ -99,7 +99,7 @@ static void ZZZ::PAIR_line(FP12 *v,ECP2 *A,ECP2 *B,FP *Qx,FP *Qy)
 		FP2_copy(&Y1,&(A->y));		//FP2 Y1=new FP2(A.gety());    // Y1
 		FP2_copy(&T1,&(A->z));		//FP2 T1=new FP2(A.getz());    // Z1
 			
-		FP2_copy(&T2,&T1);		//FP2 T2=new FP2(A.getz());    // Z1
+		FP2_copy(&T2,&T1);			//FP2 T2=new FP2(A.getz());    // Z1
 
 		FP2_mul(&T1,&T1,&(B->y));	//T1.mul(B.gety());    // T1=Z1.Y2 
 		FP2_mul(&T2,&T2,&(B->x));	//T2.mul(B.getx());    // T2=Z1.X2
@@ -136,13 +136,146 @@ static void ZZZ::PAIR_line(FP12 *v,ECP2 *A,ECP2 *B,FP *Qx,FP *Qy)
 		FP4_zero(&b);
 		FP4_from_FP2H(&c,&Y1);		//b=new FP4(Y1);
 #endif
-		ECP2_add(A,B);			//A.add(B);
+		ECP2_add(A,B);				//A.add(B);
     }
 
     FP12_from_FP4s(v,&a,&b,&c);
+	v->type=FP_SPARSER;
 }
 
-/* Optimal R-ate pairing r=e(P,Q) */
+/* prepare ate parameter, n=6u+2 (BN) or n=u (BLS), n3=3*n */
+int ZZZ::PAIR_nbits(BIG n3,BIG n)
+{
+	BIG x;
+    BIG_rcopy(x,CURVE_Bnx);
+
+#if PAIRING_FRIENDLY_ZZZ==BN
+    BIG_pmul(n,x,6);
+#if SIGN_OF_X_ZZZ==POSITIVEX
+	BIG_inc(n,2);
+#else
+    BIG_dec(n,2);
+#endif
+
+#else
+    BIG_copy(n,x);
+#endif
+
+    BIG_norm(n);
+	BIG_pmul(n3,n,3);
+	BIG_norm(n3);
+
+    return BIG_nbits(n3);
+}
+
+/*
+	For multi-pairing, product of n pairings
+	1. Declare FP12 array of length number of bits in Ate parameter
+	2. Initialise this array by calling PAIR_initmp()
+	3. Accumulate each pairing by calling PAIR_another() n times
+	4. Call PAIR_miller()
+	5. Call final exponentiation PAIR_fexp()
+*/
+
+/* prepare for multi-pairing */
+void ZZZ::PAIR_initmp(FP12 r[])
+{
+	int i;
+	for (i=ATE_BITS_ZZZ-1; i>=0; i--)
+		FP12_one(&r[i]);
+	return;
+}
+
+/* basic Miller loop */
+void ZZZ::PAIR_miller(FP12 *res,FP12 r[])
+{
+	int i;
+    FP12_one(res);
+	for (i=ATE_BITS_ZZZ-1; i>=1; i--)
+	{
+		FP12_sqr(res,res);
+		FP12_ssmul(res,&r[i]);
+	}
+
+#if SIGN_OF_X_ZZZ==NEGATIVEX
+    FP12_conj(res,res);
+#endif
+	FP12_ssmul(res,&r[0]);
+	return;
+}
+
+/* Accumulate another set of line functions for n-pairing */
+void ZZZ::PAIR_another(FP12 r[],ECP2* PV,ECP* QV)
+{
+    int i,j,nb,bt;
+	BIG x,n,n3;
+    FP12 lv,lv2;
+    ECP2 A,NP,P;
+	ECP Q;
+	FP Qx,Qy;
+#if PAIRING_FRIENDLY_ZZZ==BN
+	ECP2 K;
+    FP2 X;
+    FP_rcopy(&Qx,Fra);
+    FP_rcopy(&Qy,Frb);
+    FP2_from_FPs(&X,&Qx,&Qy);
+#if SEXTIC_TWIST_ZZZ==M_TYPE
+	FP2_inv(&X,&X);
+	FP2_norm(&X);
+#endif
+#endif
+
+	nb=PAIR_nbits(n3,n);
+
+	ECP2_copy(&P,PV);
+	ECP_copy(&Q,QV);
+
+	ECP2_affine(&P);
+	ECP_affine(&Q);
+
+	FP_copy(&Qx,&(Q.x));
+	FP_copy(&Qy,&(Q.y));
+
+	ECP2_copy(&A,&P);
+	ECP2_copy(&NP,&P); ECP2_neg(&NP);
+
+	for (i=nb-2; i>=1; i--)
+	{
+		PAIR_line(&lv,&A,&A,&Qx,&Qy);
+
+		bt=BIG_bit(n3,i)-BIG_bit(n,i); // bt=BIG_bit(n,i);
+		if (bt==1)
+		{
+			PAIR_line(&lv2,&A,&P,&Qx,&Qy);
+			FP12_smul(&lv,&lv2);
+		}
+		if (bt==-1)
+		{
+			PAIR_line(&lv2,&A,&NP,&Qx,&Qy);
+			FP12_smul(&lv,&lv2);
+		}
+		FP12_ssmul(&r[i],&lv);
+	}
+
+#if PAIRING_FRIENDLY_ZZZ==BN
+
+#if SIGN_OF_X_ZZZ==NEGATIVEX
+	ECP2_neg(&A);
+#endif
+
+	ECP2_copy(&K,&P);
+	ECP2_frob(&K,&X);
+	PAIR_line(&lv,&A,&K,&Qx,&Qy);
+	ECP2_frob(&K,&X);
+	ECP2_neg(&K);
+	PAIR_line(&lv2,&A,&K,&Qx,&Qy);
+	FP12_smul(&lv,&lv2);
+	FP12_ssmul(&r[0],&lv);
+
+#endif
+}
+
+/* Optimal single R-ate pairing r=e(P,Q) */
 void ZZZ::PAIR_ate(FP12 *r,ECP2 *P1,ECP *Q1)
 {
     BIG x,n,n3;
@@ -150,7 +283,7 @@ void ZZZ::PAIR_ate(FP12 *r,ECP2 *P1,ECP *Q1)
     int i,nb,bt;
     ECP2 A,NP,P;
 	ECP Q;
-    FP12 lv;
+    FP12 lv,lv2;
 #if PAIRING_FRIENDLY_ZZZ==BN
     ECP2 KA;
     FP2 X;
@@ -166,23 +299,7 @@ void ZZZ::PAIR_ate(FP12 *r,ECP2 *P1,ECP *Q1)
 
 #endif
 
-    BIG_rcopy(x,CURVE_Bnx);
-
-#if PAIRING_FRIENDLY_ZZZ==BN
-    BIG_pmul(n,x,6);
-#if SIGN_OF_X_ZZZ==POSITIVEX
-	BIG_inc(n,2);
-#else
-    BIG_dec(n,2);
-#endif
-
-#else
-    BIG_copy(n,x);
-#endif
-
-    BIG_norm(n);
-	BIG_pmul(n3,n,3);
-	BIG_norm(n3);
+	nb=PAIR_nbits(n3,n);
 
 	ECP2_copy(&P,P1);
 	ECP_copy(&Q,Q1);
@@ -190,56 +307,53 @@ void ZZZ::PAIR_ate(FP12 *r,ECP2 *P1,ECP *Q1)
 	ECP2_affine(&P);
 	ECP_affine(&Q);
 
-
     FP_copy(&Qx,&(Q.x));
     FP_copy(&Qy,&(Q.y));
 
     ECP2_copy(&A,&P);
-
 	ECP2_copy(&NP,&P); ECP2_neg(&NP);
 
     FP12_one(r);
-    nb=BIG_nbits(n3);
 
     /* Main Miller Loop */
     for (i=nb-2; i>=1; i--)
     {
 		FP12_sqr(r,r);
         PAIR_line(&lv,&A,&A,&Qx,&Qy);
-        FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
 
 		bt=BIG_bit(n3,i)-BIG_bit(n,i); // bt=BIG_bit(n,i);
         if (bt==1)
         {
-            PAIR_line(&lv,&A,&P,&Qx,&Qy);
-            FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
+            PAIR_line(&lv2,&A,&P,&Qx,&Qy);
+            FP12_smul(&lv,&lv2);
         }
 		if (bt==-1)
 		{
-			//ECP2_neg(P);
-            PAIR_line(&lv,&A,&NP,&Qx,&Qy);
-            FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-			//ECP2_neg(P);
+            PAIR_line(&lv2,&A,&NP,&Qx,&Qy);
+            FP12_smul(&lv,&lv2);
 		}
-
+		FP12_ssmul(r,&lv);
     }
 
 #if SIGN_OF_X_ZZZ==NEGATIVEX
     FP12_conj(r,r);
 #endif
+
     /* R-ate fixup required for BN curves */
 #if PAIRING_FRIENDLY_ZZZ==BN
-    ECP2_copy(&KA,&P);
-    ECP2_frob(&KA,&X);
+
 #if SIGN_OF_X_ZZZ==NEGATIVEX
     ECP2_neg(&A);
 #endif
+
+    ECP2_copy(&KA,&P);
+    ECP2_frob(&KA,&X);
     PAIR_line(&lv,&A,&KA,&Qx,&Qy);
-    FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
     ECP2_frob(&KA,&X);
     ECP2_neg(&KA);
-    PAIR_line(&lv,&A,&KA,&Qx,&Qy);
-    FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
+    PAIR_line(&lv2,&A,&KA,&Qx,&Qy);
+	FP12_smul(&lv,&lv2);
+    FP12_ssmul(r,&lv);
 #endif
 }
 
@@ -252,7 +366,7 @@ void ZZZ::PAIR_double_ate(FP12 *r,ECP2 *P1,ECP *Q1,ECP2 *R1,ECP *S1)
     int i,nb,bt;
     ECP2 A,B,NP,NR,P,R;
 	ECP Q,S;
-    FP12 lv;
+    FP12 lv,lv2;
 #if PAIRING_FRIENDLY_ZZZ==BN
     ECP2 K;
     FP2 X;
@@ -267,22 +381,7 @@ void ZZZ::PAIR_double_ate(FP12 *r,ECP2 *P1,ECP *Q1,ECP2 *R1,ECP *S1)
 #endif
 
 #endif
-    BIG_rcopy(x,CURVE_Bnx);
-
-#if PAIRING_FRIENDLY_ZZZ==BN
-    BIG_pmul(n,x,6);
-#if SIGN_OF_X_ZZZ==POSITIVEX
-	BIG_inc(n,2);
-#else
-    BIG_dec(n,2);
-#endif
-#else
-    BIG_copy(n,x);
-#endif
-
-    BIG_norm(n);
-	BIG_pmul(n3,n,3);
-	BIG_norm(n3);
+	nb=PAIR_nbits(n3,n);
 
 	ECP2_copy(&P,P1);
 	ECP_copy(&Q,Q1);
@@ -309,33 +408,30 @@ void ZZZ::PAIR_double_ate(FP12 *r,ECP2 *P1,ECP *Q1,ECP2 *R1,ECP *S1)
 	ECP2_copy(&NR,&R); ECP2_neg(&NR);
 
     FP12_one(r);
-    nb=BIG_nbits(n3);
 
     /* Main Miller Loop */
     for (i=nb-2; i>=1; i--)
     {
         FP12_sqr(r,r);
         PAIR_line(&lv,&A,&A,&Qx,&Qy);
-        FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-
-        PAIR_line(&lv,&B,&B,&Sx,&Sy);
-        FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
+        PAIR_line(&lv2,&B,&B,&Sx,&Sy);
+		FP12_smul(&lv,&lv2);
+        FP12_ssmul(r,&lv);
 
 		bt=BIG_bit(n3,i)-BIG_bit(n,i); // bt=BIG_bit(n,i);
         if (bt==1)
         {
             PAIR_line(&lv,&A,&P,&Qx,&Qy);
-            FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-
-            PAIR_line(&lv,&B,&R,&Sx,&Sy);
-            FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
+            PAIR_line(&lv2,&B,&R,&Sx,&Sy);
+			FP12_smul(&lv,&lv2);
+            FP12_ssmul(r,&lv);
         }
 		if (bt==-1)
 		{
             PAIR_line(&lv,&A,&NP,&Qx,&Qy);
-            FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-            PAIR_line(&lv,&B,&NR,&Sx,&Sy);
-            FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
+            PAIR_line(&lv2,&B,&NR,&Sx,&Sy);
+			FP12_smul(&lv,&lv2);
+            FP12_ssmul(r,&lv);
 		}
 	}
 
@@ -353,20 +449,20 @@ void ZZZ::PAIR_double_ate(FP12 *r,ECP2 *P1,ECP *Q1,ECP2 *R1,ECP *S1)
     ECP2_copy(&K,&P);
     ECP2_frob(&K,&X);
     PAIR_line(&lv,&A,&K,&Qx,&Qy);
-    FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
     ECP2_frob(&K,&X);
     ECP2_neg(&K);
-    PAIR_line(&lv,&A,&K,&Qx,&Qy);
-    FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
+    PAIR_line(&lv2,&A,&K,&Qx,&Qy);
+	FP12_smul(&lv,&lv2);
+    FP12_ssmul(r,&lv);
+
     ECP2_copy(&K,&R);
     ECP2_frob(&K,&X);
-
     PAIR_line(&lv,&B,&K,&Sx,&Sy);
-    FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
     ECP2_frob(&K,&X);
     ECP2_neg(&K);
-    PAIR_line(&lv,&B,&K,&Sx,&Sy);
-    FP12_smul(r,&lv,SEXTIC_TWIST_ZZZ);
+    PAIR_line(&lv2,&B,&K,&Sx,&Sy);
+	FP12_smul(&lv,&lv2);
+    FP12_ssmul(r,&lv);
 #endif
 }
 

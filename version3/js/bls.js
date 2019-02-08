@@ -100,10 +100,20 @@ var BLS = function(ctx) {
 			var G=ctx.ECP2.generator();
 			var PK=ctx.ECP2.fromBytes(W);
 			D.neg();
-			var v=ctx.PAIR.ate2(G,D,PK,HM);
+
+// Use new multi-pairing mechanism 
+			var r=ctx.PAIR.initmp();
+			ctx.PAIR.another(r,G,D);
+			ctx.PAIR.another(r,PK,HM);
+			var v=ctx.PAIR.miller(r);
+
+//.. or alternatively
+//			var v=ctx.PAIR.ate2(G,D,PK,HM);
+
+			v=ctx.PAIR.fexp(v);
 			if (v.isunity())
 				return this.BLS_OK;
-			return this.BLS_OK;
+			return this.BLS_FAIL;
 		}
     };
 

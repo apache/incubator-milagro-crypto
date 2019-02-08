@@ -949,7 +949,7 @@ int RSA_2048(csprng *RNG)
 		RSA_KEY_PAIR(RNG,65537,&priv,&pub,NULL,NULL);
 		iterations++;
 		elapsed=(clock()-start)/(double)CLOCKS_PER_SEC;
-    } while (elapsed<MIN_TIME || iterations<MIN_ITERS);
+    } while (elapsed<MIN_TIME || iterations<1);
     elapsed=1000.0*elapsed/iterations;
     printf("RSA gen - %8d iterations  ",iterations);
     printf(" %8.2lf ms per iteration\n",elapsed);

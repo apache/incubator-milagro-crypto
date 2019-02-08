@@ -5,7 +5,7 @@
 
 namespace amcl {
 
-#define MAX_RSA_BYTES 512 // Maximum of 4096
+#define MAX_RSA_BYTES 1920 // Maximum of 4096
 
 /**	@brief RSA Key Pair Generator
  *

@@ -16,6 +16,8 @@ public class CONFIG_CURVE {
 	public static final int CURVE_PAIRING_TYPE=@PF@;
 	public static final int SEXTIC_TWIST=@ST@;
 	public static final int SIGN_OF_X=@SX@;
+	public static final int ATE_BITS= @AB@;
+
 
 	public static final int SHA256=32;
 	public static final int SHA384=48;

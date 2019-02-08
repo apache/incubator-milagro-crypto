@@ -17,6 +17,16 @@ extern const BIG_XXX CURVE_WB_ZZZ[4];	 /**< BN curve constant for GS decompositi
 extern const BIG_XXX CURVE_BB_ZZZ[4][4]; /**< BN curve constant for GS decomposition */
 
 /* Pairing function prototypes */
+
+/**	@brief Precompute line functions for n-pairing
+ *
+	@param r array of precomputed FP24 products of line functions
+	@param PV ECP4 instance, an element of G2
+	@param QV ECP instance, an element of G1
+
+ */
+extern void PAIR_ZZZ_another(FP24_YYY r[],ECP4_ZZZ* PV,ECP_ZZZ* QV);
+
 /**	@brief Calculate Miller loop for Optimal ATE pairing e(P,Q)
  *
 	@param r FP24 result of the pairing calculation e(P,Q)
@@ -72,6 +82,31 @@ extern void PAIR_ZZZ_GTpow(FP24_YYY *x,BIG_XXX b);
 
  */
 extern int PAIR_ZZZ_GTmember(FP24_YYY *x);
+
+/**	@brief Prepare Ate parameter
+ *
+	@param n BIG parameter
+	@param n3 BIG paramter = 3*n
+	@return number of nits in n3
+
+ */
+extern int PAIR_ZZZ_nbits(BIG_XXX n3,BIG_XXX n);
+
+/**	@brief Initialise structure for multi-pairing
+ *
+	@param r FP24 array, to be initialised to 1
+
+ */
+extern void PAIR_ZZZ_initmp(FP24_YYY r[]);
+
+
+/**	@brief Miller loop
+ *
+ 	@param res FP24 result
+	@param r FP24 precomputed array of accumulated line functions
+
+ */
+extern void PAIR_ZZZ_miller(FP24_YYY *res,FP24_YYY r[]);
 
 
 #endif

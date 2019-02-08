@@ -69,6 +69,21 @@ impl FP4 {
         f.b.zero();
         return f;
     }
+	
+    pub fn set_fp2s(&mut self,c: &FP2, d: &FP2) {
+        self.a.copy(&c);
+	self.b.copy(&d);
+    }
+
+    pub fn set_fp2(&mut self,c: &FP2) {
+        self.a.copy(&c);
+	self.b.zero();
+    }
+
+    pub fn set_fp2h(&mut self,c: &FP2) {
+        self.b.copy(&c);
+	self.a.zero();
+    }
 
     /* reduce components mod Modulus */
     pub fn reduce(&mut self) {
@@ -109,13 +124,15 @@ impl FP4 {
     }
 
     pub fn geta(&self) -> FP2 {
-        let f = FP2::new_copy(&self.a);
-        return f;
+        return self.a;
+//        let f = FP2::new_copy(&self.a);
+//        return f;
     }
     /* extract imaginary part b */
     pub fn getb(&self) -> FP2 {
-        let f = FP2::new_copy(&self.b);
-        return f;
+        return self.b;
+//        let f = FP2::new_copy(&self.b);
+//        return f;
     }
 
     /* test self=x */

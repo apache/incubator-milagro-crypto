@@ -82,7 +82,17 @@ public struct BLS192
         let G=ECP4.generator()
         let PK=ECP4.fromBytes(W)
         D.neg()
-        var v=PAIR192.ate2(G,D,PK,HM)
+
+
+// Use new multi-pairing mechanism 
+        var r=PAIR192.initmp()
+        PAIR192.another(&r,G,D)
+        PAIR192.another(&r,PK,HM)
+        var v=PAIR192.miller(r)
+
+//.. or alternatively
+//        var v=PAIR192.ate2(G,D,PK,HM)
+
         v=PAIR192.fexp(v)
     
         if v.isunity() {

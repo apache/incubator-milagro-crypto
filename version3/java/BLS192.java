@@ -79,7 +79,16 @@ public class BLS192
 		ECP4 G=ECP4.generator();
 		ECP4 PK=ECP4.fromBytes(W);
 		D.neg();
-		FP24 v=PAIR192.ate2(G,D,PK,HM);
+
+// Use new multi-pairing mechanism 
+		FP24[] r=PAIR192.initmp();
+		PAIR192.another(r,G,D);
+		PAIR192.another(r,PK,HM);
+		FP24 v=PAIR192.miller(r);
+
+//.. or alternatively
+//		FP24 v=PAIR192.ate2(G,D,PK,HM);
+
 		v=PAIR192.fexp(v);
 		if (v.isunity())
 			return BLS_OK;

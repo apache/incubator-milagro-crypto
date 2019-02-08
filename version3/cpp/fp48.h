@@ -10,11 +10,19 @@ namespace YYY {
 	@brief FP12 Structure - towered over three FP16
 */
 
+#define FP48_ZERO 0
+#define FP48_ONE 1
+#define FP48_SPARSER 2
+#define FP48_SPARSE 3
+#define FP48_DENSE 4
+
+
 typedef struct
 {
     FP16 a; /**< first part of FP12 */
     FP16 b; /**< second part of FP12 */
     FP16 c; /**< third part of FP12 */
+	int type;
 } FP48;
 
 extern const XXX::BIG Fra; /**< real part of BN curve Frobenius Constant */
@@ -85,15 +93,20 @@ extern void FP48_usqr(FP48 *x,FP48 *y);
 	@param y FP48 instance
  */
 extern void FP48_sqr(FP48 *x,FP48 *y);
-/**	@brief Fast multiplication of an FP48 by an FP48 that arises from an ATE pairing line function
+/**	@brief Fast multiplication of two sparse FP24s that arises from ATE pairing line functions
  *
-	Here the multiplier has a special form that can be exploited
 	@param x FP48 instance, on exit = x*y
 	@param y FP48 instance, of special form
-	@param t D_TYPE or M_TYPE twist
  */
-extern void FP48_smul(FP48 *x,FP48 *y,int t);
-/**	@brief Multiplication of two FP48s
+extern void FP48_smul(FP48 *x,FP48 *y);
+
+/**	@brief Fast multiplication of what may be sparse multiplicands
+ *
+	@param x FP48 instance, on exit = x*y
+	@param y FP48 instance, of special form
+ */
+extern void FP48_ssmul(FP48 *x,FP48 *y);
+/**	@brief Full unconditional Multiplication of two FP24s
  *
 	@param x FP48 instance, on exit = x*y
 	@param y FP48 instance, the multiplier

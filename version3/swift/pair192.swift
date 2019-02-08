@@ -76,7 +76,9 @@ public struct PAIR192 {
         }        
         A.dbl()
 
-        return FP24(a,b,c)
+        var res=FP24(a,b,c)
+        res.settype(FP24.SPARSER)
+        return res
     }
 
     static func lineadd(_ A: inout ECP4,_ B:ECP4,_ Qx:FP,_ Qy:FP) -> FP24
@@ -118,21 +120,88 @@ public struct PAIR192 {
         }  
         A.add(B)
 
-        return FP24(a,b,c)
+        var res=FP24(a,b,c)
+        res.settype(FP24.SPARSER)
+        return res
+    }
+
+    static private func lbits(_ n3:inout BIG,_ n:inout BIG) -> Int
+    {
+        n.copy(BIG(ROM.CURVE_Bnx))
+        n3.copy(n)
+        n3.pmul(3)
+        n3.norm()
+        return n3.nbits()          
+    }
+
+    static public func initmp() -> [FP24]
+    {
+        var r=[FP24]();
+        for _ in (0...CONFIG_CURVE.ATE_BITS-1).reversed() {
+            r.append(FP24(1))
+        }
+        return r
+    }
+
+/* basic Miller loop */
+    static public func miller(_ r: [FP24]) -> FP24 {
+        var res=FP24(1)
+        for i in (1...CONFIG_CURVE.ATE_BITS-1).reversed() {
+            res.sqr()
+            res.ssmul(r[i])
+        }
+
+        if CONFIG_CURVE.SIGN_OF_X==CONFIG_CURVE.NEGATIVEX {
+            res.conj();
+        }
+        res.ssmul(r[0])
+        return res
+    }
+
+/* Accumulate another set of line functions for n-pairing */
+    static public func another(_ r: inout [FP24],_ P1: ECP4,_ Q1: ECP) {
+        var n = BIG();
+        var n3 = BIG();
+
+// P is needed in affine form for line function, Q for (Qx,Qy) extraction
+        var P=ECP4(); P.copy(P1); P.affine()
+        var Q=ECP(); Q.copy(Q1); Q.affine()
+
+        let Qx=FP(Q.getx())
+        let Qy=FP(Q.gety())
+    
+        var A=ECP4()
+        A.copy(P)
+        var NP=ECP4()
+        NP.copy(P)
+        NP.neg()
+
+        let nb=lbits(&n3,&n)
+
+        for i in (1...nb-2).reversed() {
+            var lv=linedbl(&A,Qx,Qy)
+
+            let bt=n3.bit(UInt(i))-n.bit(UInt(i))
+            if bt == 1 {
+                let lv2=lineadd(&A,P,Qx,Qy)
+                lv.smul(lv2)
+            }
+            if bt == -1 {
+                let lv2=lineadd(&A,NP,Qx,Qy)
+                lv.smul(lv2)
+            }
+            r[i].ssmul(lv)
+        }
     }
 
 
     // Optimal R-ate pairing
     static public func ate(_ P1:ECP4,_ Q1:ECP) -> FP24
     {
-        let x=BIG(ROM.CURVE_Bnx)
-        let n=BIG(x)
+        var n = BIG();
+        var n3 = BIG();
         
         var lv:FP24
-
-        var n3=BIG(n)
-        n3.pmul(3)
-        n3.norm()
 
         var P=ECP4(); P.copy(P1); P.affine()
         var Q=ECP(); Q.copy(Q1); Q.affine()
@@ -149,22 +218,23 @@ public struct PAIR192 {
         NP.copy(P)
         NP.neg()
 
-        let nb=n3.nbits()
+        let nb=lbits(&n3,&n)
     
         for i in (1...nb-2).reversed()
         {
             r.sqr()            
             lv=linedbl(&A,Qx,Qy)
-            r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+
             let bt=n3.bit(UInt(i))-n.bit(UInt(i))
             if bt == 1 {
-              lv=lineadd(&A,P,Qx,Qy)
-              r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+                let lv2=lineadd(&A,P,Qx,Qy)
+                lv.smul(lv2)
             }
             if bt == -1 {
-                lv=lineadd(&A,NP,Qx,Qy)
-                r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+                let lv2=lineadd(&A,NP,Qx,Qy)
+                lv.smul(lv2)
             }
+            r.ssmul(lv)            
         }
     
         if CONFIG_CURVE.SIGN_OF_X == CONFIG_CURVE.NEGATIVEX {
@@ -177,13 +247,9 @@ public struct PAIR192 {
     // Optimal R-ate double pairing e(P,Q).e(R,S)
     static public func ate2(_ P1:ECP4,_ Q1:ECP,_ R1:ECP4,_ S1:ECP) -> FP24
     {
-        let x=BIG(ROM.CURVE_Bnx)
-        let n=BIG(x)
+        var n = BIG();
+        var n3 = BIG();
         var lv:FP24
-
-        var n3=BIG(n)
-        n3.pmul(3)
-        n3.norm()
     
         var P=ECP4(); P.copy(P1); P.affine()
         var Q=ECP(); Q.copy(Q1); Q.affine()
@@ -209,31 +275,30 @@ public struct PAIR192 {
         NR.copy(R)
         NR.neg()
 
-        let nb=n3.nbits()
+        let nb=lbits(&n3,&n)
     
         for i in (1...nb-2).reversed()
         {
             r.sqr()            
             lv=linedbl(&A,Qx,Qy)
-            r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
-            lv=linedbl(&B,Sx,Sy)
-            r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+            var lv2=linedbl(&B,Sx,Sy)
+            lv.smul(lv2)
+            r.ssmul(lv)
             let bt=n3.bit(UInt(i))-n.bit(UInt(i))
 
             if bt == 1 {
                 lv=lineadd(&A,P,Qx,Qy)
-                r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
-                lv=lineadd(&B,R,Sx,Sy)
-                r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+                lv2=lineadd(&B,R,Sx,Sy)
+                lv.smul(lv2)
+                r.ssmul(lv)
             }
 
             if bt == -1 {
                 lv=lineadd(&A,NP,Qx,Qy)
-                r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
-                lv=lineadd(&B,NR,Sx,Sy)
-                r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)              
+                lv2=lineadd(&B,NR,Sx,Sy)
+                lv.smul(lv2)
+                r.ssmul(lv)              
             }            
-
         }
     
         if CONFIG_CURVE.SIGN_OF_X == CONFIG_CURVE.NEGATIVEX {

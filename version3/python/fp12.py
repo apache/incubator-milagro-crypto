@@ -5,6 +5,7 @@
 #
 
 import copy
+from constants import *
 from XXX import curve
 from XXX.fp4 import *
 
@@ -105,6 +106,8 @@ class Fp12:
 
 # regular squaring
     def sqr(self):  # mutable
+        if self.isone() :
+            return
         A = self.a.copy()
         A.sqr()
         B = self.b * self.c
@@ -164,6 +167,62 @@ class Fp12:
         else:
             R *= other
         return R
+
+# multiply line functions
+    def smul(self,other) :
+        if curve.SexticTwist == D_TYPE :
+            w1=self.a.a*other.a.a
+            w2=self.a.b*other.a.b
+            w3=self.b.a*other.b.a
+
+            ta=self.a.a+self.a.b
+            tb=other.a.a+other.a.b
+            tc=ta*tb
+            tc-=(w1+w2)
+
+            ta=self.a.a+self.b.a
+            tb=other.a.a+other.b.a
+            td=ta*tb
+            td-=(w1+w3)
+
+            ta=self.a.b+self.b.a
+            tb=other.a.b+other.b.a
+            te=ta*tb
+            te-=(w2+w3)
+
+            w1+=w2.mulQNR()
+            self.a=Fp4(w1,tc)
+            self.b=Fp4(td,te)
+            self.c=Fp4(w3)
+        else :
+            w1=self.a.a*other.a.a
+            w2=self.a.b*other.a.b
+            w3=self.c.b*other.c.b
+
+            ta=self.a.a+self.a.b
+            tb=other.a.a+other.a.b
+            tc=ta*tb
+            tc-=(w1+w2)
+			
+            ta=self.a.a+self.c.b
+            tb=other.a.a+other.c.b
+            td=ta*tb
+            td-=(w1+w3)
+
+            ta=self.a.b+self.c.b
+            tb=other.a.b+other.c.b
+            te=ta*tb
+            te-=(w2+w3)
+
+            w1+=w2.mulQNR()
+            self.a=Fp4(w1,tc)
+
+            self.b=Fp4(w3.mulQNR())
+            self.b.times_i()
+
+            self.c=Fp4(te.mulQNR(),td)
+
+        return self
 
     def muls(self, other):  # multiple Fp12 by Fp4
         R = Fp12(self.a * other, self.b * other, self.c * other)

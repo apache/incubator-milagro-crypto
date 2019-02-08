@@ -19,6 +19,17 @@ extern const XXX::BIG CURVE_WB[4];	 /**< BN curve constant for GS decomposition 
 extern const XXX::BIG CURVE_BB[4][4]; /**< BN curve constant for GS decomposition */
 
 /* Pairing function prototypes */
+
+/**	@brief Precompute line functions for n-pairing
+ *
+	@param r array of precomputed FP12 products of line functions
+	@param PV ECP2 instance, an element of G2
+	@param QV ECP instance, an element of G1
+
+ */
+extern void PAIR_another(YYY::FP12 r[],ECP2* PV,ECP* QV);
+
+
 /**	@brief Calculate Miller loop for Optimal ATE pairing e(P,Q)
  *
 	@param r FP12 result of the pairing calculation e(P,Q)
@@ -70,10 +81,34 @@ extern void PAIR_GTpow(YYY::FP12 *x,XXX::BIG b);
 /**	@brief Tests FP12 for membership of GT
  *
 	@param x FP12 instance
-	@return 1 if x is in GT, else return 0
 
  */
 extern int PAIR_GTmember(YYY::FP12 *x);
+
+/**	@brief Prepare Ate parameter
+ *
+	@param n BIG parameter
+	@param n3 BIG paramter = 3*n
+	@return number of nits in n3
+
+ */
+extern int PAIR_nbits(XXX::BIG n3,XXX::BIG n);
+
+/**	@brief Initialise structure for multi-pairing
+ *
+	@param r FP12 array, to be initialised to 1
+
+ */
+extern void PAIR_initmp(YYY::FP12 r[]);
+
+
+/**	@brief Miller loop
+ *
+ 	@param res FP12 result
+	@param r FP12 precomputed array of accumulated line functions
+
+ */
+extern void PAIR_miller(YYY::FP12 *res,YYY::FP12 r[]);
 
 }
 

@@ -109,7 +109,21 @@ public struct FP8 {
     {
     return b;
     }
-
+    mutating func set_fp4s(_ c: FP4,_ d: FP4)
+    {
+        a.copy(c)
+        b.copy(d)
+    }
+    mutating func set_fp4(_ c: FP4)
+    {
+        a.copy(c)
+        b.zero()
+    }    
+    mutating func set_fp4h(_ c: FP4)
+    {
+        b.copy(c)
+        a.zero()
+    }  
     /* test self=x? */
     func equals(_ x:FP8) -> Bool
     {
