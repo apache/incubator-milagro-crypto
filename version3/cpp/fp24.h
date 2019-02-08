@@ -10,11 +10,19 @@ namespace YYY {
 	@brief FP12 Structure - towered over three FP8
 */
 
+#define FP24_ZERO 0
+#define FP24_ONE 1
+#define FP24_SPARSER 2
+#define FP24_SPARSE 3
+#define FP24_DENSE 4
+
+
 typedef struct
 {
     FP8 a; /**< first part of FP12 */
     FP8 b; /**< second part of FP12 */
     FP8 c; /**< third part of FP12 */
+	int type;
 } FP24;
 
 extern const XXX::BIG Fra; /**< real part of BN curve Frobenius Constant */
@@ -85,20 +93,27 @@ extern void FP24_usqr(FP24 *x,FP24 *y);
 	@param y FP24 instance
  */
 extern void FP24_sqr(FP24 *x,FP24 *y);
-/**	@brief Fast multiplication of an FP24 by an FP24 that arises from an ATE pairing line function
+
+/**	@brief Fast multiplication of two sparse FP24s that arises from ATE pairing line functions
  *
-	Here the multiplier has a special form that can be exploited
 	@param x FP24 instance, on exit = x*y
 	@param y FP24 instance, of special form
-	@param t D_TYPE or M_TYPE twist
  */
-extern void FP24_smul(FP24 *x,FP24 *y,int t);
-/**	@brief Multiplication of two FP24s
+extern void FP24_smul(FP24 *x,FP24 *y);
+
+/**	@brief Fast multiplication of what may be sparse multiplicands
+ *
+	@param x FP24 instance, on exit = x*y
+	@param y FP24 instance, of special form
+ */
+extern void FP24_ssmul(FP24 *x,FP24 *y);
+/**	@brief Full unconditional Multiplication of two FP24s
  *
 	@param x FP24 instance, on exit = x*y
 	@param y FP24 instance, the multiplier
  */
 extern void FP24_mul(FP24 *x,FP24 *y);
+
 /**	@brief Inverting an FP24
  *
 	@param x FP24 instance, on exit = 1/y

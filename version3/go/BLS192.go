@@ -74,7 +74,16 @@ func Verify(SIG []byte, m string, W []byte) int {
 	G := ECP4_generator()
 	PK := ECP4_fromBytes(W)
 	D.neg()
-	v := Ate2(G, D, PK, HM)
+
+// Use new multi-pairing mechanism 
+	r:=initmp()
+	another(r,G,D)
+	another(r,PK,HM)
+	v:=miller(r)
+
+//.. or alternatively
+//	v := Ate2(G, D, PK, HM)
+
 	v = Fexp(v)
 	if v.Isunity() {
 		return BLS_OK

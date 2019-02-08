@@ -14,6 +14,13 @@ const BLS int = 2
 const D_TYPE int = 0
 const M_TYPE int = 1
 
+// Sparsity
+const FP_ZERO int = 0
+const FP_ONE int = 1
+const FP_SPARSER int = 2
+const FP_SPARSE int = 3
+const FP_DENSE int = 4
+
 // Pairing x parameter sign
 const POSITIVEX int = 0
 const NEGATIVEX int = 1
@@ -27,6 +34,7 @@ const CURVE_PAIRING_TYPE int = @PF@
 
 const SEXTIC_TWIST int = @ST@
 const SIGN_OF_X int = @SX@
+const ATE_BITS int = @AB@
 
 // associated hash function and AES key size
 

@@ -123,37 +123,134 @@ func line(A *ECP2, B *ECP2, Qx *FP, Qy *FP) *FP12 {
 		A.Add(B)
 	}
 
-	return NewFP12fp4s(a, b, c)
+	r:=NewFP12fp4s(a, b, c)
+	r.stype=FP_SPARSER
+	return r
+}
+
+/* prepare ate parameter, n=6u+2 (BN) or n=u (BLS), n3=3*n */
+func lbits(n3 *BIG,n *BIG) int {
+	n.copy(NewBIGints(CURVE_Bnx))
+	if CURVE_PAIRING_TYPE==BN {
+		n.pmul(6)
+		if SIGN_OF_X==POSITIVEX {
+			n.inc(2)
+		} else {
+			n.dec(2)
+		}
+	}
+
+	n.norm()
+	n3.copy(n)
+	n3.pmul(3)
+	n3.norm()
+	return n3.nbits()
+}
+
+/* prepare for multi-pairing */
+func initmp() []*FP12 {
+	var r []*FP12
+	for i:=ATE_BITS-1; i>=0; i-- {
+		r=append(r,NewFP12int(1))
+	}
+	return r
+}
+
+/* basic Miller loop */
+func miller(r []*FP12) *FP12 {
+	res:=NewFP12int(1);
+	for i:=ATE_BITS-1; i>=1; i-- {
+		res.sqr()
+		res.ssmul(r[i]);
+	}
+
+	if SIGN_OF_X==NEGATIVEX {
+		res.conj()
+	}
+	res.ssmul(r[0])
+	return res
+}
+
+/* Accumulate another set of line functions for n-pairing */
+func another(r []*FP12,P1 *ECP2,Q1 *ECP) {
+	f:=NewFP2bigs(NewBIGints(Fra), NewBIGints(Frb))
+	n:=NewBIG()
+	n3:=NewBIG()
+	K:=NewECP2();
+	var lv,lv2 *FP12
+
+// P is needed in affine form for line function, Q for (Qx,Qy) extraction
+	P:=NewECP2()
+	P.Copy(P1)
+	Q:=NewECP()
+	Q.Copy(Q1)
+
+	P.Affine()
+	Q.Affine()
+
+	if CURVE_PAIRING_TYPE==BN {
+		if SEXTIC_TWIST==M_TYPE {
+			f.inverse()
+			f.norm()
+		}
+	}
+
+	Qx := NewFPcopy(Q.getx())
+	Qy := NewFPcopy(Q.gety())
+
+	A:=NewECP2()
+	A.Copy(P)
+
+	MP:=NewECP2()
+	MP.Copy(P); MP.neg()
+
+	nb:=lbits(n3,n)
+
+	for i:=nb-2;i>=1;i-- {
+		lv=line(A,A,Qx,Qy)
+
+		bt:=n3.bit(i)-n.bit(i)
+		if bt==1 {
+			lv2=line(A,P,Qx,Qy)
+			lv.smul(lv2)
+		}
+		if bt==-1 {
+			lv2=line(A,MP,Qx,Qy)
+			lv.smul(lv2)
+		}
+		r[i].ssmul(lv)
+	}
+
+/* R-ate fixup required for BN curves */
+	if CURVE_PAIRING_TYPE==BN {
+		if SIGN_OF_X==NEGATIVEX {
+			A.neg()
+		}
+		K.Copy(P)
+		K.frob(f)
+		lv=line(A,K,Qx,Qy)
+		K.frob(f)
+		K.neg()
+		lv2=line(A,K,Qx,Qy)
+		lv.smul(lv2)
+		r[0].ssmul(lv)
+	} 
 }
 
 /* Optimal R-ate pairing */
 func Ate(P1 *ECP2, Q1 *ECP) *FP12 {
 	f := NewFP2bigs(NewBIGints(Fra), NewBIGints(Frb))
-	x := NewBIGints(CURVE_Bnx)
-	n := NewBIGcopy(x)
+	n:=NewBIG()
+	n3:=NewBIG()
 	K := NewECP2()
-	var lv *FP12
+	var lv,lv2 *FP12
 
 	if CURVE_PAIRING_TYPE == BN {
 		if SEXTIC_TWIST == M_TYPE {
 			f.inverse()
 			f.norm()
 		}
-		n.pmul(6)
-		if SIGN_OF_X == POSITIVEX {
-			n.inc(2)
-		} else {
-			n.dec(2)
-		}
-	} else {
-		n.copy(x)
 	}
-
-	n.norm()
-
-	n3 := NewBIGcopy(n)
-	n3.pmul(3)
-	n3.norm()
 
 	P := NewECP2()
 	P.Copy(P1)
@@ -174,21 +271,21 @@ func Ate(P1 *ECP2, Q1 *ECP) *FP12 {
 	NP.Copy(P)
 	NP.neg()
 
-	nb := n3.nbits()
+	nb:=lbits(n3,n)
 
 	for i := nb - 2; i >= 1; i-- {
 		r.sqr()
 		lv = line(A, A, Qx, Qy)
-		r.smul(lv, SEXTIC_TWIST)
 		bt := n3.bit(i) - n.bit(i)
 		if bt == 1 {
-			lv = line(A, P, Qx, Qy)
-			r.smul(lv, SEXTIC_TWIST)
+			lv2 = line(A, P, Qx, Qy)
+			lv.smul(lv2)
 		}
 		if bt == -1 {
-			lv = line(A, NP, Qx, Qy)
-			r.smul(lv, SEXTIC_TWIST)
+			lv2 = line(A, NP, Qx, Qy)
+			lv.smul(lv2)
 		}
+		r.ssmul(lv)
 	}
 
 	if SIGN_OF_X == NEGATIVEX {
@@ -205,11 +302,11 @@ func Ate(P1 *ECP2, Q1 *ECP) *FP12 {
 		K.Copy(P)
 		K.frob(f)
 		lv = line(A, K, Qx, Qy)
-		r.smul(lv, SEXTIC_TWIST)
 		K.frob(f)
 		K.neg()
-		lv = line(A, K, Qx, Qy)
-		r.smul(lv, SEXTIC_TWIST)
+		lv2 = line(A, K, Qx, Qy)
+		lv.smul(lv2)
+		r.ssmul(lv)
 	}
 
 	return r
@@ -218,31 +315,17 @@ func Ate(P1 *ECP2, Q1 *ECP) *FP12 {
 /* Optimal R-ate double pairing e(P,Q).e(R,S) */
 func Ate2(P1 *ECP2, Q1 *ECP, R1 *ECP2, S1 *ECP) *FP12 {
 	f := NewFP2bigs(NewBIGints(Fra), NewBIGints(Frb))
-	x := NewBIGints(CURVE_Bnx)
-	n := NewBIGcopy(x)
+	n:=NewBIG()
+	n3:=NewBIG()
 	K := NewECP2()
-	var lv *FP12
+	var lv,lv2 *FP12
 
 	if CURVE_PAIRING_TYPE == BN {
 		if SEXTIC_TWIST == M_TYPE {
 			f.inverse()
 			f.norm()
 		}
-		n.pmul(6)
-		if SIGN_OF_X == POSITIVEX {
-			n.inc(2)
-		} else {
-			n.dec(2)
-		}
-	} else {
-		n.copy(x)
 	}
-
-	n.norm()
-
-	n3 := NewBIGcopy(n)
-	n3.pmul(3)
-	n3.norm()
 
 	P := NewECP2()
 	P.Copy(P1)
@@ -275,26 +358,26 @@ func Ate2(P1 *ECP2, Q1 *ECP, R1 *ECP2, S1 *ECP) *FP12 {
 	NR.Copy(R)
 	NR.neg()
 
-	nb := n3.nbits()
+	nb:=lbits(n3,n)
 
 	for i := nb - 2; i >= 1; i-- {
 		r.sqr()
 		lv = line(A, A, Qx, Qy)
-		r.smul(lv, SEXTIC_TWIST)
-		lv = line(B, B, Sx, Sy)
-		r.smul(lv, SEXTIC_TWIST)
+		lv2 = line(B, B, Sx, Sy)
+		lv.smul(lv2)
+		r.ssmul(lv)
 		bt := n3.bit(i) - n.bit(i)
 		if bt == 1 {
 			lv = line(A, P, Qx, Qy)
-			r.smul(lv, SEXTIC_TWIST)
-			lv = line(B, R, Sx, Sy)
-			r.smul(lv, SEXTIC_TWIST)
+			lv2 = line(B, R, Sx, Sy)
+			lv.smul(lv2)
+			r.ssmul(lv)
 		}
 		if bt == -1 {
 			lv = line(A, NP, Qx, Qy)
-			r.smul(lv, SEXTIC_TWIST)
-			lv = line(B, NR, Sx, Sy)
-			r.smul(lv, SEXTIC_TWIST)
+			lv2 = line(B, NR, Sx, Sy)
+			lv.smul(lv2)
+			r.ssmul(lv)
 		}
 	}
 
@@ -312,21 +395,19 @@ func Ate2(P1 *ECP2, Q1 *ECP, R1 *ECP2, S1 *ECP) *FP12 {
 		K.frob(f)
 
 		lv = line(A, K, Qx, Qy)
-		r.smul(lv, SEXTIC_TWIST)
 		K.frob(f)
 		K.neg()
-		lv = line(A, K, Qx, Qy)
-		r.smul(lv, SEXTIC_TWIST)
-
+		lv2 = line(A, K, Qx, Qy)
+		lv.smul(lv2)
+		r.ssmul(lv)
 		K.Copy(R)
 		K.frob(f)
-
 		lv = line(B, K, Sx, Sy)
-		r.smul(lv, SEXTIC_TWIST)
 		K.frob(f)
 		K.neg()
-		lv = line(B, K, Sx, Sy)
-		r.smul(lv, SEXTIC_TWIST)
+		lv2 = line(B, K, Sx, Sy)
+		lv.smul(lv2)
+		r.ssmul(lv)
 	}
 
 	return r

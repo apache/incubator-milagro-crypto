@@ -81,8 +81,20 @@ int BLS_ZZZ_VERIFY(octet *SIG,char *m,octet *W)
 	ECP2_ZZZ_generator(&G);
 	ECP2_ZZZ_fromOctet(&PK,W);
 	ECP_ZZZ_neg(&D);
-    PAIR_ZZZ_double_ate(&v,&G,&D,&PK,&HM);
-    PAIR_ZZZ_fexp(&v);
+
+
+// Use new multi-pairing mechanism 
+
+	FP12_YYY r[ATE_BITS_ZZZ];
+	PAIR_ZZZ_initmp(r);
+	PAIR_ZZZ_another(r,&G,&D);
+	PAIR_ZZZ_another(r,&PK,&HM);
+	PAIR_ZZZ_miller(&v,r);
+
+//.. or alternatively
+//    PAIR_ZZZ_double_ate(&v,&G,&D,&PK,&HM);
+    
+	PAIR_ZZZ_fexp(&v);
     if (FP12_YYY_isunity(&v)) return BLS_OK;
 	return BLS_FAIL;
 }

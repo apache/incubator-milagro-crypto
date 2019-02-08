@@ -78,7 +78,9 @@ public struct PAIR {
         }        
         A.dbl()
 
-        return FP12(a,b,c)
+        var res=FP12(a,b,c)
+        res.settype(FP12.SPARSER)
+        return res
     }
 
 
@@ -122,7 +124,111 @@ public struct PAIR {
             c=FP4(Y1); c.times_i()
          }  
         A.add(B)
-        return FP12(a,b,c)
+        var res=FP12(a,b,c)
+        res.settype(FP12.SPARSER)
+        return res
+    }
+
+    static private func lbits(_ n3:inout BIG,_ n:inout BIG) -> Int
+    {
+        n.copy(BIG(ROM.CURVE_Bnx))
+        if CONFIG_CURVE.CURVE_PAIRING_TYPE == CONFIG_CURVE.BN {
+            n.pmul(6)
+            if CONFIG_CURVE.SIGN_OF_X == CONFIG_CURVE.POSITIVEX {  
+                n.inc(2)
+            } else {
+                n.dec(2)
+            }
+        }
+        n.norm()
+        n3.copy(n)
+        n3.pmul(3)
+        n3.norm()
+        return n3.nbits()          
+    }
+
+    static public func initmp() -> [FP12]
+    {
+        var r=[FP12]();
+        for _ in (0...CONFIG_CURVE.ATE_BITS-1).reversed() {
+            r.append(FP12(1))
+        }
+        return r
+    }
+
+/* basic Miller loop */
+    static public func miller(_ r: [FP12]) -> FP12 {
+        var res=FP12(1)
+        for i in (1...CONFIG_CURVE.ATE_BITS-1).reversed() {
+            res.sqr()
+            res.ssmul(r[i])
+        }
+
+        if CONFIG_CURVE.SIGN_OF_X==CONFIG_CURVE.NEGATIVEX {
+            res.conj();
+        }
+        res.ssmul(r[0])
+        return res
+    }
+
+/* Accumulate another set of line functions for n-pairing */
+    static public func another(_ r: inout [FP12],_ P1: ECP2,_ Q1: ECP) {
+        var f=FP2(BIG(ROM.Fra),BIG(ROM.Frb))
+        var n = BIG();
+        var n3 = BIG();
+        var K = ECP2()
+
+// P is needed in affine form for line function, Q for (Qx,Qy) extraction
+        var P=ECP2(); P.copy(P1); P.affine()
+        var Q=ECP(); Q.copy(Q1); Q.affine()
+
+        if CONFIG_CURVE.CURVE_PAIRING_TYPE == CONFIG_CURVE.BN {
+            if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.M_TYPE {  
+                f.inverse()
+                f.norm()
+            }
+        }
+
+        let Qx=FP(Q.getx())
+        let Qy=FP(Q.gety())
+    
+        var A=ECP2()
+        A.copy(P)
+        var NP=ECP2()
+        NP.copy(P)
+        NP.neg()
+
+        let nb=lbits(&n3,&n)
+
+        for i in (1...nb-2).reversed() {
+            var lv=linedbl(&A,Qx,Qy)
+
+            let bt=n3.bit(UInt(i))-n.bit(UInt(i))
+            if bt == 1 {
+                let lv2=lineadd(&A,P,Qx,Qy)
+                lv.smul(lv2)
+            }
+            if bt == -1 {
+                let lv2=lineadd(&A,NP,Qx,Qy)
+                lv.smul(lv2)
+            }
+            r[i].ssmul(lv)
+        }
+
+/* R-ate fixup required for BN curves */
+        if CONFIG_CURVE.CURVE_PAIRING_TYPE == CONFIG_CURVE.BN {
+            if CONFIG_CURVE.SIGN_OF_X==CONFIG_CURVE.NEGATIVEX {
+                A.neg()
+            }
+            K.copy(P)
+            K.frob(f)
+            var lv=lineadd(&A,K,Qx,Qy)
+            K.frob(f)
+            K.neg()
+            let lv2=lineadd(&A,K,Qx,Qy)
+            lv.smul(lv2)
+            r[0].ssmul(lv)
+        } 
     }
 
 
@@ -130,8 +236,8 @@ public struct PAIR {
     static public func ate(_ P1:ECP2,_ Q1:ECP) -> FP12
     {
         var f=FP2(BIG(ROM.Fra),BIG(ROM.Frb))
-        let x=BIG(ROM.CURVE_Bnx)
-        var n=BIG(x)
+        var n = BIG();
+        var n3 = BIG();
         var K=ECP2()
         
         var lv:FP12
@@ -141,19 +247,7 @@ public struct PAIR {
                 f.inverse()
                 f.norm()
             }
-            n.pmul(6);
-            if CONFIG_CURVE.SIGN_OF_X == CONFIG_CURVE.NEGATIVEX { 
-                n.dec(2)
-            } else {
-                n.inc(2)
-            }
-        } else {n.copy(x)}
-	
-        n.norm()
-
-        var n3=BIG(n)
-        n3.pmul(3)
-        n3.norm()
+        }
 
         var P=ECP2(); P.copy(P1); P.affine()
         var Q=ECP(); Q.copy(Q1); Q.affine()
@@ -170,23 +264,24 @@ public struct PAIR {
         NP.neg()
 
         var r=FP12(1)
-        let nb=n3.nbits()
+        let nb=lbits(&n3,&n)
     
         for i in (1...nb-2).reversed()
         //for var i=nb-2;i>=1;i--
         {
             r.sqr()            
             lv=linedbl(&A,Qx,Qy)
-            r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+
             let bt=n3.bit(UInt(i))-n.bit(UInt(i))
             if bt == 1 {
-		      lv=lineadd(&A,P,Qx,Qy)
-		      r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+                let lv2=lineadd(&A,P,Qx,Qy)
+                lv.smul(lv2)
             }
             if bt == -1 {
-                lv=lineadd(&A,NP,Qx,Qy)
-                r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+                let lv2=lineadd(&A,NP,Qx,Qy)
+                lv.smul(lv2)
             }
+            r.ssmul(lv)        
         }
     
         if CONFIG_CURVE.SIGN_OF_X == CONFIG_CURVE.NEGATIVEX {
@@ -203,11 +298,11 @@ public struct PAIR {
             K.frob(f)
 
             lv=lineadd(&A,K,Qx,Qy)
-            r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
             K.frob(f)
             K.neg()
-            lv=lineadd(&A,K,Qx,Qy)
-            r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+            let lv2=lineadd(&A,K,Qx,Qy)
+            lv.smul(lv2)
+            r.ssmul(lv)
         }
         return r
     }
@@ -215,8 +310,8 @@ public struct PAIR {
     static public func ate2(_ P1:ECP2,_ Q1:ECP,_ R1:ECP2,_ S1:ECP) -> FP12
     {
         var f=FP2(BIG(ROM.Fra),BIG(ROM.Frb))
-        let x=BIG(ROM.CURVE_Bnx)
-        var n=BIG(x)
+        var n = BIG();
+        var n3 = BIG();
         var K=ECP2()
         var lv:FP12
 
@@ -225,24 +320,12 @@ public struct PAIR {
                 f.inverse()
                 f.norm()
             }
-            n.pmul(6); 
-            if CONFIG_CURVE.SIGN_OF_X == CONFIG_CURVE.NEGATIVEX { 
-                n.dec(2)
-            } else {
-                n.inc(2)
-            }        
-        } else {n.copy(x)}
-	
-        n.norm()
-        var n3=BIG(n)
-        n3.pmul(3)
-        n3.norm()
+        }
     
-	   var P=ECP2(); P.copy(P1); P.affine()
-	   var Q=ECP(); Q.copy(Q1); Q.affine()
-	   var R=ECP2(); R.copy(R1); R.affine()
-	   var S=ECP(); S.copy(S1); S.affine()
-
+        var P=ECP2(); P.copy(P1); P.affine()
+        var Q=ECP(); Q.copy(Q1); Q.affine()
+        var R=ECP2(); R.copy(R1); R.affine()
+        var S=ECP(); S.copy(S1); S.affine()
 
         let Qx=FP(Q.getx())
         let Qy=FP(Q.gety())
@@ -262,30 +345,29 @@ public struct PAIR {
         NR.copy(R)
         NR.neg()
 
-
-        let nb=n3.nbits()
+        let nb=lbits(&n3,&n)
     
         for i in (1...nb-2).reversed()
         {
             r.sqr()            
             lv=linedbl(&A,Qx,Qy)
-            r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
-            lv=linedbl(&B,Sx,Sy)
-            r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+            var lv2=linedbl(&B,Sx,Sy)
+            lv.smul(lv2)
+            r.ssmul(lv)
             let bt=n3.bit(UInt(i))-n.bit(UInt(i))
 
             if bt == 1 {
                 lv=lineadd(&A,P,Qx,Qy)
-                r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
-                lv=lineadd(&B,R,Sx,Sy)
-                r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+                lv2=lineadd(&B,R,Sx,Sy)
+                lv.smul(lv2)
+                r.ssmul(lv)
             }
 
             if bt == -1 {
                 lv=lineadd(&A,NP,Qx,Qy)
-                r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
-                lv=lineadd(&B,NR,Sx,Sy)
-                r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)              
+                lv2=lineadd(&B,NR,Sx,Sy)
+                lv.smul(lv2)
+                r.ssmul(lv)              
             }            
 
         }
@@ -305,21 +387,21 @@ public struct PAIR {
             K.frob(f)
 
             lv=lineadd(&A,K,Qx,Qy)
-            r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
             K.frob(f)
             K.neg()
-            lv=lineadd(&A,K,Qx,Qy)
-            r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+            var lv2=lineadd(&A,K,Qx,Qy)
+            lv.smul(lv2)
+            r.ssmul(lv)
     
             K.copy(R)
             K.frob(f)
 
             lv=lineadd(&B,K,Sx,Sy)
-            r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
             K.frob(f)
             K.neg()
-            lv=lineadd(&B,K,Sx,Sy)
-            r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST)
+            lv2=lineadd(&B,K,Sx,Sy)
+            lv.smul(lv2)
+            r.ssmul(lv)
         }
         return r
     }

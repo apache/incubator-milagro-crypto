@@ -123,18 +123,68 @@ public final class PAIR {
 			}
 			A.add(B);
 		}
-
-		return new FP12(a,b,c);
+		FP12 r=new FP12(a,b,c);
+		r.settype(FP12.SPARSE);
+		return r;
 	}
 
-/* Optimal R-ate pairing */
-	public static FP12 ate(ECP2 P1,ECP Q1)
+/* prepare ate parameter, n=6u+2 (BN) or n=u (BLS), n3=3*n */
+	public static int lbits(BIG n3,BIG n)
 	{
+		n.copy(new BIG(ROM.CURVE_Bnx));
+		if (CONFIG_CURVE.CURVE_PAIRING_TYPE==CONFIG_CURVE.BN)
+		{
+			n.pmul(6);
+			if (CONFIG_CURVE.SIGN_OF_X==CONFIG_CURVE.POSITIVEX)
+			{
+				n.inc(2);
+			} else {
+				n.dec(2);
+			}
+		}
+		
+		n.norm();
+		n3.copy(n);
+		n3.pmul(3);
+		n3.norm();
+		return n3.nbits();
+	}
+
+/* prepare for multi-pairing */
+	public static FP12[] initmp()
+	{
+		FP12[] r=new FP12[CONFIG_CURVE.ATE_BITS];
+		for (int i=CONFIG_CURVE.ATE_BITS-1; i>=0; i--)
+			r[i]=new FP12(1);
+		return r;
+	}
+
+/* basic Miller loop */
+	public static FP12 miller(FP12[] r)
+	{
+		FP12 res=new FP12(1);
+		for (int i=CONFIG_CURVE.ATE_BITS-1; i>=1; i--)
+		{
+			res.sqr();
+			res.ssmul(r[i]); 
+		}
+
+		if (CONFIG_CURVE.SIGN_OF_X==CONFIG_CURVE.NEGATIVEX)
+			res.conj();
+		res.ssmul(r[0]);
+
+		return res;
+	}
+
+/* Accumulate another set of line functions for n-pairing */
+	public static void another(FP12[] r,ECP2 P1,ECP Q1)
+	{
+
 		FP2 f;
-		BIG x=new BIG(ROM.CURVE_Bnx);
-		BIG n=new BIG(x);
+		BIG n=new BIG(0);
+		BIG n3=new BIG(0);
 		ECP2 K=new ECP2();
-		FP12 lv;
+		FP12 lv,lv2;
 		int bt;
 
 // P is needed in affine form for line function, Q for (Qx,Qy) extraction
@@ -152,21 +202,81 @@ public final class PAIR {
 				f.inverse();
 				f.norm();
 			}
-			n.pmul(6);
-			if (CONFIG_CURVE.SIGN_OF_X==CONFIG_CURVE.POSITIVEX)
+		}
+
+		FP Qx=new FP(Q.getx());
+		FP Qy=new FP(Q.gety());
+
+		ECP2 A=new ECP2();
+		A.copy(P);
+
+		ECP2 MP=new ECP2();
+		MP.copy(P); MP.neg();
+
+		int nb=lbits(n3,n);
+
+		for (int i=nb-2;i>=1;i--)
+		{
+			lv=line(A,A,Qx,Qy);
+
+			bt=n3.bit(i)-n.bit(i); 
+			if (bt==1)
 			{
-				n.inc(2);
-			} else {
-				n.dec(2);
+				lv2=line(A,P,Qx,Qy);
+				lv.smul(lv2);
+			}
+			if (bt==-1)
+			{
+				lv2=line(A,MP,Qx,Qy);
+				lv.smul(lv2);
+			}
+			r[i].ssmul(lv);
+		}
+
+/* R-ate fixup required for BN curves */
+		if (CONFIG_CURVE.CURVE_PAIRING_TYPE==CONFIG_CURVE.BN)
+		{
+			if (CONFIG_CURVE.SIGN_OF_X==CONFIG_CURVE.NEGATIVEX)
+			{
+				A.neg();
+			}
+			K.copy(P);
+			K.frob(f);
+			lv=line(A,K,Qx,Qy);
+			K.frob(f);
+			K.neg();
+			lv2=line(A,K,Qx,Qy);
+			lv.smul(lv2);
+			r[0].ssmul(lv);
+		} 
+	}
+
+/* Optimal R-ate pairing */
+	public static FP12 ate(ECP2 P1,ECP Q1)
+	{
+		FP2 f;
+		BIG n=new BIG(0);
+		BIG n3=new BIG(0);
+		ECP2 K=new ECP2();
+		FP12 lv,lv2;
+		int bt;
+
+// P is needed in affine form for line function, Q for (Qx,Qy) extraction
+		ECP2 P=new ECP2(P1);
+		ECP Q=new ECP(Q1);
+
+		P.affine();
+		Q.affine();
+
+		if (CONFIG_CURVE.CURVE_PAIRING_TYPE==CONFIG_CURVE.BN)
+		{
+			f=new FP2(new BIG(ROM.Fra),new BIG(ROM.Frb));
+			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.M_TYPE)
+			{
+				f.inverse();
+				f.norm();
 			}
 		}
-		else
-			n.copy(x);
-		n.norm();
-		
-		BIG n3=new BIG(n);
-		n3.pmul(3);
-		n3.norm();
 
 		FP Qx=new FP(Q.getx());
 		FP Qy=new FP(Q.gety());
@@ -178,25 +288,25 @@ public final class PAIR {
 		ECP2 MP=new ECP2();
 		MP.copy(P); MP.neg();
 
-		int nb=n3.nbits();
+		int nb=lbits(n3,n);
 
 		for (int i=nb-2;i>=1;i--)
 		{
 			r.sqr();
 			lv=line(A,A,Qx,Qy);
-			r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
 
 			bt=n3.bit(i)-n.bit(i); 
 			if (bt==1)
 			{
-				lv=line(A,P,Qx,Qy);
-				r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+				lv2=line(A,P,Qx,Qy);
+				lv.smul(lv2);
 			}
 			if (bt==-1)
 			{
-				lv=line(A,MP,Qx,Qy);
-				r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+				lv2=line(A,MP,Qx,Qy);
+				lv.smul(lv2);
 			}
+			r.ssmul(lv);
 		}
 
 		if (CONFIG_CURVE.SIGN_OF_X==CONFIG_CURVE.NEGATIVEX)
@@ -214,11 +324,11 @@ public final class PAIR {
 			K.copy(P);
 			K.frob(f);
 			lv=line(A,K,Qx,Qy);
-			r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
 			K.frob(f);
 			K.neg();
-			lv=line(A,K,Qx,Qy);
-			r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+			lv2=line(A,K,Qx,Qy);
+			lv.smul(lv2);
+			r.ssmul(lv);
 		} 
 		return r;
 	}
@@ -227,10 +337,10 @@ public final class PAIR {
 	public static FP12 ate2(ECP2 P1,ECP Q1,ECP2 R1,ECP S1)
 	{
 		FP2 f;
-		BIG x=new BIG(ROM.CURVE_Bnx);
-		BIG n=new BIG(x);
+		BIG n=new BIG(0);
+		BIG n3=new BIG(0);
 		ECP2 K=new ECP2();
-		FP12 lv;
+		FP12 lv,lv2;
 		int bt;
 
 		ECP2 P=new ECP2(P1);
@@ -253,21 +363,7 @@ public final class PAIR {
 				f.inverse();
 				f.norm();
 			}
-			n.pmul(6); 
-			if (CONFIG_CURVE.SIGN_OF_X==CONFIG_CURVE.POSITIVEX)
-			{
-				n.inc(2);
-			} else {
-				n.dec(2);
-			}
 		}
-		else
-			n.copy(x);
-		n.norm();
-
-		BIG n3=new BIG(n);
-		n3.pmul(3);
-		n3.norm();
 
 		FP Qx=new FP(Q.getx());
 		FP Qy=new FP(Q.gety());
@@ -286,32 +382,30 @@ public final class PAIR {
 		ECP2 MR=new ECP2();
 		MR.copy(R); MR.neg();
 
-
-		int nb=n3.nbits();
+		int nb=lbits(n3,n);
 
 		for (int i=nb-2;i>=1;i--)
 		{
 			r.sqr();
 			lv=line(A,A,Qx,Qy);
-			r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
-
-			lv=line(B,B,Sx,Sy);
-			r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+			lv2=line(B,B,Sx,Sy);
+			lv.smul(lv2);
+			r.ssmul(lv);
 
 			bt=n3.bit(i)-n.bit(i);
 			if (bt==1)
 			{
 				lv=line(A,P,Qx,Qy);
-				r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
-				lv=line(B,R,Sx,Sy);
-				r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+				lv2=line(B,R,Sx,Sy);
+				lv.smul(lv2);
+				r.ssmul(lv);
 			}
 			if (bt==-1)
 			{
 				lv=line(A,MP,Qx,Qy);
-				r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
-				lv=line(B,MR,Sx,Sy);
-				r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+				lv2=line(B,MR,Sx,Sy);
+				lv.smul(lv2);
+				r.ssmul(lv);
 			}
 		}
 
@@ -334,19 +428,19 @@ public final class PAIR {
 			K.frob(f);
 
 			lv=line(A,K,Qx,Qy);
-			r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
 			K.frob(f);
 			K.neg();
-			lv=line(A,K,Qx,Qy);
-			r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+			lv2=line(A,K,Qx,Qy);
+			lv.smul(lv2);
+			r.ssmul(lv);
 			K.copy(R);
 			K.frob(f);
 			lv=line(B,K,Sx,Sy);
-			r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
 			K.frob(f);
 			K.neg();
-			lv=line(B,K,Sx,Sy);
-			r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+			lv2=line(B,K,Sx,Sy);
+			lv.smul(lv2);
+			r.ssmul(lv);
 		}
 		return r;
 	}

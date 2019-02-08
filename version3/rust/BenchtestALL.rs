@@ -715,7 +715,7 @@ fn bls48(mut rng: &mut RAND) {
 		println!("BN Pairing-Friendly Curve");
 	}
 	if ecp::CURVE_PAIRING_TYPE == CurvePairingType::BLS {
-		println!("BLS24 Pairing-Friendly Curve");
+		println!("BLS48 Pairing-Friendly Curve");
 	}
 
 	println!("Modulus size {:} bits", fp::MODBITS);

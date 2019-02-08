@@ -29,9 +29,16 @@
 
 public struct FP12
 {
+    static public let ZERO:Int=0
+    static public let ONE:Int=1
+    static public let SPARSER:Int=2
+    static public let SPARSE:Int=3
+    static public let DENSE:Int=4
+
     private var a:FP4
     private var b:FP4
     private var c:FP4
+    private var stype:Int
     
     /* reduce all components of this mod Modulus */
     mutating func reduce()
@@ -43,16 +50,28 @@ public struct FP12
     /* normalise all components of this */
     mutating func norm()
     {
-        a.norm();
-        b.norm();
-        c.norm();
+        a.norm()
+        b.norm()
+        c.norm()
     }
+
+    mutating func settype(_ t:Int)
+    {
+        stype=t
+    }
+
+    mutating func gettype() -> Int
+    {
+        return stype
+    }
+
     /* Constructors */
     init(_ d:FP4)
     {
         a=FP4(d)
         b=FP4(0)
         c=FP4(0)
+        stype=FP12.SPARSER
     }
     
     init(_ d:Int)
@@ -60,6 +79,8 @@ public struct FP12
         a=FP4(d)
         b=FP4(0)
         c=FP4(0)
+        if (d==1) {stype=FP12.ONE}
+        else {stype=FP12.SPARSER}
     }
     
     init(_ d:FP4,_ e:FP4,_ f:FP4)
@@ -67,6 +88,7 @@ public struct FP12
         a=FP4(d)
         b=FP4(e)
         c=FP4(f)
+        stype=FP12.DENSE
     }
     
     init(_ x:FP12)
@@ -74,6 +96,7 @@ public struct FP12
         a=FP4(x.a)
         b=FP4(x.b)
         c=FP4(x.c)
+        stype=x.stype
     }
     /* test x==0 ? */
     func iszilch() -> Bool
@@ -86,6 +109,8 @@ public struct FP12
         a.cmove(g.a,d)
         b.cmove(g.b,d)
         c.cmove(g.c,d)
+        let u = ~(d-1)
+        stype^=(stype^g.stype)&u   
     }
 
     /* return 1 if b==c, no branching */
@@ -150,6 +175,7 @@ public struct FP12
         a.copy(x.a)
         b.copy(x.b)
         c.copy(x.c)
+        stype=x.stype
     }
     /* set self=1 */
     mutating func one()
@@ -157,6 +183,7 @@ public struct FP12
         a.one()
         b.zero()
         c.zero()
+        stype=FP12.ONE
     }
     /* self=conj(self) */
     mutating func conj()
@@ -201,12 +228,14 @@ public struct FP12
         c.add(c)
         b.add(B)
         c.add(C)
+        stype=FP12.DENSE
         reduce()
     
     }
     /* Chung-Hasan SQR2 method from http://cacr.uwaterloo.ca/techreports/2006/cacr2006-24.pdf */
     mutating func sqr()
     {
+        if (stype==FP12.ONE) {return}
         var A=FP4(a)
         var B=FP4(b)
         var C=FP4(c)
@@ -239,7 +268,11 @@ public struct FP12
 
         b.copy(C); b.add(D)
         c.add(A)
-    
+        if (stype==FP12.SPARSER) {
+            stype=FP12.SPARSE
+        } else {
+            stype=FP12.DENSE
+        }
         norm()
     }
     
@@ -298,88 +331,106 @@ public struct FP12
         z3.norm()
         z3.times_i()
         a.copy(z0); a.add(z3)
-    
+        stype=FP12.DENSE
         norm()
     }
     
-    /* Special case of multiplication arises from special form of ATE pairing line function */
-    mutating func smul(_ y:FP12,_ twist:Int)
+/* FP12 full multiplication w=w*y */
+/* Supports sparse multiplicands */
+/* Usually w is denser than y */
+    mutating func ssmul(_ y:FP12)
     {
-        if twist == CONFIG_CURVE.D_TYPE {
-            var z0=FP4(a)
-            var z2=FP4(b)
-            var z3=FP4(b)
-            var t0=FP4(0)
-            var t1=FP4(y.a)
-    
-            z0.mul(y.a)
-            z2.pmul(y.b.real())
-            b.add(a)
-            t1.adds(y.b.real())
-    
-            b.norm(); t1.norm()
-
-            b.mul(t1)
-            z3.add(c); z3.norm()
-            z3.pmul(y.b.real())
-    
-            t0.copy(z0); t0.neg()
-            t1.copy(z2); t1.neg()
-    
-            b.add(t0)
-    
-            b.add(t1)
-            z3.add(t1)
-            z2.add(t0)
-    
-            t0.copy(a); t0.add(c)
-            t0.norm(); z3.norm()
-            t0.mul(y.a)
-            c.copy(z2); c.add(t0)
-    
-            z3.times_i()
-            a.copy(z0); a.add(z3)
+        if stype==FP12.ONE {
+            copy(y)
+            return
         }
-        if twist == CONFIG_CURVE.M_TYPE {
+        if y.stype==FP12.ONE {
+            return
+        }
+        if y.stype>=FP12.SPARSE {
             var z0=FP4(a)
             var z1=FP4(0)
             var z2=FP4(0)
             var z3=FP4(0)
-            var t0=FP4(a)
-            var t1=FP4(0)
-        
             z0.mul(y.a)
-            t0.add(b)
-            t0.norm()
 
-            z1.copy(t0); z1.mul(y.a)
-            t0.copy(b); t0.add(c)
-            t0.norm()
+            if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.M_TYPE {  
+                if y.stype==FP12.SPARSE || stype==FP12.SPARSE {
+                    var ga=FP2(0)
+                    var gb=FP2(0)
 
-            z3.copy(t0)
-            z3.pmul(y.c.getb())
-            z3.times_i()
+                    gb.copy(b.getb())
+                    gb.mul(y.b.getb())
+                    ga.zero()
+                    if y.stype != FP12.SPARSE {
+                        ga.copy(b.getb())
+                        ga.mul(y.b.geta())
+                    }
+                    if stype != FP12.SPARSE {
+                        ga.copy(b.geta())
+                        ga.mul(y.b.getb())
+                    }
+                    z2.set_fp2s(ga,gb)
+                    z2.times_i()
+                } else {
+                    z2.copy(b)
+                    z2.mul(y.b)
+                }
+            } else {
+                z2.copy(b)
+                z2.mul(y.b)
+            }
+            var t0=FP4(a)
+            var t1=FP4(y.a)
+            t0.add(b); t0.norm()
+            t1.add(y.b); t1.norm()
+
+            z1.copy(t0); z1.mul(t1)
+            t0.copy(b); t0.add(c); t0.norm()
+            t1.copy(y.b); t1.add(y.c); t1.norm()
+
+            z3.copy(t0); z3.mul(t1)
 
             t0.copy(z0); t0.neg()
+            t1.copy(z2); t1.neg()
 
             z1.add(t0)
-            b.copy(z1)
-            z2.copy(t0)
+            b.copy(z1); b.add(t1)
 
-            t0.copy(a); t0.add(c)
-            t1.copy(y.a); t1.add(y.c)
+            z3.add(t1)
+            z2.add(t0)
 
-            t0.norm()
-            t1.norm()
+            t0.copy(a); t0.add(c); t0.norm()
+            t1.copy(y.a); t1.add(y.c); t1.norm()
     
             t0.mul(t1)
             z2.add(t0)
 
-            t0.copy(c)
-            
-            t0.pmul(y.c.getb())
-            t0.times_i()
+            if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.D_TYPE {  
+                if y.stype==FP12.SPARSE || stype==FP12.SPARSE {
+                    var ga=FP2(0)
+                    var gb=FP2(0)
 
+                    ga.copy(c.geta())
+                    ga.mul(y.c.geta())
+                    gb.zero()
+                    if y.stype != FP12.SPARSE {
+                        gb.copy(c.geta())
+                        gb.mul(y.c.getb())
+                    }
+                    if stype != FP12.SPARSE {
+                        gb.copy(c.getb())
+                        gb.mul(y.c.geta())
+                    }
+                    t0.set_fp2s(ga,gb)
+                } else {
+                    t0.copy(c)
+                    t0.mul(y.c)
+                }
+            } else {
+                t0.copy(c)
+                t0.mul(y.c)
+            }
             t1.copy(t0); t1.neg()
 
             c.copy(z2); c.add(t1)
@@ -388,9 +439,200 @@ public struct FP12
             b.add(t0)
             z3.norm()
             z3.times_i()
-            a.copy(z0); a.add(z3)      
+            a.copy(z0); a.add(z3);
+        } else {
+            if stype==FP12.SPARSER {
+                smul(y)
+                return
+            }
+            if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.D_TYPE {  // dense by sparser - 13m 
+                var z0=FP4(a)
+                var z2=FP4(b)
+                var z3=FP4(b)
+                var t0=FP4(0)
+                var t1=FP4(y.a)
+                z0.mul(y.a)
+                z2.pmul(y.b.real())
+                b.add(a)
+                t1.adds(y.b.real())
+
+                t1.norm()
+                b.norm()
+                b.mul(t1)
+                z3.add(c)
+                z3.norm()
+                z3.pmul(y.b.real())
+
+                t0.copy(z0); t0.neg()
+                t1.copy(z2); t1.neg()
+
+                b.add(t0)
+
+                b.add(t1)
+                z3.add(t1)
+                z2.add(t0)
+
+                t0.copy(a); t0.add(c); t0.norm()
+                z3.norm()
+                t0.mul(y.a)
+                c.copy(z2); c.add(t0)
+
+                z3.times_i()
+                a.copy(z0); a.add(z3)
+            }
+            if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.M_TYPE {
+                var z0=FP4(a)
+                var z1=FP4(0)
+                var z2=FP4(0)
+                var z3=FP4(0)
+                var t0=FP4(a)
+                var t1=FP4(0)
+        
+                z0.mul(y.a)
+                t0.add(b); t0.norm()
+
+                z1.copy(t0); z1.mul(y.a)
+                t0.copy(b); t0.add(c)
+                t0.norm()
+
+                z3.copy(t0)
+                z3.pmul(y.c.getb())
+                z3.times_i()
+
+                t0.copy(z0); t0.neg()
+                z1.add(t0)
+                b.copy(z1)
+                z2.copy(t0)
+
+                t0.copy(a); t0.add(c); t0.norm()
+                t1.copy(y.a); t1.add(y.c); t1.norm()
+
+                t0.mul(t1)
+                z2.add(t0)
+                t0.copy(c)
+            
+                t0.pmul(y.c.getb())
+                t0.times_i()
+                t1.copy(t0); t1.neg()
+
+                c.copy(z2); c.add(t1)
+                z3.add(t1)
+                t0.times_i()
+                b.add(t0)
+                z3.norm()
+                z3.times_i()
+                a.copy(z0); a.add(z3)
+            }   
         }
-        norm()
+        stype=FP12.DENSE
+        norm()    
+    }
+
+    /* Special case of multiplication arises from special form of ATE pairing line function */
+    mutating func smul(_ y:FP12)
+    {
+        if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.D_TYPE {  
+            var w1=FP2(a.geta())
+            var w2=FP2(a.getb())
+            var w3=FP2(b.geta())
+
+            w1.mul(y.a.geta())
+            w2.mul(y.a.getb())
+            w3.mul(y.b.geta())
+
+            var ta=FP2(a.geta())
+            var tb=FP2(y.a.geta())
+            ta.add(a.getb()); ta.norm()
+            tb.add(y.a.getb()); tb.norm()
+            var tc=FP2(ta)
+            tc.mul(tb)
+            var t=FP2(w1)
+            t.add(w2)
+            t.neg()
+            tc.add(t)
+
+            ta.copy(a.geta()); ta.add(b.geta()); ta.norm()
+            tb.copy(y.a.geta()); tb.add(y.b.geta()); tb.norm()
+            var td=FP2(ta)
+            td.mul(tb)
+            t.copy(w1)
+            t.add(w3)
+            t.neg()
+            td.add(t)
+
+            ta.copy(a.getb()); ta.add(b.geta()); ta.norm()
+            tb.copy(y.a.getb()); tb.add(y.b.geta()); tb.norm()
+            var te=FP2(ta)
+            te.mul(tb)
+            t.copy(w2)
+            t.add(w3)
+            t.neg()
+            te.add(t)
+
+            w2.mul_ip()
+            w1.add(w2)
+
+            a.set_fp2s(w1,tc)
+            b.set_fp2s(td,te)
+            c.set_fp2(w3)
+
+            a.norm()
+            b.norm()
+    } else {
+            var w1=FP2(a.geta())
+            var w2=FP2(a.getb())
+            var w3=FP2(c.getb())
+
+            w1.mul(y.a.geta())
+            w2.mul(y.a.getb())
+            w3.mul(y.c.getb())
+
+            var ta=FP2(a.geta())
+            var tb=FP2(y.a.geta())
+            ta.add(a.getb()); ta.norm()
+            tb.add(y.a.getb()); tb.norm()
+            var tc=FP2(ta)
+            tc.mul(tb)
+            var t=FP2(w1)
+            t.add(w2)
+            t.neg()
+            tc.add(t)
+
+            ta.copy(a.geta()); ta.add(c.getb()); ta.norm()
+            tb.copy(y.a.geta()); tb.add(y.c.getb()); tb.norm()
+            var td=FP2(ta)
+            td.mul(tb)
+            t.copy(w1)
+            t.add(w3)
+            t.neg()
+            td.add(t)
+
+            ta.copy(a.getb()); ta.add(c.getb()); ta.norm()
+            tb.copy(y.a.getb()); tb.add(y.c.getb()); tb.norm()
+            var te=FP2(ta)
+            te.mul(tb)
+            t.copy(w2)
+            t.add(w3)
+            t.neg()
+            te.add(t)
+
+            w2.mul_ip()
+            w1.add(w2)
+            a.set_fp2s(w1,tc);
+
+            w3.mul_ip()
+            w3.norm()
+            b.set_fp2h(w3);
+
+            te.norm()
+            te.mul_ip()
+            c.set_fp2s(te,td)
+
+            a.norm()
+            c.norm()
+
+        }
+        stype=FP12.SPARSE
     }
     /* self=1/self */
     mutating func inverse()
@@ -427,6 +669,7 @@ public struct FP12
         a.copy(f0); a.mul(f3)
         b.copy(f1); b.mul(f3)
         c.copy(f2); c.mul(f3)
+        stype=FP12.DENSE        
     }
     
     /* self=self^p using Frobenius */
@@ -444,6 +687,7 @@ public struct FP12
     
         b.pmul(f)
         c.pmul(f2)
+        stype=FP12.DENSE        
     }
     
     /* trace function */

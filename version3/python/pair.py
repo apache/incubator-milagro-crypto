@@ -16,7 +16,6 @@ from XXX import ecp2
 
 # line function
 
-
 def g(A, B, Qx, Qy):
     if A == B:
         XX, YY, ZZ = A.getxyz()
@@ -63,13 +62,7 @@ def g(A, B, Qx, Qy):
 
 # full pairing - miller loop followed by final exponentiation
 
-
-def e(P, Q):
-    r = miller(P, Q)
-    return fexp(r)
-
-
-def miller(P1, Q1):
+def lbits() :
     x = curve.x
     if curve.PairingFriendly == BN:
         n = 6 * x
@@ -80,7 +73,66 @@ def miller(P1, Q1):
     else:
         n = x
     n3 = 3 * n
+    return n3.bit_length(),n3,n
 
+def initmp() :
+    nb,n3,n=lbits()
+    r=[]
+    for i in range (nb-1,-1,-1) :
+        r.append(Fp12.one())
+    return r
+
+def miller(r) :
+    nb,n3,n=lbits()
+    res=Fp12.one()
+    for i in range (nb-1,0,-1) :
+        res.sqr()
+        res *= r[i]
+    if curve.SignOfX == NEGATIVEX:
+        res.conj()
+    res *= r[0]
+    return res
+	
+def another(r,P1,Q1) :
+    nb,n3,n=lbits()
+    P = P1.copy()
+    Q = Q1.copy()
+
+    P.affine()
+    Q.affine()
+    A = P.copy()
+    Qx, Qy = Q.getxy()	
+    for i in range(nb - 2, 0, -1):
+        lv=g(A, A, Qx, Qy)
+
+        if big.bit(n3, i) == 1 and big.bit(n, i) == 0:
+            lv2 =  g(A, P, Qx, Qy)
+            lv.smul(lv2)
+        if big.bit(n3, i) == 0 and big.bit(n, i) == 1:
+            lv2 = g(A, -P, Qx, Qy)
+            lv.smul(lv2)
+        r[i] *= lv
+    
+    if curve.PairingFriendly == BN:
+        KA = P.copy()
+        KA.frobenius()
+        if curve.SignOfX == NEGATIVEX:
+            A = -A
+        lv = g(A, KA, Qx, Qy)
+        KA.frobenius()
+        KA = -KA
+        lv2 = g(A, KA, Qx, Qy)
+        lv.smul(lv2)
+        r[0] *= lv
+
+def e(P, Q):
+    r = miller(P, Q)
+    return fexp(r)
+
+
+def ate(P1, Q1):
+    nb,n3,n=lbits()
+    
     P = P1.copy()
     Q = Q1.copy()
 
@@ -88,17 +140,19 @@ def miller(P1, Q1):
     Q.affine()
     A = P.copy()
     Qx, Qy = Q.getxy()
-    nb = n3.bit_length()
     r = Fp12.one()
 # miller loop
     for i in range(nb - 2, 0, -1):
         r.sqr()
-        r *= g(A, A, Qx, Qy)
+        lv=g(A, A, Qx, Qy)
 
         if big.bit(n3, i) == 1 and big.bit(n, i) == 0:
-            r *= g(A, P, Qx, Qy)
+            lv2 =  g(A, P, Qx, Qy)
+            lv.smul(lv2)
         if big.bit(n3, i) == 0 and big.bit(n, i) == 1:
-            r *= g(A, -P, Qx, Qy)
+            lv2 = g(A, -P, Qx, Qy)
+            lv.smul(lv2)
+        r *= lv
 
 # adjustment
     if curve.SignOfX == NEGATIVEX:
@@ -109,27 +163,19 @@ def miller(P1, Q1):
         KA.frobenius()
         if curve.SignOfX == NEGATIVEX:
             A = -A
-        r *= g(A, KA, Qx, Qy)
+        lv = g(A, KA, Qx, Qy)
         KA.frobenius()
         KA = -KA
-        r *= g(A, KA, Qx, Qy)
+        lv2 = g(A, KA, Qx, Qy)
+        lv.smul(lv2)
+        r *= lv
 
     return r
 
 
-def double_miller(P1, Q1, U1, V1):
-    x = curve.x
+def double_ate(P1, Q1, U1, V1):
 
-    if curve.PairingFriendly == BN:
-        n = 6 * x
-        if curve.SignOfX == POSITIVEX:
-            n += 2
-        else:
-            n -= 2
-    else:
-        n = x
-
-    n3 = 3 * n
+    nb,n3,n=lbits()
 
     P = P1.copy()
     Q = Q1.copy()
@@ -144,19 +190,26 @@ def double_miller(P1, Q1, U1, V1):
     Qx, Qy = Q.getxy()
     B = U.copy()
     Wx, Wy = V.getxy()
-    nb = n3.bit_length()
     r = Fp12.one()
 # miller loop
     for i in range(nb - 2, 0, -1):
         r.sqr()
-        r *= g(A, A, Qx, Qy)
-        r *= g(B, B, Wx, Wy)
+        lv = g(A, A, Qx, Qy)
+        lv2 = g(B, B, Wx, Wy)
+        lv.smul(lv2)
+        r *= lv
+        #r *= g(A, A, Qx, Qy)
+        #r *= g(B, B, Wx, Wy)
         if big.bit(n3, i) == 1 and big.bit(n, i) == 0:
-            r *= g(A, P, Qx, Qy)
-            r *= g(B, U, Wx, Wy)
+            lv = g(A, P, Qx, Qy)
+            lv2 = g(B, U, Wx, Wy)
+            lv.smul(lv2)
+            r *= lv
         if big.bit(n3, i) == 0 and big.bit(n, i) == 1:
-            r *= g(A, -P, Qx, Qy)
-            r *= g(B, -U, Wx, Wy)
+            lv = g(A, -P, Qx, Qy)
+            lv2 = g(B, -U, Wx, Wy)
+            lv.smul(lv2)
+            r *= lv
 # adjustment
     if curve.SignOfX == NEGATIVEX:
         r.conj()
@@ -167,18 +220,22 @@ def double_miller(P1, Q1, U1, V1):
         if curve.SignOfX == NEGATIVEX:
             A = -A
             B = -B
-        r *= g(A, KA, Qx, Qy)
+        lv = g(A, KA, Qx, Qy)
         KA.frobenius()
         KA = -KA
-        r *= g(A, KA, Qx, Qy)
+        lv2 = g(A, KA, Qx, Qy)
+        lv.smul(lv2)
+        r *= lv
 
         KB = U.copy()
         KB.frobenius()
 
-        r *= g(B, KB, Wx, Wy)
+        lv = g(B, KB, Wx, Wy)
         KB.frobenius()
         KB = -KB
-        r *= g(B, KB, Wx, Wy)
+        lv2 = g(B, KB, Wx, Wy)
+        lv.smul(lv2)
+        r *= lv
 
     return r
 

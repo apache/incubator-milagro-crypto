@@ -82,7 +82,16 @@ public struct BLS256
         let G=ECP8.generator()
         let PK=ECP8.fromBytes(W)
         D.neg()
-        var v=PAIR256.ate2(G,D,PK,HM)
+
+// Use new multi-pairing mechanism 
+        var r=PAIR256.initmp()
+        PAIR256.another(&r,G,D)
+        PAIR256.another(&r,PK,HM)
+        var v=PAIR256.miller(r)
+
+//.. or alternatively
+//        var v=PAIR256.ate2(G,D,PK,HM)
+
         v=PAIR256.fexp(v)
     
         if v.isunity() {

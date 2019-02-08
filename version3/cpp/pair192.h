@@ -75,6 +75,41 @@ extern void PAIR_GTpow(YYY::FP24 *x,XXX::BIG b);
  */
 extern int PAIR_GTmember(YYY::FP24 *x);
 
+
+/**	@brief Precompute line functions for n-pairing
+ *
+	@param r array of precomputed FP24 products of line functions
+	@param PV ECP4 instance, an element of G2
+	@param QV ECP instance, an element of G1
+
+ */
+extern void PAIR_another(YYY::FP24 r[],ECP4* PV,ECP* QV);
+
+/**	@brief Prepare Ate parameter
+ *
+	@param n BIG parameter
+	@param n3 BIG paramter = 3*n
+	@return number of nits in n3
+
+ */
+extern int PAIR_nbits(XXX::BIG n3,XXX::BIG n);
+
+/**	@brief Initialise structure for multi-pairing
+ *
+	@param r FP24 array, to be initialised to 1
+
+ */
+extern void PAIR_initmp(YYY::FP24 r[]);
+
+
+/**	@brief Miller loop
+ *
+ 	@param res FP24 result
+	@param r FP24 precomputed array of accumulated line functions
+
+ */
+extern void PAIR_miller(YYY::FP24 *res,YYY::FP24 r[]);
+
 }
 
 #endif

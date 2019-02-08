@@ -57,6 +57,13 @@
 #define D_TYPE 0
 #define M_TYPE 1
 
+#define FP_ZERO 0
+#define FP_UNITY 1
+#define FP_SPARSER 2
+#define FP_SPARSE 3
+#define FP_DENSE 4
+
+
 /**
  * @brief SHA256 hash function instance */
 typedef struct

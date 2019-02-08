@@ -123,16 +123,102 @@ public final class PAIR256 {
 			}
 			A.add(B);
 		}
-		return new FP48(a,b,c);
+		FP48 r=new FP48(a,b,c);
+		r.settype(FP48.SPARSE);
+		return r;
 	}
+
+/* prepare ate parameter, n=6u+2 (BN) or n=u (BLS), n3=3*n */
+	public static int lbits(BIG n3,BIG n)
+	{
+		n.copy(new BIG(ROM.CURVE_Bnx));
+		n3.copy(n);
+		n3.pmul(3);
+		n3.norm();
+		return n3.nbits();
+	}
+
+/* prepare for multi-pairing */
+	public static FP48[] initmp()
+	{
+		FP48[] r=new FP48[CONFIG_CURVE.ATE_BITS];
+		for (int i=CONFIG_CURVE.ATE_BITS-1; i>=0; i--)
+			r[i]=new FP48(1);
+		return r;
+	}
+
+/* basic Miller loop */
+	public static FP48 miller(FP48[] r)
+	{
+		FP48 res=new FP48(1);
+		for (int i=CONFIG_CURVE.ATE_BITS-1; i>=1; i--)
+		{
+			res.sqr();
+			res.ssmul(r[i]); 
+		}
+
+		if (CONFIG_CURVE.SIGN_OF_X==CONFIG_CURVE.NEGATIVEX)
+			res.conj();
+		res.ssmul(r[0]);
+
+		return res;
+	}
+
+/* Accumulate another set of line functions for n-pairing */
+	public static void another(FP48[] r,ECP8 P1,ECP Q1)
+	{
+		FP2 f;
+		BIG n=new BIG(0);
+		BIG n3=new BIG(0);
+		FP48 lv,lv2;
+		int bt;
+
+// P is needed in affine form for line function, Q for (Qx,Qy) extraction
+		ECP8 P=new ECP8(P1);
+		ECP Q=new ECP(Q1);
+
+		P.affine();
+		Q.affine();
+
+		FP Qx=new FP(Q.getx());
+		FP Qy=new FP(Q.gety());
+
+		ECP8 A=new ECP8();
+		A.copy(P);
+
+		ECP8 MP=new ECP8();
+		MP.copy(P); MP.neg();
+
+		int nb=lbits(n3,n);
+
+		for (int i=nb-2;i>=1;i--)
+		{
+			lv=line(A,A,Qx,Qy);
+
+			bt=n3.bit(i)-n.bit(i); 
+			if (bt==1)
+			{
+				lv2=line(A,P,Qx,Qy);
+				lv.smul(lv2);
+			}
+			if (bt==-1)
+			{
+				lv2=line(A,MP,Qx,Qy);
+				lv.smul(lv2);
+			}
+			r[i].ssmul(lv);
+		}
+
+	}
+
 
 /* Optimal R-ate pairing */
 	public static FP48 ate(ECP8 P1,ECP Q1)
 	{
 		FP2 f;
-		BIG x=new BIG(ROM.CURVE_Bnx);
-		BIG n=new BIG(x);
-		FP48 lv;
+		BIG n=new BIG(0);
+		BIG n3=new BIG(0);
+		FP48 lv,lv2;
 		int bt;
 		
 		ECP8 P=new ECP8(P1);
@@ -140,11 +226,6 @@ public final class PAIR256 {
 
 		P.affine();
 		Q.affine();
-
-
-		BIG n3=new BIG(n);
-		n3.pmul(3);
-		n3.norm();
 
 		FP Qx=new FP(Q.getx());
 		FP Qy=new FP(Q.gety());
@@ -156,25 +237,25 @@ public final class PAIR256 {
 		ECP8 MP=new ECP8();
 		MP.copy(P); MP.neg();
 
-		int nb=n3.nbits();
+		int nb=lbits(n3,n);
 
 		for (int i=nb-2;i>=1;i--)
 		{
 			r.sqr();
 			lv=line(A,A,Qx,Qy);
-			r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
 
 			bt=n3.bit(i)-n.bit(i); 
 			if (bt==1)
 			{
-				lv=line(A,P,Qx,Qy);
-				r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+				lv2=line(A,P,Qx,Qy);
+				lv.smul(lv2);
 			}
 			if (bt==-1)
 			{
-				lv=line(A,MP,Qx,Qy);
-				r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+				lv2=line(A,MP,Qx,Qy);
+				lv.smul(lv2);
 			}
+			r.ssmul(lv);
 		}
 
 		if (CONFIG_CURVE.SIGN_OF_X==CONFIG_CURVE.NEGATIVEX)
@@ -189,9 +270,9 @@ public final class PAIR256 {
 	public static FP48 ate2(ECP8 P1,ECP Q1,ECP8 R1,ECP S1)
 	{
 		FP2 f;
-		BIG x=new BIG(ROM.CURVE_Bnx);
-		BIG n=new BIG(x);
-		FP48 lv;
+		BIG n=new BIG(0);
+		BIG n3=new BIG(0);
+		FP48 lv,lv2;
 		int bt;
 
 		ECP8 P=new ECP8(P1);
@@ -205,10 +286,6 @@ public final class PAIR256 {
 
 		R.affine();
 		S.affine();
-
-		BIG n3=new BIG(n);
-		n3.pmul(3);
-		n3.norm();
 
 		FP Qx=new FP(Q.getx());
 		FP Qy=new FP(Q.gety());
@@ -227,32 +304,30 @@ public final class PAIR256 {
 		ECP8 MR=new ECP8();
 		MR.copy(R); MR.neg();
 
-
-		int nb=n3.nbits();
+		int nb=lbits(n3,n);
 
 		for (int i=nb-2;i>=1;i--)
 		{
 			r.sqr();
 			lv=line(A,A,Qx,Qy);
-			r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
-
-			lv=line(B,B,Sx,Sy);
-			r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+			lv2=line(B,B,Sx,Sy);
+			lv.smul(lv2);
+			r.ssmul(lv);
 
 			bt=n3.bit(i)-n.bit(i);
 			if (bt==1)
 			{
 				lv=line(A,P,Qx,Qy);
-				r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
-				lv=line(B,R,Sx,Sy);
-				r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+				lv2=line(B,R,Sx,Sy);
+				lv.smul(lv2);
+				r.ssmul(lv);
 			}
 			if (bt==-1)
 			{
 				lv=line(A,MP,Qx,Qy);
-				r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
-				lv=line(B,MR,Sx,Sy);
-				r.smul(lv,CONFIG_CURVE.SEXTIC_TWIST);
+				lv2=line(B,MR,Sx,Sy);
+				lv.smul(lv2);
+				r.ssmul(lv);
 			}
 		}
 

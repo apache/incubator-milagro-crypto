@@ -1567,8 +1567,9 @@ int rsa_2048(csprng *RNG)
 
     printf("Decrypting test string\n");
     RSA_DECRYPT(&priv,&C,&ML);   // ... and then decrypt it 
-
+	printf("Decrypted\n");
     OAEP_DECODE(HASH_TYPE_RSA_RSA2048,NULL,&ML);    // decode it 
+	printf("Decoded\n");
     OCT_output_string(&ML);
 
     printf("Signing message\n");

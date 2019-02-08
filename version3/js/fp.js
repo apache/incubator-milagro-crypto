@@ -39,6 +39,12 @@ var FP = function(ctx) {
     FP.GENERALISED_MERSENNE = 2;
     FP.MONTGOMERY_FRIENDLY = 3;
 
+	FP.ZERO = 0;
+	FP.ONE = 1;
+	FP.SPARSER = 2;
+	FP.SPARSE = 3;
+	FP.DENSE= 4;
+
     FP.MODBITS = ctx.config["@NBT"];
     FP.MOD8 = ctx.config["@M8"];
     FP.MODTYPE = ctx.config["@MT"];

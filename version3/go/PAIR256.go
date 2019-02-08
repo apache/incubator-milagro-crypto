@@ -123,18 +123,91 @@ func line(A *ECP8, B *ECP8, Qx *FP, Qy *FP) *FP48 {
 		A.Add(B)
 	}
 
-	return NewFP48fp16s(a, b, c)
+	r:=NewFP48fp16s(a, b, c)
+	r.stype=FP_SPARSER
+	return r
+}
+
+/* prepare ate parameter, n=6u+2 (BN) or n=u (BLS), n3=3*n */
+func lbits(n3 *BIG,n *BIG) int {
+	n.copy(NewBIGints(CURVE_Bnx))
+	n3.copy(n)
+	n3.pmul(3)
+	n3.norm()
+	return n3.nbits()
+}
+
+/* prepare for multi-pairing */
+func initmp() []*FP48 {
+	var r []*FP48
+	for i:=ATE_BITS-1; i>=0; i-- {
+		r=append(r,NewFP48int(1))
+	}
+	return r
+}
+
+/* basic Miller loop */
+func miller(r []*FP48) *FP48 {
+	res:=NewFP48int(1);
+	for i:=ATE_BITS-1; i>=1; i-- {
+		res.sqr()
+		res.ssmul(r[i]);
+	}
+
+	if SIGN_OF_X==NEGATIVEX {
+		res.conj()
+	}
+	res.ssmul(r[0])
+	return res
+}
+
+/* Accumulate another set of line functions for n-pairing */
+func another(r []*FP48,P1 *ECP8,Q1 *ECP) {
+	n:=NewBIG()
+	n3:=NewBIG()
+	var lv,lv2 *FP48
+
+// P is needed in affine form for line function, Q for (Qx,Qy) extraction
+	P:=NewECP8()
+	P.Copy(P1)
+	Q:=NewECP()
+	Q.Copy(Q1)
+
+	P.Affine()
+	Q.Affine()
+
+	Qx := NewFPcopy(Q.getx())
+	Qy := NewFPcopy(Q.gety())
+
+	A:=NewECP8()
+	A.Copy(P)
+
+	MP:=NewECP8()
+	MP.Copy(P); MP.neg()
+
+	nb:=lbits(n3,n)
+
+	for i:=nb-2;i>=1;i-- {
+		lv=line(A,A,Qx,Qy)
+
+		bt:=n3.bit(i)-n.bit(i)
+		if bt==1 {
+			lv2=line(A,P,Qx,Qy)
+			lv.smul(lv2)
+		}
+		if bt==-1 {
+			lv2=line(A,MP,Qx,Qy)
+			lv.smul(lv2)
+		}
+		r[i].ssmul(lv)
+	}
 }
 
 /* Optimal R-ate pairing */
 func Ate(P1 *ECP8, Q1 *ECP) *FP48 {
-	x := NewBIGints(CURVE_Bnx)
-	n := NewBIGcopy(x)
-	var lv *FP48
-
-	n3 := NewBIGcopy(n)
-	n3.pmul(3)
-	n3.norm()
+	n:=NewBIG()
+	n3:=NewBIG()
+	var lv,lv2 *FP48
 
 	P := NewECP8()
 	P.Copy(P1)
@@ -154,21 +227,22 @@ func Ate(P1 *ECP8, Q1 *ECP) *FP48 {
 	NP.Copy(P)
 	NP.neg()
 
-	nb := n3.nbits()
+	nb:=lbits(n3,n)
 
 	for i := nb - 2; i >= 1; i-- {
 		r.sqr()
 		lv = line(A, A, Qx, Qy)
-		r.smul(lv, SEXTIC_TWIST)
+		
 		bt := n3.bit(i) - n.bit(i)
 		if bt == 1 {
-			lv = line(A, P, Qx, Qy)
-			r.smul(lv, SEXTIC_TWIST)
+			lv2 = line(A, P, Qx, Qy)
+			lv.smul(lv2)
 		}
 		if bt == -1 {
-			lv = line(A, NP, Qx, Qy)
-			r.smul(lv, SEXTIC_TWIST)
+			lv2 = line(A, NP, Qx, Qy)
+			lv.smul(lv2)
 		}
+		r.ssmul(lv)
 	}
 
 	if SIGN_OF_X == NEGATIVEX {
@@ -180,13 +254,9 @@ func Ate(P1 *ECP8, Q1 *ECP) *FP48 {
 
 /* Optimal R-ate double pairing e(P,Q).e(R,S) */
 func Ate2(P1 *ECP8, Q1 *ECP, R1 *ECP8, S1 *ECP) *FP48 {
-	x := NewBIGints(CURVE_Bnx)
-	n := NewBIGcopy(x)
-	var lv *FP48
-
-	n3 := NewBIGcopy(n)
-	n3.pmul(3)
-	n3.norm()
+	n:=NewBIG()
+	n3:=NewBIG()
+	var lv,lv2 *FP48
 
 	P := NewECP8()
 	P.Copy(P1)
@@ -219,26 +289,26 @@ func Ate2(P1 *ECP8, Q1 *ECP, R1 *ECP8, S1 *ECP) *FP48 {
 	NR.Copy(R)
 	NR.neg()
 
-	nb := n3.nbits()
+	nb := lbits(n3,n)
 
 	for i := nb - 2; i >= 1; i-- {
 		r.sqr()
 		lv = line(A, A, Qx, Qy)
-		r.smul(lv, SEXTIC_TWIST)
-		lv = line(B, B, Sx, Sy)
-		r.smul(lv, SEXTIC_TWIST)
+		lv2 = line(B, B, Sx, Sy)
+		lv.smul(lv2)
+		r.ssmul(lv)
 		bt := n3.bit(i) - n.bit(i)
 		if bt == 1 {
 			lv = line(A, P, Qx, Qy)
-			r.smul(lv, SEXTIC_TWIST)
-			lv = line(B, R, Sx, Sy)
-			r.smul(lv, SEXTIC_TWIST)
+			lv2 = line(B, R, Sx, Sy)
+			lv.smul(lv2)
+			r.ssmul(lv)
 		}
 		if bt == -1 {
 			lv = line(A, NP, Qx, Qy)
-			r.smul(lv, SEXTIC_TWIST)
-			lv = line(B, NR, Sx, Sy)
-			r.smul(lv, SEXTIC_TWIST)
+			lv2 = line(B, NR, Sx, Sy)
+			lv.smul(lv2)
+			r.ssmul(lv)
 		}
 	}
 

@@ -22,6 +22,7 @@ under the License.
 /* FP12 elements are of the form a+i.b+i^2.c */
 
 #include "fp12_YYY.h"
+#include "config_curve_ZZZ.h"
 
 using namespace XXX;
 
@@ -81,6 +82,7 @@ void YYY::FP12_copy(FP12 *w,FP12 *x)
     FP4_copy(&(w->a),&(x->a));
     FP4_copy(&(w->b),&(x->b));
     FP4_copy(&(w->c),&(x->c));
+	w->type=x->type;
 }
 
 /* FP12 w=1 */
@@ -90,6 +92,7 @@ void YYY::FP12_one(FP12 *w)
     FP4_one(&(w->a));
     FP4_zero(&(w->b));
     FP4_zero(&(w->c));
+	w->type=FP_UNITY;
 }
 
 /* return 1 if x==y, else 0 */
@@ -118,6 +121,7 @@ void YYY::FP12_from_FP4(FP12 *w,FP4 *a)
     FP4_copy(&(w->a),a);
     FP4_zero(&(w->b));
     FP4_zero(&(w->c));
+	w->type=FP_SPARSER;
 }
 
 /* Create FP12 from 3 FP4's */
@@ -127,6 +131,7 @@ void YYY::FP12_from_FP4s(FP12 *w,FP4 *a,FP4 *b,FP4 *c)
     FP4_copy(&(w->a),a);
     FP4_copy(&(w->b),b);
     FP4_copy(&(w->c),c);
+	w->type=FP_DENSE;
 }
 
 /* Granger-Scott Unitary Squaring. This does not benefit from lazy reduction */
@@ -167,6 +172,7 @@ void YYY::FP12_usqr(FP12 *w,FP12 *x)
     FP4_add(&(w->b),&B,&(w->b));
     FP4_add(&(w->c),&C,&(w->c));
 
+	w->type=FP_DENSE;
     FP12_reduce(w);	    /* reduce here as in pow function repeated squarings would trigger multiple reductions */
 }
 
@@ -177,6 +183,12 @@ void YYY::FP12_sqr(FP12 *w,FP12 *x)
     /* Use Chung-Hasan SQR2 method from http://cacr.uwaterloo.ca/techreports/2006/cacr2006-24.pdf */
 
     FP4 A,B,C,D;
+
+	if (x->type<=FP_UNITY)
+	{
+		FP12_copy(w,x);
+		return;
+	}
 
     FP4_sqr(&A,&(x->a));
     FP4_mul(&B,&(x->b),&(x->c));
@@ -209,78 +221,170 @@ void YYY::FP12_sqr(FP12 *w,FP12 *x)
     FP4_add(&(w->b),&C,&D);
     FP4_add(&(w->c),&(w->c),&A);
 
+	if (x->type==FP_SPARSER)
+		w->type=FP_SPARSE;
+	else
+		w->type=FP_DENSE;
     FP12_norm(w);
 }
 
-/* FP12 full multiplication w=w*y */
+// Use FP12_mul when both multiplicands are dense
+// Use FP12smul when it is known that both multiplicands are line functions
+// Use FP12ssmul when it is suspected that one or both multiplicands could have some sparsity
 
 
-/* SU= 896 */
 /* FP12 full multiplication w=w*y */
 void YYY::FP12_mul(FP12 *w,FP12 *y)
 {
-    FP4 z0,z1,z2,z3,t0,t1;
+	FP4 z0,z1,z2,z3,t0,t1;
 
-    FP4_mul(&z0,&(w->a),&(y->a));
-    FP4_mul(&z2,&(w->b),&(y->b));  //
+	FP4_mul(&z0,&(w->a),&(y->a));  // xa.ya   always 11x11
 
-    FP4_add(&t0,&(w->a),&(w->b));
-    FP4_add(&t1,&(y->a),&(y->b));  //
+	FP4_mul(&z2,&(w->b),&(y->b));  // xb.yb  could be 00x00 or 01x01 or or 10x10 or 11x00 or 11x10 or 11x01 or 11x11 
 
-	FP4_norm(&t0);
-	FP4_norm(&t1);
-
-    FP4_mul(&z1,&t0,&t1);
-    FP4_add(&t0,&(w->b),&(w->c));
-    FP4_add(&t1,&(y->b),&(y->c));  //
+	FP4_add(&t0,&(w->a),&(w->b));  // (xa+xb)
+	FP4_add(&t1,&(y->a),&(y->b));  // (ya+yb)
 
 	FP4_norm(&t0);
 	FP4_norm(&t1);
 
-    FP4_mul(&z3,&t0,&t1);
-
-    FP4_neg(&t0,&z0);
-    FP4_neg(&t1,&z2);
-
-    FP4_add(&z1,&z1,&t0);   // z1=z1-z0
-    FP4_add(&(w->b),&z1,&t1);
-
-    FP4_add(&z3,&z3,&t1);        // z3=z3-z2
-    FP4_add(&z2,&z2,&t0);        // z2=z2-z0
-
-    FP4_add(&t0,&(w->a),&(w->c));
-    FP4_add(&t1,&(y->a),&(y->c));
+	FP4_mul(&z1,&t0,&t1); // (xa+xb)(ya+yb)  always 11x11
+	FP4_add(&t0,&(w->b),&(w->c));  // (xb+xc)
+	FP4_add(&t1,&(y->b),&(y->c));  // (yb+yc)
 
 	FP4_norm(&t0);
 	FP4_norm(&t1);
 
-    FP4_mul(&t0,&t1,&t0);
-    FP4_add(&z2,&z2,&t0);
+	FP4_mul(&z3,&t0,&t1);	// (xb+xc)(yb+yc)   could be anything...
+	FP4_neg(&t0,&z0);		// -(xa.ya)
+	FP4_neg(&t1,&z2);		// -(xb.yb)
 
-    FP4_mul(&t0,&(w->c),&(y->c));
-    FP4_neg(&t1,&t0);
+	FP4_add(&z1,&z1,&t0);  
+	FP4_add(&(w->b),&z1,&t1); // /wb = (xa+xb)(ya+yb) -(xa.ya) -(xb.yb)						= xa.yb + xb.ya
 
-    FP4_add(&(w->c),&z2,&t1);
-    FP4_add(&z3,&z3,&t1);
-    FP4_times_i(&t0);
-    FP4_add(&(w->b),&(w->b),&t0);
+	FP4_add(&z3,&z3,&t1);        // (xb+xc)(yb+yc) -(xb.yb)
+	FP4_add(&z2,&z2,&t0);        // (xb.yb) - (xa.ya)
+
+	FP4_add(&t0,&(w->a),&(w->c));  // (xa+xc)
+	FP4_add(&t1,&(y->a),&(y->c));  // (ya+yc)
+
+	FP4_norm(&t0);
+	FP4_norm(&t1);
+
+	FP4_mul(&t0,&t1,&t0);	// (xa+xc)(ya+yc)    always 11x11
+	FP4_add(&z2,&z2,&t0);	// (xb.yb) - (xa.ya) + (xa+xc)(ya+yc)
+
+	FP4_mul(&t0,&(w->c),&(y->c)); // (xc.yc)  could be anything	
+	FP4_neg(&t1,&t0);			  // -(xc.yc) 
+
+	FP4_add(&(w->c),&z2,&t1);		// wc = (xb.yb) - (xa.ya) + (xa+xc)(ya+yc) - (xc.yc)	=  xb.yb + xc.ya + xa.yc
+	FP4_add(&z3,&z3,&t1);			// (xb+xc)(yb+yc) -(xb.yb) - (xc.yc)					=  xb.yc + xc.yb
+	FP4_times_i(&t0);				// i.(xc.yc)
+	FP4_add(&(w->b),&(w->b),&t0);   // wb = (xa+xb)(ya+yb) -(xa.ya) -(xb.yb) +i(xc.yc)
 	FP4_norm(&z3);
-    FP4_times_i(&z3);
-    FP4_add(&(w->a),&z0,&z3);
+	FP4_times_i(&z3);				// i[(xb+xc)(yb+yc) -(xb.yb) - (xc.yc)]					= i(xb.yc + xc.yb)
+	FP4_add(&(w->a),&z0,&z3);		// wa = xa.ya + i(xb.yc + xc.yb)
 
     FP12_norm(w);
+	w->type=FP_DENSE;
 }
 
-/* FP12 multiplication w=w*y */
-/* SU= 744 */
-/* catering for special case that arises from special form of ATE pairing line function */
-void YYY::FP12_smul(FP12 *w,FP12 *y,int type)
+/* FP12 full multiplication w=w*y */
+/* Supports sparse multiplicands */
+/* Usually w is denser than y */
+void YYY::FP12_ssmul(FP12 *w,FP12 *y)
 {
-    FP4 z0,z1,z2,z3,t0,t1;
+	FP4 z0,z1,z2,z3,t0,t1;
+	if (w->type==FP_UNITY)
+	{
+		FP12_copy(w,y);
+		return;
+	}
+	if (y->type==FP_UNITY)
+		return;
 
-	if (type==D_TYPE)
-	{ // y->c is 0
+	if (y->type >= FP_SPARSE)
+	{
+		FP4_mul(&z0,&(w->a),&(y->a));  // xa.ya   always 11x11
 
+#if SEXTIC_TWIST_ZZZ == M_TYPE
+		if (y->type==FP_SPARSE || w->type==FP_SPARSE)
+		{
+			FP2_mul(&z2.b,&(w->b).b,&(y->b).b);
+			FP2_zero(&z2.a);
+			if (y->type!=FP_SPARSE)
+				FP2_mul(&z2.a,&(w->b).b,&(y->b).a);
+			if (w->type!=FP_SPARSE)
+				FP2_mul(&z2.a,&(w->b).a,&(y->b).b);
+			FP4_times_i(&z2);
+		}
+		else
+#endif
+			FP4_mul(&z2,&(w->b),&(y->b));  // xb.yb  could be 00x00 or 01x01 or or 10x10 or 11x00 or 11x10 or 11x01 or 11x11 
+
+		FP4_add(&t0,&(w->a),&(w->b));  // (xa+xb)
+		FP4_add(&t1,&(y->a),&(y->b));  // (ya+yb)
+
+		FP4_norm(&t0);
+		FP4_norm(&t1);
+
+		FP4_mul(&z1,&t0,&t1); // (xa+xb)(ya+yb)  always 11x11
+		FP4_add(&t0,&(w->b),&(w->c));  // (xb+xc)
+		FP4_add(&t1,&(y->b),&(y->c));  // (yb+yc)
+
+		FP4_norm(&t0);
+		FP4_norm(&t1);
+
+		FP4_mul(&z3,&t0,&t1);	// (xb+xc)(yb+yc)   could be anything...
+		FP4_neg(&t0,&z0);		// -(xa.ya)
+		FP4_neg(&t1,&z2);		// -(xb.yb)
+
+		FP4_add(&z1,&z1,&t0);  
+		FP4_add(&(w->b),&z1,&t1); // /wb = (xa+xb)(ya+yb) -(xa.ya) -(xb.yb)						= xa.yb + xb.ya
+
+		FP4_add(&z3,&z3,&t1);        // (xb+xc)(yb+yc) -(xb.yb)
+		FP4_add(&z2,&z2,&t0);        // (xb.yb) - (xa.ya)
+
+		FP4_add(&t0,&(w->a),&(w->c));  // (xa+xc)
+		FP4_add(&t1,&(y->a),&(y->c));  // (ya+yc)
+
+		FP4_norm(&t0);
+		FP4_norm(&t1);
+
+		FP4_mul(&t0,&t1,&t0);	// (xa+xc)(ya+yc)    always 11x11
+		FP4_add(&z2,&z2,&t0);	// (xb.yb) - (xa.ya) + (xa+xc)(ya+yc)
+
+#if SEXTIC_TWIST_ZZZ == D_TYPE
+		if (y->type==FP_SPARSE || w->type==FP_SPARSE)
+		{
+			FP2_mul(&t0.a,&(w->c).a,&(y->c).a);
+			FP2_zero(&t0.b);
+			if (y->type!=FP_SPARSE)
+				FP2_mul(&t0.b,&(w->c).a,&(y->c).b);
+			if (w->type!=FP_SPARSE)
+				FP2_mul(&t0.b,&(w->c).b,&(y->c).a);
+		}
+		else
+#endif
+			FP4_mul(&t0,&(w->c),&(y->c)); // (xc.yc)  could be anything
+			
+		FP4_neg(&t1,&t0);			  // -(xc.yc) 
+
+		FP4_add(&(w->c),&z2,&t1);		// wc = (xb.yb) - (xa.ya) + (xa+xc)(ya+yc) - (xc.yc)	=  xb.yb + xc.ya + xa.yc
+		FP4_add(&z3,&z3,&t1);			// (xb+xc)(yb+yc) -(xb.yb) - (xc.yc)					=  xb.yc + xc.yb
+		FP4_times_i(&t0);				// i.(xc.yc)
+		FP4_add(&(w->b),&(w->b),&t0);   // wb = (xa+xb)(ya+yb) -(xa.ya) -(xb.yb) +i(xc.yc)
+		FP4_norm(&z3);
+		FP4_times_i(&z3);				// i[(xb+xc)(yb+yc) -(xb.yb) - (xc.yc)]					= i(xb.yc + xc.yb)
+		FP4_add(&(w->a),&z0,&z3);		// wa = xa.ya + i(xb.yc + xc.yb)
+	} else {
+		if (w->type==FP_SPARSER)
+		{
+			FP12_smul(w,y);
+			return;
+		}
+ // dense by sparser - 13m 
+#if SEXTIC_TWIST_ZZZ == D_TYPE
 		FP4_copy(&z3,&(w->b));
 		FP4_mul(&z0,&(w->a),&(y->a));
 
@@ -306,7 +410,6 @@ void YYY::FP12_smul(FP12 *w,FP12 *y,int type)
 		FP4_add(&z2,&z2,&t0);        // z2=z2-z0
 
 		FP4_add(&t0,&(w->a),&(w->c));
-
 		FP4_norm(&t0);
 		FP4_norm(&z3);
 
@@ -315,10 +418,8 @@ void YYY::FP12_smul(FP12 *w,FP12 *y,int type)
 
 		FP4_times_i(&z3);
 		FP4_add(&(w->a),&z0,&z3);
-	}
-
-	if (type==M_TYPE)
-	{ // y->b is zero
+#endif
+#if SEXTIC_TWIST_ZZZ == M_TYPE
 		FP4_mul(&z0,&(w->a),&(y->a));
 		FP4_add(&t0,&(w->a),&(w->b));
 		FP4_norm(&t0);
@@ -334,7 +435,6 @@ void YYY::FP12_smul(FP12 *w,FP12 *y,int type)
 		FP4_add(&z1,&z1,&t0);   // z1=z1-z0
 
 		FP4_copy(&(w->b),&z1);
-
 		FP4_copy(&z2,&t0);
 
 		FP4_add(&t0,&(w->a),&(w->c));
@@ -358,8 +458,114 @@ void YYY::FP12_smul(FP12 *w,FP12 *y,int type)
 		FP4_norm(&z3);
 		FP4_times_i(&z3);
 		FP4_add(&(w->a),&z0,&z3);
+
+#endif
 	}
+	w->type=FP_DENSE;
     FP12_norm(w);
+}
+
+/* FP12 multiplication w=w*y */
+/* catering for special case that arises from special form of ATE pairing line function */
+/* w and y are both sparser line functions - cost = 6m */ 
+void YYY::FP12_smul(FP12 *w,FP12 *y)
+{
+	FP2 w1,w2,w3,ta,tb,tc,td,te,t;
+
+//	if (type==D_TYPE)
+//	{ 
+#if SEXTIC_TWIST_ZZZ == D_TYPE
+	FP2_mul(&w1,&(w->a).a,&(y->a).a); // A1.A2
+	FP2_mul(&w2,&(w->a).b,&(y->a).b); // B1.B2
+	FP2_mul(&w3,&(w->b).a,&(y->b).a); // C1.C2
+
+	FP2_add(&ta,&(w->a).a,&(w->a).b); // A1+B1
+	FP2_add(&tb,&(y->a).a,&(y->a).b); // A2+B2
+	FP2_norm(&ta);
+	FP2_norm(&tb);
+	FP2_mul(&tc,&ta,&tb);			// (A1+B1)(A2+B2)
+	FP2_add(&t,&w1,&w2);
+	FP2_neg(&t,&t);
+	FP2_add(&tc,&tc,&t);			// (A1+B1)(A2+B2)-A1.A2-B1*B2 =  (A1.B2+A2.B1)		
+				
+	FP2_add(&ta,&(w->a).a,&(w->b).a); // A1+C1
+	FP2_add(&tb,&(y->a).a,&(y->b).a); // A2+C2
+	FP2_norm(&ta);
+	FP2_norm(&tb);
+	FP2_mul(&td,&ta,&tb);			// (A1+C1)(A2+C2)
+	FP2_add(&t,&w1,&w3);
+	FP2_neg(&t,&t);
+	FP2_add(&td,&td,&t);			// (A1+C1)(A2+C2)-A1.A2-C1*C2 =  (A1.C2+A2.C1)		
+
+	FP2_add(&ta,&(w->a).b,&(w->b).a); // B1+C1
+	FP2_add(&tb,&(y->a).b,&(y->b).a); // B2+C2
+	FP2_norm(&ta);
+	FP2_norm(&tb);
+	FP2_mul(&te,&ta,&tb);			// (B1+C1)(B2+C2)
+	FP2_add(&t,&w2,&w3);
+	FP2_neg(&t,&t);
+	FP2_add(&te,&te,&t);			// (B1+C1)(B2+C2)-B1.B2-C1*C2 =  (B1.C2+B2.C1)		
+
+	FP2_mul_ip(&w2);
+	FP2_add(&w1,&w1,&w2);
+	FP4_from_FP2s(&(w->a),&w1,&tc);
+	FP4_from_FP2s(&(w->b),&td,&te); // only norm these 2
+	FP4_from_FP2(&(w->c),&w3);
+
+	FP4_norm(&(w->a));
+	FP4_norm(&(w->b));
+#endif
+//	} else { 
+#if SEXTIC_TWIST_ZZZ == M_TYPE
+	FP2_mul(&w1,&(w->a).a,&(y->a).a); // A1.A2
+	FP2_mul(&w2,&(w->a).b,&(y->a).b); // B1.B2
+	FP2_mul(&w3,&(w->c).b,&(y->c).b); // F1.F2
+
+	FP2_add(&ta,&(w->a).a,&(w->a).b); // A1+B1
+	FP2_add(&tb,&(y->a).a,&(y->a).b); // A2+B2
+	FP2_norm(&ta);
+	FP2_norm(&tb);
+	FP2_mul(&tc,&ta,&tb);			// (A1+B1)(A2+B2)
+	FP2_add(&t,&w1,&w2);
+	FP2_neg(&t,&t);
+	FP2_add(&tc,&tc,&t);			// (A1+B1)(A2+B2)-A1.A2-B1*B2 =  (A1.B2+A2.B1)		
+				
+	FP2_add(&ta,&(w->a).a,&(w->c).b); // A1+F1
+	FP2_add(&tb,&(y->a).a,&(y->c).b); // A2+F2
+	FP2_norm(&ta);
+	FP2_norm(&tb);
+	FP2_mul(&td,&ta,&tb);			// (A1+F1)(A2+F2)
+	FP2_add(&t,&w1,&w3);
+	FP2_neg(&t,&t);
+	FP2_add(&td,&td,&t);			// (A1+F1)(A2+F2)-A1.A2-F1*F2 =  (A1.F2+A2.F1)		
+
+	FP2_add(&ta,&(w->a).b,&(w->c).b); // B1+F1
+	FP2_add(&tb,&(y->a).b,&(y->c).b); // B2+F2
+	FP2_norm(&ta);
+	FP2_norm(&tb);
+	FP2_mul(&te,&ta,&tb);			// (B1+F1)(B2+F2)
+	FP2_add(&t,&w2,&w3);
+	FP2_neg(&t,&t);
+	FP2_add(&te,&te,&t);			// (B1+F1)(B2+F2)-B1.B2-F1*F2 =  (B1.F2+B2.F1)	
+
+	FP2_mul_ip(&w2);
+	FP2_add(&w1,&w1,&w2);
+	FP4_from_FP2s(&(w->a),&w1,&tc);
+
+	FP2_mul_ip(&w3);
+	FP2_norm(&w3);
+	FP4_from_FP2H(&(w->b),&w3);
+
+	FP2_norm(&te);
+	FP2_mul_ip(&te);
+	FP4_from_FP2s(&(w->c),&te,&td);
+
+	FP4_norm(&(w->a));
+	FP4_norm(&(w->c));
+#endif
+
+//	}
+	w->type=FP_SPARSE;
 }
 
 /* Set w=1/x */
@@ -400,7 +606,7 @@ void YYY::FP12_inv(FP12 *w,FP12 *x)
     FP4_mul(&(w->a),&f0,&f3);
     FP4_mul(&(w->b),&f1,&f3);
     FP4_mul(&(w->c),&f2,&f3);
-
+	w->type=FP_DENSE;
 }
 
 /* constant time powering by small integer of max length bts */
@@ -610,6 +816,7 @@ void YYY::FP12_frob(FP12 *w,FP2 *f)
 
     FP4_pmul(&(w->b),&(w->b),f);
     FP4_pmul(&(w->c),&(w->c),&f2);
+	w->type=FP_DENSE;
 }
 
 /* SU= 8 */
@@ -715,11 +922,15 @@ void YYY::FP12_fromOctet(FP12 *g,octet *W)
     FP_nres(&(g->c.b.b),b);
 }
 
-/* Move b to a if d=1 */
+/* Move g to f
+if d=1 */
 void YYY::FP12_cmove(FP12 *f,FP12 *g,int d)
 {
     FP4_cmove(&(f->a),&(g->a),d);
     FP4_cmove(&(f->b),&(g->b),d);
     FP4_cmove(&(f->c),&(g->c),d);
+	d=~(d-1);
+	f->type^=(f->type^g->type)&d;
 }
+
 

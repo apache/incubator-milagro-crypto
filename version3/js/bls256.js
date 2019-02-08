@@ -100,10 +100,20 @@ var BLS256 = function(ctx) {
 			var G=ctx.ECP8.generator();
 			var PK=ctx.ECP8.fromBytes(W);
 			D.neg();
-			var v=ctx.PAIR256.ate2(G,D,PK,HM);
+
+// Use new multi-pairing mechanism 
+			var r=ctx.PAIR256.initmp();
+			ctx.PAIR256.another(r,G,D);
+			ctx.PAIR256.another(r,PK,HM);
+			var v=ctx.PAIR256.miller(r);
+
+//.. or alternatively
+//			var v=ctx.PAIR256.ate2(G,D,PK,HM);
+
+			v=ctx.PAIR256.fexp(v);
 			if (v.isunity())
 				return this.BLS_OK;
-			return this.BLS_OK;
+			return this.BLS_FAIL;
 		}
     };
 

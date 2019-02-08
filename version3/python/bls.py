@@ -53,9 +53,17 @@ def verify(SIG,m,W):
     PK=ECp2()
     PK.fromBytes(W)
     D=-D
-    v = pair.double_miller(G, D, PK, HM)
-    v = pair.fexp(v)
 
+# Use new multi-pairing mechanism 
+    r=pair.initmp()
+    pair.another(r,G,D)
+    pair.another(r,PK,HM)
+    v=pair.miller(r)
+
+#.. or alternatively
+#    v = pair.double_ate(G, D, PK, HM)
+    
+    v = pair.fexp(v)
     if v.isone():
         return True
     return False

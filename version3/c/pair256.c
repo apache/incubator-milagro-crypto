@@ -129,6 +129,100 @@ static void PAIR_ZZZ_line(FP48_YYY *v,ECP8_ZZZ *A,ECP8_ZZZ *B,FP_YYY *Qx,FP_YYY 
     }
 
     FP48_YYY_from_FP16s(v,&a,&b,&c);
+	v->type=FP_SPARSER;
+}
+
+/* prepare ate parameter, n=6u+2 (BN) or n=u (BLS), n3=3*n */
+int PAIR_ZZZ_nbits(BIG_XXX n3,BIG_XXX n)
+{
+	BIG_XXX x;
+    BIG_XXX_rcopy(x,CURVE_Bnx_ZZZ);
+
+    BIG_XXX_copy(n,x);
+    BIG_XXX_norm(n);
+	BIG_XXX_pmul(n3,n,3);
+	BIG_XXX_norm(n3);
+
+    return BIG_XXX_nbits(n3);
+}
+
+/*
+	For multi-pairing, product of n pairings
+	1. Declare FP24 array of length number of bits in Ate parameter
+	2. Initialise this array by calling PAIR_initmp()
+	3. Accumulate each pairing by calling PAIR_another() n times
+	4. Call PAIR_miller()
+	5. Call final exponentiation PAIR_fexp()
+*/
+
+/* prepare for multi-pairing */
+void PAIR_ZZZ_initmp(FP48_YYY r[])
+{
+	int i;
+	for (i=ATE_BITS_ZZZ-1; i>=0; i--)
+		FP48_YYY_one(&r[i]);
+	return;
+}
+
+/* basic Miller loop */
+void PAIR_ZZZ_miller(FP48_YYY *res,FP48_YYY r[])
+{
+	int i;
+    FP48_YYY_one(res);
+	for (i=ATE_BITS_ZZZ-1; i>=1; i--)
+	{
+		FP48_YYY_sqr(res,res);
+		FP48_YYY_ssmul(res,&r[i]);
+	}
+
+#if SIGN_OF_X_ZZZ==NEGATIVEX
+    FP48_YYY_conj(res,res);
+#endif
+	FP48_YYY_ssmul(res,&r[0]);
+	return;
+}
+
+/* Accumulate another set of line functions for n-pairing */
+void PAIR_ZZZ_another(FP48_YYY r[],ECP8_ZZZ* PV,ECP_ZZZ* QV)
+{
+    int i,j,nb,bt;
+	BIG_XXX x,n,n3;
+    FP48_YYY lv,lv2;
+    ECP8_ZZZ A,NP,P;
+	ECP_ZZZ Q;
+	FP_YYY Qx,Qy;
+
+	nb=PAIR_ZZZ_nbits(n3,n);
+
+	ECP8_ZZZ_copy(&P,PV);
+	ECP_ZZZ_copy(&Q,QV);
+
+	ECP8_ZZZ_affine(&P);
+	ECP_ZZZ_affine(&Q);
+
+	FP_YYY_copy(&Qx,&(Q.x));
+	FP_YYY_copy(&Qy,&(Q.y));
+
+	ECP8_ZZZ_copy(&A,&P);
+	ECP8_ZZZ_copy(&NP,&P); ECP8_ZZZ_neg(&NP);
+
+	for (i=nb-2; i>=1; i--)
+	{
+		PAIR_ZZZ_line(&lv,&A,&A,&Qx,&Qy);
+
+		bt=BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i); // bt=BIG_bit(n,i);
+		if (bt==1)
+		{
+			PAIR_ZZZ_line(&lv2,&A,&P,&Qx,&Qy);
+			FP48_YYY_smul(&lv,&lv2);
+		}
+		if (bt==-1)
+		{
+			PAIR_ZZZ_line(&lv2,&A,&NP,&Qx,&Qy);
+			FP48_YYY_smul(&lv,&lv2);
+		}
+		FP48_YYY_ssmul(&r[i],&lv);
+	}
 }
 
 /* Optimal R-ate pairing r=e(P,Q) */
@@ -136,17 +230,12 @@ void PAIR_ZZZ_ate(FP48_YYY *r,ECP8_ZZZ *P1,ECP_ZZZ *Q1)
 {
     BIG_XXX x,n,n3;
 	FP_YYY Qx,Qy;
-    int i,j,nb,bt;
+    int i,nb,bt;
     ECP8_ZZZ A,NP,P;
 	ECP_ZZZ Q;
-    FP48_YYY lv;
+    FP48_YYY lv,lv2;
 
-    BIG_XXX_rcopy(x,CURVE_Bnx_ZZZ);
-
-    BIG_XXX_copy(n,x);
-
-	BIG_XXX_pmul(n3,n,3);
-	BIG_XXX_norm(n3);
+	nb=PAIR_ZZZ_nbits(n3,n);
 
 	ECP8_ZZZ_copy(&P,P1);
 	ECP_ZZZ_copy(&Q,Q1);
@@ -162,29 +251,25 @@ void PAIR_ZZZ_ate(FP48_YYY *r,ECP8_ZZZ *P1,ECP_ZZZ *Q1)
 	ECP8_ZZZ_copy(&NP,&P); ECP8_ZZZ_neg(&NP);
 
     FP48_YYY_one(r);
-    nb=BIG_XXX_nbits(n3);  // n3
 
-	j=0;
     /* Main Miller Loop */
     for (i=nb-2; i>=1; i--)
     {
-		j++;
 		FP48_YYY_sqr(r,r);
         PAIR_ZZZ_line(&lv,&A,&A,&Qx,&Qy);
-        FP48_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
 
-		bt= BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i); 
+		bt= BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i);  // BIG_bit(n,i); 
         if (bt==1)
         {
-            PAIR_ZZZ_line(&lv,&A,&P,&Qx,&Qy);
-            FP48_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
+            PAIR_ZZZ_line(&lv2,&A,&P,&Qx,&Qy);
+            FP48_YYY_smul(&lv,&lv2);
         }
 		if (bt==-1)
 		{
-            PAIR_ZZZ_line(&lv,&A,&NP,&Qx,&Qy);
-            FP48_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
+            PAIR_ZZZ_line(&lv2,&A,&NP,&Qx,&Qy);
+            FP48_YYY_smul(&lv,&lv2);
 		}
-
+        FP48_YYY_ssmul(r,&lv);
     }
 
 #if SIGN_OF_X_ZZZ==NEGATIVEX
@@ -201,13 +286,9 @@ void PAIR_ZZZ_double_ate(FP48_YYY *r,ECP8_ZZZ *P1,ECP_ZZZ *Q1,ECP8_ZZZ *R1,ECP_Z
     int i,nb,bt;
     ECP8_ZZZ A,B,NP,NR,P,R;
 	ECP_ZZZ Q,S;
-    FP48_YYY lv;
+    FP48_YYY lv,lv2;
 
-    BIG_XXX_rcopy(x,CURVE_Bnx_ZZZ);
-    BIG_XXX_copy(n,x);
-
-	BIG_XXX_pmul(n3,n,3);
-	BIG_XXX_norm(n3);
+	nb=PAIR_ZZZ_nbits(n3,n);
 
 	ECP8_ZZZ_copy(&P,P1);
 	ECP_ZZZ_copy(&Q,Q1);
@@ -232,35 +313,31 @@ void PAIR_ZZZ_double_ate(FP48_YYY *r,ECP8_ZZZ *P1,ECP_ZZZ *Q1,ECP8_ZZZ *R1,ECP_Z
 	ECP8_ZZZ_copy(&NP,&P); ECP8_ZZZ_neg(&NP);
 	ECP8_ZZZ_copy(&NR,&R); ECP8_ZZZ_neg(&NR);
 
-
     FP48_YYY_one(r);
-    nb=BIG_XXX_nbits(n3);
 
     /* Main Miller Loop */
     for (i=nb-2; i>=1; i--)
     {
         FP48_YYY_sqr(r,r);
         PAIR_ZZZ_line(&lv,&A,&A,&Qx,&Qy);
-        FP48_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
+		PAIR_ZZZ_line(&lv2,&B,&B,&Sx,&Sy);
+        FP48_YYY_smul(&lv,&lv2);
+        FP48_YYY_ssmul(r,&lv);
 
-        PAIR_ZZZ_line(&lv,&B,&B,&Sx,&Sy);
-        FP48_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-
-		bt=BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i); 
+		bt=BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i); // bt=BIG_bit(n,i);
         if (bt==1)
         {
             PAIR_ZZZ_line(&lv,&A,&P,&Qx,&Qy);
-            FP48_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-
-            PAIR_ZZZ_line(&lv,&B,&R,&Sx,&Sy);
-            FP48_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
+            PAIR_ZZZ_line(&lv2,&B,&R,&Sx,&Sy);
+			FP48_YYY_smul(&lv,&lv2);
+            FP48_YYY_ssmul(r,&lv);
         }
 		if (bt==-1)
 		{
             PAIR_ZZZ_line(&lv,&A,&NP,&Qx,&Qy);
-            FP48_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
-            PAIR_ZZZ_line(&lv,&B,&NR,&Sx,&Sy);
-            FP48_YYY_smul(r,&lv,SEXTIC_TWIST_ZZZ);
+            PAIR_ZZZ_line(&lv2,&B,&NR,&Sx,&Sy);
+            FP48_YYY_smul(&lv,&lv2);
+            FP48_YYY_ssmul(r,&lv);
 		}
 	}
 

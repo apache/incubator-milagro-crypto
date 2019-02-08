@@ -73,7 +73,6 @@ int ZZZ::BLS_SIGN(octet *SIG,char *m,octet *S)
 }
 
 /* Verify signature of message m, the signature SIG, and the public key W */
-
 int ZZZ::BLS_VERIFY(octet *SIG,char *m,octet *W)
 {
 	FP48 v;
@@ -84,7 +83,16 @@ int ZZZ::BLS_VERIFY(octet *SIG,char *m,octet *W)
 	ECP8_generator(&G);
 	ECP8_fromOctet(&PK,W);
 	ECP_neg(&D);
-    PAIR_double_ate(&v,&G,&D,&PK,&HM);
+// Use new multi-pairing mechanism 
+
+	FP48 r[ATE_BITS_ZZZ];
+	PAIR_initmp(r);
+	PAIR_another(r,&G,&D);
+	PAIR_another(r,&PK,&HM);
+	PAIR_miller(&v,r);
+
+//.. or alternatively
+//    PAIR_double_ate(&v,&G,&D,&PK,&HM);
     PAIR_fexp(&v);
     if (FP48_isunity(&v)) return BLS_OK;
 	return BLS_FAIL;

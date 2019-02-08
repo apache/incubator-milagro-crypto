@@ -28,6 +28,7 @@ type FP48 struct {
 	a *FP16
 	b *FP16
 	c *FP16
+	stype int
 }
 
 /* Constructors */
@@ -36,6 +37,7 @@ func NewFP48fp16(d *FP16) *FP48 {
 	F.a = NewFP16copy(d)
 	F.b = NewFP16int(0)
 	F.c = NewFP16int(0)
+	F.stype=FP_SPARSER
 	return F
 }
 
@@ -44,6 +46,11 @@ func NewFP48int(d int) *FP48 {
 	F.a = NewFP16int(d)
 	F.b = NewFP16int(0)
 	F.c = NewFP16int(0)
+	if d==1 {
+		F.stype=FP_ONE
+	} else {
+		F.stype=FP_SPARSER
+	}
 	return F
 }
 
@@ -52,6 +59,7 @@ func NewFP48fp16s(d *FP16, e *FP16, f *FP16) *FP48 {
 	F.a = NewFP16copy(d)
 	F.b = NewFP16copy(e)
 	F.c = NewFP16copy(f)
+	F.stype=FP_DENSE
 	return F
 }
 
@@ -60,6 +68,7 @@ func NewFP48copy(x *FP48) *FP48 {
 	F.a = NewFP16copy(x.a)
 	F.b = NewFP16copy(x.b)
 	F.c = NewFP16copy(x.c)
+	F.stype=x.stype
 	return F
 }
 
@@ -87,6 +96,8 @@ func (F *FP48) cmove(g *FP48, d int) {
 	F.a.cmove(g.a, d)
 	F.b.cmove(g.b, d)
 	F.c.cmove(g.c, d)
+	d=^(d-1)
+	F.stype^=(F.stype^g.stype)&d
 }
 
 /* Constant time select from pre-computed table */
@@ -142,10 +153,12 @@ func (F *FP48) Copy(x *FP48) {
 	F.a.copy(x.a)
 	F.b.copy(x.b)
 	F.c.copy(x.c)
+	F.stype=x.stype
 }
 
 /* set this=1 */
 func (F *FP48) one() {
+	F.stype=FP_ONE
 	F.a.one()
 	F.b.zero()
 	F.c.zero()
@@ -197,11 +210,14 @@ func (F *FP48) usqr() {
 	F.b.add(B)
 	F.c.add(C)
 	F.reduce()
-
+	F.stype=FP_DENSE
 }
 
 /* Chung-Hasan SQR2 method from http://cacr.uwaterloo.ca/techreports/2006/cacr2006-24.pdf */
 func (F *FP48) sqr() {
+	if F.stype==FP_ONE {
+		return
+	}
 	A := NewFP16copy(F.a)
 	B := NewFP16copy(F.b)
 	C := NewFP16copy(F.c)
@@ -237,6 +253,11 @@ func (F *FP48) sqr() {
 	F.b.copy(C)
 	F.b.add(D)
 	F.c.add(A)
+	if F.stype==FP_SPARSER {
+		F.stype=FP_SPARSE
+	} else {
+		F.stype=FP_DENSE
+	}
 	F.norm()
 }
 
@@ -305,111 +326,300 @@ func (F *FP48) Mul(y *FP48) {
 	z3.times_i()
 	F.a.copy(z0)
 	F.a.add(z3)
+	F.stype=FP_DENSE
 	F.norm()
 }
 
-/* Special case of multiplication arises from special form of ATE pairing line function */
-func (F *FP48) smul(y *FP48, twist int) {
-	if twist == D_TYPE {
-		z0 := NewFP16copy(F.a)
-		z2 := NewFP16copy(F.b)
-		z3 := NewFP16copy(F.b)
-		t0 := NewFP16int(0)
-		t1 := NewFP16copy(y.a)
-
-		z0.mul(y.a)
-		z2.pmul(y.b.real())
-		F.b.add(F.a)
-		t1.real().add(y.b.real())
-
-		t1.norm()
-		F.b.norm()
-		F.b.mul(t1)
-		z3.add(F.c)
-		z3.norm()
-		z3.pmul(y.b.real())
-
-		t0.copy(z0)
-		t0.neg()
-		t1.copy(z2)
-		t1.neg()
-
-		F.b.add(t0)
-		F.b.add(t1)
-		z3.add(t1)
-		z3.norm()
-		z2.add(t0)
-
-		t0.copy(F.a)
-		t0.add(F.c)
-		t0.norm()
-		t0.mul(y.a)
-		F.c.copy(z2)
-		F.c.add(t0)
-
-		z3.times_i()
-		F.a.copy(z0)
-		F.a.add(z3)
+/* FP48 full multiplication w=w*y */
+/* Supports sparse multiplicands */
+/* Usually w is denser than y */
+func (F *FP48) ssmul(y *FP48) {
+	if F.stype==FP_ONE {
+		F.Copy(y)
+		return
 	}
-	if twist == M_TYPE {
-		z0 := NewFP16copy(F.a)
-		z1 := NewFP16int(0)
-		z2 := NewFP16int(0)
-		z3 := NewFP16int(0)
-		t0 := NewFP16copy(F.a)
-		t1 := NewFP16int(0)
-
+	if y.stype==FP_ONE {
+		return
+	}
+	if y.stype>=FP_SPARSE {
+		z0:=NewFP16copy(F.a)
+		z1:=NewFP16int(0)
+		z2:=NewFP16int(0)
+		z3:=NewFP16int(0)
 		z0.mul(y.a)
-		t0.add(F.b)
-		t0.norm()
 
-		z1.copy(t0)
-		z1.mul(y.a)
-		t0.copy(F.b)
-		t0.add(F.c)
-		t0.norm()
+		if SEXTIC_TWIST==M_TYPE {
+			if y.stype==FP_SPARSE || F.stype==FP_SPARSE {
+				z2.getb().copy(F.b.getb())
+				z2.getb().mul(y.b.getb())
+				z2.geta().zero()
+				if y.stype!=FP_SPARSE {
+					z2.geta().copy(F.b.getb())
+					z2.geta().mul(y.b.geta())
+				}
+				if F.stype!=FP_SPARSE {
+					z2.geta().copy(F.b.geta())
+					z2.geta().mul(y.b.getb())
+				}
+				z2.times_i()
+			} else {
+				z2.copy(F.b)
+				z2.mul(y.b)
+			}
+		} else {
+			z2.copy(F.b)
+			z2.mul(y.b)
+		}
+		t0:=NewFP16copy(F.a)
+		t1:=NewFP16copy(y.a)
+		t0.add(F.b); t0.norm();
+		t1.add(y.b); t1.norm()
 
-		z3.copy(t0)
-		z3.pmul(y.c.getb())
-		z3.times_i()
+		z1.copy(t0); z1.mul(t1)
+		t0.copy(F.b); t0.add(F.c); t0.norm()
+		t1.copy(y.b); t1.add(y.c); t1.norm()
 
-		t0.copy(z0)
-		t0.neg()
+		z3.copy(t0); z3.mul(t1)
+
+		t0.copy(z0); t0.neg()
+		t1.copy(z2); t1.neg()
 
 		z1.add(t0)
-		F.b.copy(z1)
-		z2.copy(t0)
+		F.b.copy(z1); F.b.add(t1)
 
-		t0.copy(F.a)
-		t0.add(F.c)
-		t1.copy(y.a)
-		t1.add(y.c)
+		z3.add(t1)
+		z2.add(t0)
 
-		t0.norm()
-		t1.norm()
-
+		t0.copy(F.a); t0.add(F.c); t0.norm()
+		t1.copy(y.a); t1.add(y.c); t1.norm()
+	
 		t0.mul(t1)
 		z2.add(t0)
 
-		t0.copy(F.c)
+		if SEXTIC_TWIST==D_TYPE {
+			if y.stype==FP_SPARSE || F.stype==FP_SPARSE {
+				t0.geta().copy(F.c.geta())
+				t0.geta().mul(y.c.geta())
+				t0.getb().zero()
+				if y.stype!=FP_SPARSE {
+					t0.getb().copy(F.c.geta())
+					t0.getb().mul(y.c.getb())
+				}
+				if F.stype!=FP_SPARSE {
+					t0.getb().copy(F.c.getb())
+					t0.getb().mul(y.c.geta())
+				}
+			} else {
+				t0.copy(F.c)
+				t0.mul(y.c)
+			}
+		} else {
+			t0.copy(F.c)
+			t0.mul(y.c)
+		}
+		t1.copy(t0); t1.neg()
 
-		t0.pmul(y.c.getb())
-		t0.times_i()
-
-		t1.copy(t0)
-		t1.neg()
-
-		F.c.copy(z2)
-		F.c.add(t1)
+		F.c.copy(z2); F.c.add(t1)
 		z3.add(t1)
 		t0.times_i()
 		F.b.add(t0)
 		z3.norm()
 		z3.times_i()
-		F.a.copy(z0)
-		F.a.add(z3)
+		F.a.copy(z0); F.a.add(z3);
+	} else {
+		if F.stype==FP_SPARSER {
+			F.smul(y)
+			return
+		}
+		if SEXTIC_TWIST==D_TYPE { // dense by sparser - 13m 
+			z0:=NewFP16copy(F.a)
+			z2:=NewFP16copy(F.b)
+			z3:=NewFP16copy(F.b)
+			t0:=NewFP16int(0)
+			t1:=NewFP16copy(y.a)
+			z0.mul(y.a)
+			z2.pmul(y.b.real())
+			F.b.add(F.a)
+			t1.real().add(y.b.real())
+
+			t1.norm()
+			F.b.norm()
+			F.b.mul(t1)
+			z3.add(F.c)
+			z3.norm()
+			z3.pmul(y.b.real())
+
+			t0.copy(z0); t0.neg()
+			t1.copy(z2); t1.neg()
+
+			F.b.add(t0)
+
+			F.b.add(t1)
+			z3.add(t1)
+			z2.add(t0)
+
+			t0.copy(F.a); t0.add(F.c); t0.norm()
+			z3.norm()
+			t0.mul(y.a)
+			F.c.copy(z2); F.c.add(t0)
+
+			z3.times_i()
+			F.a.copy(z0); F.a.add(z3)
+		}
+		if SEXTIC_TWIST==M_TYPE {
+			z0:=NewFP16copy(F.a)
+			z1:=NewFP16int(0)
+			z2:=NewFP16int(0)
+			z3:=NewFP16int(0)
+			t0:=NewFP16copy(F.a)
+			t1:=NewFP16int(0)
+		
+			z0.mul(y.a)
+			t0.add(F.b); t0.norm()
+
+			z1.copy(t0); z1.mul(y.a)
+			t0.copy(F.b); t0.add(F.c)
+			t0.norm()
+
+			z3.copy(t0)
+			z3.pmul(y.c.getb())
+			z3.times_i()
+
+			t0.copy(z0); t0.neg()
+			z1.add(t0)
+			F.b.copy(z1)
+			z2.copy(t0)
+
+			t0.copy(F.a); t0.add(F.c); t0.norm()
+			t1.copy(y.a); t1.add(y.c); t1.norm()
+
+			t0.mul(t1)
+			z2.add(t0)
+			t0.copy(F.c)
+			
+			t0.pmul(y.c.getb())
+			t0.times_i()
+			t1.copy(t0); t1.neg()
+
+			F.c.copy(z2); F.c.add(t1)
+			z3.add(t1)
+			t0.times_i()
+			F.b.add(t0)
+			z3.norm()
+			z3.times_i()
+			F.a.copy(z0); F.a.add(z3)
+		}	
 	}
+	F.stype=FP_DENSE
 	F.norm()
+}
+
+
+/* Special case of multiplication arises from special form of ATE pairing line function */
+func (F *FP48) smul(y *FP48) {
+	if SEXTIC_TWIST==D_TYPE {	
+		w1:=NewFP8copy(F.a.geta())
+		w2:=NewFP8copy(F.a.getb())
+		w3:=NewFP8copy(F.b.geta())
+
+		w1.mul(y.a.geta())
+		w2.mul(y.a.getb())
+		w3.mul(y.b.geta())
+
+		ta:=NewFP8copy(F.a.geta())
+		tb:=NewFP8copy(y.a.geta())
+		ta.add(F.a.getb()); ta.norm()
+		tb.add(y.a.getb()); tb.norm()
+		tc:=NewFP8copy(ta)
+		tc.mul(tb);
+		t:=NewFP8copy(w1)
+		t.add(w2)
+		t.neg()
+		tc.add(t)
+
+		ta.copy(F.a.geta()); ta.add(F.b.geta()); ta.norm()
+		tb.copy(y.a.geta()); tb.add(y.b.geta()); tb.norm()
+		td:=NewFP8copy(ta)
+		td.mul(tb)
+		t.copy(w1)
+		t.add(w3)
+		t.neg()
+		td.add(t)
+
+		ta.copy(F.a.getb()); ta.add(F.b.geta()); ta.norm()
+		tb.copy(y.a.getb()); tb.add(y.b.geta()); tb.norm()
+		te:=NewFP8copy(ta)
+		te.mul(tb)
+		t.copy(w2)
+		t.add(w3)
+		t.neg()
+		te.add(t)
+
+		w2.times_i()
+		w1.add(w2)
+
+		F.a.geta().copy(w1); F.a.getb().copy(tc)
+		F.b.geta().copy(td); F.b.getb().copy(te)
+		F.c.geta().copy(w3); F.c.getb().zero()
+
+		F.a.norm()
+		F.b.norm()
+	} else {
+		w1:=NewFP8copy(F.a.geta())
+		w2:=NewFP8copy(F.a.getb())
+		w3:=NewFP8copy(F.c.getb())
+
+		w1.mul(y.a.geta())
+		w2.mul(y.a.getb())
+		w3.mul(y.c.getb())
+
+		ta:=NewFP8copy(F.a.geta())
+		tb:=NewFP8copy(y.a.geta())
+		ta.add(F.a.getb()); ta.norm()
+		tb.add(y.a.getb()); tb.norm()
+		tc:=NewFP8copy(ta)
+		tc.mul(tb);
+		t:=NewFP8copy(w1)
+		t.add(w2)
+		t.neg()
+		tc.add(t)
+
+		ta.copy(F.a.geta()); ta.add(F.c.getb()); ta.norm()
+		tb.copy(y.a.geta()); tb.add(y.c.getb()); tb.norm()
+		td:=NewFP8copy(ta)
+		td.mul(tb)
+		t.copy(w1)
+		t.add(w3)
+		t.neg()
+		td.add(t)
+
+		ta.copy(F.a.getb()); ta.add(F.c.getb()); ta.norm()
+		tb.copy(y.a.getb()); tb.add(y.c.getb()); tb.norm()
+		te:=NewFP8copy(ta)
+		te.mul(tb)
+		t.copy(w2)
+		t.add(w3)
+		t.neg()
+		te.add(t)
+
+		w2.times_i()
+		w1.add(w2)
+		F.a.geta().copy(w1); F.a.getb().copy(tc)
+
+		w3.times_i()
+		w3.norm()
+		F.b.geta().zero(); F.b.getb().copy(w3)
+
+		te.norm()
+		te.times_i()
+		F.c.geta().copy(te)
+		F.c.getb().copy(td)
+
+		F.a.norm()
+		F.c.norm()
+
+	}
+	F.stype=FP_SPARSE;
 }
 
 /* this=1/this */
@@ -457,6 +667,7 @@ func (F *FP48) Inverse() {
 	F.b.mul(f3)
 	F.c.copy(f2)
 	F.c.mul(f3)
+	F.stype=FP_DENSE
 }
 
 /* this=this^p using Frobenius */
@@ -485,6 +696,7 @@ func (F *FP48) frob(f *FP2, n int) {
 		F.c.times_i4()
 		F.c.times_i4()
 	}
+	F.stype=FP_DENSE
 }
 
 /* trace function */

@@ -10,11 +10,19 @@ namespace YYY {
 	@brief FP12 Structure - towered over three FP4
 */
 
+#define FP12_ZERO 0
+#define FP12_ONE 1
+#define FP12_SPARSER 2
+#define FP12_SPARSE 3
+#define FP12_DENSE 4
+
+
 typedef struct
 {
     FP4 a; /**< first part of FP12 */
     FP4 b; /**< second part of FP12 */
     FP4 c; /**< third part of FP12 */
+	int type;
 } FP12;
 
 extern const XXX::BIG Fra; /**< real part of BN curve Frobenius Constant */
@@ -85,24 +93,33 @@ extern void FP12_usqr(FP12 *x,FP12 *y);
 	@param y FP12 instance
  */
 extern void FP12_sqr(FP12 *x,FP12 *y);
-/**	@brief Fast multiplication of an FP12 by an FP12 that arises from an ATE pairing line function
+/**	@brief Fast multiplication of two sparse FP12s that arises from ATE pairing line functions
  *
-	Here the multiplier has a special form that can be exploited
 	@param x FP12 instance, on exit = x*y
 	@param y FP12 instance, of special form
-	@param t D_TYPE or M_TYPE twist
  */
-extern void FP12_smul(FP12 *x,FP12 *y,int t);
-/**	@brief Multiplication of two FP12s
+extern void FP12_smul(FP12 *x,FP12 *y);
+
+/**	@brief Fast multiplication of what may be sparse multiplicands
+ *
+	@param x FP12 instance, on exit = x*y
+	@param y FP12 instance, of special form
+ */
+extern void FP12_ssmul(FP12 *x,FP12 *y);
+
+
+/**	@brief Full unconditional Multiplication of two FP12s
  *
 	@param x FP12 instance, on exit = x*y
 	@param y FP12 instance, the multiplier
  */
 extern void FP12_mul(FP12 *x,FP12 *y);
+
 /**	@brief Inverting an FP12
  *
 	@param x FP12 instance, on exit = 1/y
 	@param y FP12 instance
+	@param t D_TYPE or M_TYPE twist
  */
 extern void FP12_inv(FP12 *x,FP12 *y);
 /**	@brief Raises an FP12 to the power of a BIG

@@ -79,7 +79,16 @@ public class BLS256
 		ECP8 G=ECP8.generator();
 		ECP8 PK=ECP8.fromBytes(W);
 		D.neg();
-		FP48 v=PAIR256.ate2(G,D,PK,HM);
+
+// Use new multi-pairing mechanism 
+		FP48[] r=PAIR256.initmp();
+		PAIR256.another(r,G,D);
+		PAIR256.another(r,PK,HM);
+		FP48 v=PAIR256.miller(r);
+
+//.. or alternatively
+//		FP48 v=PAIR256.ate2(G,D,PK,HM);
+
 		v=PAIR256.fexp(v);
 		if (v.isunity())
 			return BLS_OK;

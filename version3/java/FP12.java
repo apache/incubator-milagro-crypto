@@ -23,9 +23,26 @@ under the License.
 package org.apache.milagro.amcl.XXX;
 
 public final class FP12 {
+	public static final int ZERO=0;
+	public static final int ONE=1;
+	public static final int SPARSER=2;
+	public static final int SPARSE=3;
+	public static final int DENSE=4;
+
 	private final FP4 a;
 	private final FP4 b;
 	private final FP4 c;
+	private int type;
+
+	public void settype(int a)
+	{
+		type=a;
+	}
+
+	public int gettype()
+	{
+		return type;
+	}
 /* reduce all components of this mod Modulus */
 	public void reduce()
 	{
@@ -51,6 +68,8 @@ public final class FP12 {
 		a.cmove(g.a,d);
 		b.cmove(g.b,d);
 		c.cmove(g.c,d);		
+		d=~(d-1);
+		type^=(type^g.type)&d;
 	}
 
 
@@ -116,6 +135,7 @@ public final class FP12 {
 		a.copy(x.a);
 		b.copy(x.b);
 		c.copy(x.c);
+		type=x.type;
 	}
 /* set this=1 */
 	public void one()
@@ -123,6 +143,7 @@ public final class FP12 {
 		a.one();
 		b.zero();
 		c.zero();
+		type=ONE;
 	}
 /* this=conj(this) */
 	public void conj()
@@ -137,6 +158,7 @@ public final class FP12 {
 		a=new FP4(d);
 		b=new FP4(0);
 		c=new FP4(0);
+		type=SPARSER;
 	}
 
 	public FP12(int d)
@@ -144,6 +166,10 @@ public final class FP12 {
 		a=new FP4(d);
 		b=new FP4(0);
 		c=new FP4(0);
+		if (d==1)
+			type=ONE;
+		else
+			type=SPARSER;
 	}
 
 	public FP12(FP4 d,FP4 e,FP4 f)
@@ -151,6 +177,7 @@ public final class FP12 {
 		a=new FP4(d);
 		b=new FP4(e);
 		c=new FP4(f);
+		type=DENSE;
 	}
 
 	public FP12(FP12 x)
@@ -158,6 +185,7 @@ public final class FP12 {
 		a=new FP4(x.a);
 		b=new FP4(x.b);
 		c=new FP4(x.c);
+		type=x.type;
 	}
 
 /* Granger-Scott Unitary Squaring */
@@ -196,12 +224,16 @@ public final class FP12 {
 		c.add(c);
 		b.add(B);
 		c.add(C);
+		type=DENSE;
 		reduce();
 	}
 
 /* Chung-Hasan SQR2 method from http://cacr.uwaterloo.ca/techreports/2006/cacr2006-24.pdf */
 	public void sqr()
 	{
+		if (type==ONE)
+			return;
+
 		FP4 A=new FP4(a);
 		FP4 B=new FP4(b);
 		FP4 C=new FP4(c);
@@ -236,6 +268,10 @@ public final class FP12 {
 
 		b.copy(C); b.add(D);
 		c.add(A);
+		if (type==SPARSER)
+			type=SPARSE;
+		else
+			type=DENSE;
 		norm();
 	}
 
@@ -297,9 +333,320 @@ public final class FP12 {
 		z3.times_i();
 		a.copy(z0); a.add(z3);
 		norm();
+		type=DENSE;
 	}
 
-/* Special case of multiplication arises from special form of ATE pairing line function */
+/* FP12 multiplication w=w*y */
+/* catering for special case that arises from special form of ATE pairing line function */
+/* w and y are both sparser line functions - cost = 6m */ 
+	public void smul(FP12 y)
+	{
+		if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.D_TYPE)
+		{	
+			FP2 w1=new FP2(a.geta());
+			FP2 w2=new FP2(a.getb());
+			FP2 w3=new FP2(b.geta());
+
+			w1.mul(y.a.geta());
+			w2.mul(y.a.getb());
+			w3.mul(y.b.geta());
+
+			FP2 ta=new FP2(a.geta());
+			FP2 tb=new FP2(y.a.geta());
+			ta.add(a.getb()); ta.norm();
+			tb.add(y.a.getb()); tb.norm();
+			FP2 tc=new FP2(ta);
+			tc.mul(tb);
+			FP2 t=new FP2(w1);
+			t.add(w2);
+			t.neg();
+			tc.add(t);
+
+			ta.copy(a.geta()); ta.add(b.geta()); ta.norm();
+			tb.copy(y.a.geta()); tb.add(y.b.geta()); tb.norm();
+			FP2 td=new FP2(ta);
+			td.mul(tb);
+			t.copy(w1);
+			t.add(w3);
+			t.neg();
+			td.add(t);
+
+			ta.copy(a.getb()); ta.add(b.geta()); ta.norm();
+			tb.copy(y.a.getb()); tb.add(y.b.geta()); tb.norm();
+			FP2 te=new FP2(ta);
+			te.mul(tb);
+			t.copy(w2);
+			t.add(w3);
+			t.neg();
+			te.add(t);
+
+			w2.mul_ip();
+			w1.add(w2);
+
+			a.geta().copy(w1); a.getb().copy(tc);
+			b.geta().copy(td); b.getb().copy(te);
+			c.geta().copy(w3); c.getb().zero();
+
+			a.norm();
+			b.norm();
+
+		} else {
+			FP2 w1=new FP2(a.geta());
+			FP2 w2=new FP2(a.getb());
+			FP2 w3=new FP2(c.getb());
+
+			w1.mul(y.a.geta());
+			w2.mul(y.a.getb());
+			w3.mul(y.c.getb());
+
+			FP2 ta=new FP2(a.geta());
+			FP2 tb=new FP2(y.a.geta());
+			ta.add(a.getb()); ta.norm();
+			tb.add(y.a.getb()); tb.norm();
+			FP2 tc=new FP2(ta);
+			tc.mul(tb);
+			FP2 t=new FP2(w1);
+			t.add(w2);
+			t.neg();
+			tc.add(t);
+
+			ta.copy(a.geta()); ta.add(c.getb()); ta.norm();
+			tb.copy(y.a.geta()); tb.add(y.c.getb()); tb.norm();
+			FP2 td=new FP2(ta);
+			td.mul(tb);
+			t.copy(w1);
+			t.add(w3);
+			t.neg();
+			td.add(t);
+
+			ta.copy(a.getb()); ta.add(c.getb()); ta.norm();
+			tb.copy(y.a.getb()); tb.add(y.c.getb()); tb.norm();
+			FP2 te=new FP2(ta);
+			te.mul(tb);
+			t.copy(w2);
+			t.add(w3);
+			t.neg();
+			te.add(t);
+
+			w2.mul_ip();
+			w1.add(w2);
+			a.geta().copy(w1); a.getb().copy(tc);
+
+			w3.mul_ip();
+			w3.norm();
+			b.geta().zero(); b.getb().copy(w3);
+
+			te.norm();
+			te.mul_ip();
+			c.geta().copy(te);
+			c.getb().copy(td);
+
+			a.norm();
+			c.norm();
+
+		}
+		type=SPARSE;
+	}
+
+/* FP12 full multiplication w=w*y */
+/* Supports sparse multiplicands */
+/* Usually w is denser than y */
+	public void ssmul(FP12 y)
+	{
+		if (type==ONE)
+		{
+			copy(y);
+			return;
+		}
+		if (y.type==ONE)
+			return;
+
+		if (y.type>=SPARSE)
+		{
+			FP4 z0=new FP4(a);
+			FP4 z1=new FP4(0);
+			FP4 z2=new FP4(0);
+			FP4 z3=new FP4(0);
+			z0.mul(y.a);
+
+			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.M_TYPE)
+			{
+				if (y.type==SPARSE || type==SPARSE)
+				{
+					z2.getb().copy(b.getb());
+					z2.getb().mul(y.b.getb());
+					z2.geta().zero();
+					if (y.type!=SPARSE)
+					{
+						z2.geta().copy(b.getb());
+						z2.geta().mul(y.b.geta());
+					}
+					if (type!=SPARSE)
+					{
+						z2.geta().copy(b.geta());
+						z2.geta().mul(y.b.getb());
+					}
+					z2.times_i();
+				} else {
+					z2.copy(b);
+					z2.mul(y.b);
+				}
+			} else {
+				z2.copy(b);
+				z2.mul(y.b);
+			}
+			FP4 t0=new FP4(a);
+			FP4 t1=new FP4(y.a);
+			t0.add(b); t0.norm();
+			t1.add(y.b); t1.norm();
+
+			z1.copy(t0); z1.mul(t1);
+			t0.copy(b); t0.add(c); t0.norm();
+			t1.copy(y.b); t1.add(y.c); t1.norm();
+
+			z3.copy(t0); z3.mul(t1);
+
+			t0.copy(z0); t0.neg();
+			t1.copy(z2); t1.neg();
+
+			z1.add(t0);
+			b.copy(z1); b.add(t1);
+
+			z3.add(t1);
+			z2.add(t0);
+
+			t0.copy(a); t0.add(c); t0.norm();
+			t1.copy(y.a); t1.add(y.c); t1.norm();
+	
+			t0.mul(t1);
+			z2.add(t0);
+
+			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.D_TYPE)
+			{
+				if (y.type==SPARSE || type==SPARSE)
+				{
+					t0.geta().copy(c.geta());
+					t0.geta().mul(y.c.geta());
+					t0.getb().zero();
+					if (y.type!=SPARSE)
+					{
+						t0.getb().copy(c.geta());
+						t0.getb().mul(y.c.getb());
+					}
+					if (type!=SPARSE)
+					{
+						t0.getb().copy(c.getb());
+						t0.getb().mul(y.c.geta());
+					}
+				} else {
+					t0.copy(c);
+					t0.mul(y.c);
+				}
+			} else {
+				t0.copy(c);
+				t0.mul(y.c);
+			}
+			t1.copy(t0); t1.neg();
+
+			c.copy(z2); c.add(t1);
+			z3.add(t1);
+			t0.times_i();
+			b.add(t0);
+			z3.norm();
+			z3.times_i();
+			a.copy(z0); a.add(z3);
+		} else {
+			if (type==SPARSER)
+			{
+				smul(y);
+				return;
+			}
+			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.D_TYPE)
+			{ // dense by sparser - 13m 
+				FP4 z0=new FP4(a);
+				FP4 z2=new FP4(b);
+				FP4 z3=new FP4(b);
+				FP4 t0=new FP4(0);
+				FP4 t1=new FP4(y.a);
+				z0.mul(y.a);
+				z2.pmul(y.b.real());
+				b.add(a);
+				t1.real().add(y.b.real());
+
+				t1.norm();
+				b.norm();
+				b.mul(t1);
+				z3.add(c);
+				z3.norm();
+				z3.pmul(y.b.real());
+
+				t0.copy(z0); t0.neg();
+				t1.copy(z2); t1.neg();
+
+				b.add(t0);
+
+				b.add(t1);
+				z3.add(t1);
+				z2.add(t0);
+
+				t0.copy(a); t0.add(c); t0.norm();
+				z3.norm();
+				t0.mul(y.a);
+				c.copy(z2); c.add(t0);
+
+				z3.times_i();
+				a.copy(z0); a.add(z3);
+			}
+			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.M_TYPE)
+			{
+				FP4 z0=new FP4(a);
+				FP4 z1=new FP4(0);
+				FP4 z2=new FP4(0);
+				FP4 z3=new FP4(0);
+				FP4 t0=new FP4(a);
+				FP4 t1=new FP4(0);
+		
+				z0.mul(y.a);
+				t0.add(b); t0.norm();
+
+				z1.copy(t0); z1.mul(y.a);
+				t0.copy(b); t0.add(c);
+				t0.norm();
+
+				z3.copy(t0); 
+				z3.pmul(y.c.getb());
+				z3.times_i();
+
+				t0.copy(z0); t0.neg();
+				z1.add(t0);
+				b.copy(z1); 
+				z2.copy(t0);
+
+				t0.copy(a); t0.add(c); t0.norm();
+				t1.copy(y.a); t1.add(y.c); t1.norm();
+
+				t0.mul(t1);
+				z2.add(t0);
+				t0.copy(c); 
+			
+				t0.pmul(y.c.getb());
+				t0.times_i();
+				t1.copy(t0); t1.neg();
+
+				c.copy(z2); c.add(t1);
+				z3.add(t1);
+				t0.times_i();
+				b.add(t0);
+				z3.norm();
+				z3.times_i();
+				a.copy(z0); a.add(z3);
+			}	
+		}
+		type=DENSE;
+		norm();
+	}
+
+/* Special case of multiplication arises from special form of ATE pairing line function 
 	public void smul(FP12 y,int type)
 	{
 		if (type==CONFIG_CURVE.D_TYPE)
@@ -392,7 +739,7 @@ public final class FP12 {
 		}
 		norm();
 	}
-
+*/
 /* this=1/this */
 	public void inverse()
 	{
@@ -432,6 +779,7 @@ public final class FP12 {
 		a.copy(f0); a.mul(f3);
 		b.copy(f1); b.mul(f3);
 		c.copy(f2); c.mul(f3);
+		type=DENSE;
 	}
 
 /* this=this^p using Frobenius */
@@ -449,6 +797,7 @@ public final class FP12 {
 
 		b.pmul(f);
 		c.pmul(f2);
+		type=DENSE;
 	}
 
 /* trace function */

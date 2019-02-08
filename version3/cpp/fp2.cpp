@@ -24,6 +24,11 @@ under the License.
 
 #include "fp2_YYY.h"
 
+//namespace YYY {
+//extern int fp2muls;
+//extern int fp2sqrs;
+//}
+
 using namespace XXX;
 
 /* test x==0 ? */
@@ -201,6 +206,8 @@ void YYY::FP2_sqr(FP2 *w,FP2 *x)
 	FP_norm(&(w->a));
 
     FP_mul(&(w->a),&w1,&(w->a));     /* w->a#2 w->a=1 w1&w2=6 w1*w2=2 */
+
+//	YYY::fp2sqrs++;
 }
 
 
@@ -242,6 +249,7 @@ void YYY::FP2_mul(FP2 *w,FP2 *x,FP2 *y)
 	BIG_dnorm(A); FP_mod(w->a.g,A);  w->a.XES=3;// may drift above 2p...
 	BIG_dnorm(E); FP_mod(w->b.g,E);  w->b.XES=2;
 
+//	YYY::fp2muls++;
 }
 
 /* output FP2 in hex format [a,b] */

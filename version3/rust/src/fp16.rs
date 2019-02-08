@@ -20,7 +20,7 @@ under the License.
 use super::fp2::FP2;
 use super::fp8::FP8;
 use super::big::BIG;
-use std::str::SplitWhitespace;
+//use std::str::SplitWhitespace;
 
 #[derive(Copy, Clone)]
 pub struct FP16 {
@@ -64,6 +64,21 @@ impl FP16 {
         return f;
     }
 
+    pub fn set_fp8s(&mut self,c: &FP8, d: &FP8) {
+        self.a.copy(&c);
+	self.b.copy(&d);
+    }
+
+    pub fn set_fp8(&mut self,c: &FP8) {
+        self.a.copy(&c);
+	self.b.zero();
+    }
+
+    pub fn set_fp8h(&mut self,c: &FP8) {
+        self.b.copy(&c);
+	self.a.zero();
+    }
+
     /* reduce components mod Modulus */
     pub fn reduce(&mut self) {
         self.a.reduce();
@@ -103,13 +118,15 @@ impl FP16 {
     }
 
     pub fn geta(&self) -> FP8 {
-        let f = FP8::new_copy(&self.a);
-        return f;
+        return self.a;
+//        let f = FP8::new_copy(&self.a);
+//        return f;
     }
     /* extract imaginary part b */
     pub fn getb(&self) -> FP8 {
-        let f = FP8::new_copy(&self.b);
-        return f;
+        return self.b;
+//        let f = FP8::new_copy(&self.b);
+//        return f;
     }
 
     /* test self=x */

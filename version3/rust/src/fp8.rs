@@ -21,7 +21,7 @@ use super::fp::FP;
 use super::fp2::FP2;
 use super::fp4::FP4;
 use super::big::BIG;
-use std::str::SplitWhitespace;
+//use std::str::SplitWhitespace;
 
 #[derive(Copy, Clone)]
 pub struct FP8 {
@@ -65,6 +65,22 @@ impl FP8 {
         return f;
     }
 
+    pub fn set_fp4s(&mut self,c: &FP4, d: &FP4) {
+        self.a.copy(&c);
+	self.b.copy(&d);
+    }
+
+    pub fn set_fp4(&mut self,c: &FP4) {
+        self.a.copy(&c);
+	self.b.zero();
+    }
+
+    pub fn set_fp4h(&mut self,c: &FP4) {
+        self.b.copy(&c);
+	self.a.zero();
+    }
+
+
     /* reduce components mod Modulus */
     pub fn reduce(&mut self) {
         self.a.reduce();
@@ -104,13 +120,15 @@ impl FP8 {
     }
 
     pub fn geta(&self) -> FP4 {
-        let f = FP4::new_copy(&self.a);
-        return f;
+        return self.a;
+//        let f = FP4::new_copy(&self.a);
+//        return f;
     }
     /* extract imaginary part b */
     pub fn getb(&self) -> FP4 {
-        let f = FP4::new_copy(&self.b);
-        return f;
+        return self.b;
+//        let f = FP4::new_copy(&self.b);
+//        return f;
     }
 
     /* test self=x */

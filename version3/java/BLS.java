@@ -79,7 +79,16 @@ public class BLS
 		ECP2 G=ECP2.generator();
 		ECP2 PK=ECP2.fromBytes(W);
 		D.neg();
-		FP12 v=PAIR.ate2(G,D,PK,HM);
+
+// Use new multi-pairing mechanism 
+		FP12[] r=PAIR.initmp();
+		PAIR.another(r,G,D);
+		PAIR.another(r,PK,HM);
+		FP12 v=PAIR.miller(r);
+
+//.. or alternatively
+//		FP12 v=PAIR.ate2(G,D,PK,HM);
+
 		v=PAIR.fexp(v);
 		if (v.isunity())
 			return BLS_OK;
