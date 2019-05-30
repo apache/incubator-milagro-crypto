@@ -153,6 +153,14 @@ var FP12 = function(ctx) {
 			this.stype=ctx.FP.ONE;
         },
 
+        /* set this=0 */
+        zero: function() {
+            this.a.zero();
+            this.b.zero();
+            this.c.zero();
+			this.stype=ctx.FP.ZERO;
+        },
+
         /* this=conj(this) */
         conj: function() {
             this.a.conj();

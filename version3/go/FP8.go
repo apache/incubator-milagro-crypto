@@ -31,10 +31,17 @@ type FP8 struct {
 }
 
 /* Constructors */
+func NewFP8() *FP8 {
+	F := new(FP8)
+	F.a = NewFP4()
+	F.b = NewFP4()
+	return F
+}
+
 func NewFP8int(a int) *FP8 {
 	F := new(FP8)
 	F.a = NewFP4int(a)
-	F.b = NewFP4int(0)
+	F.b = NewFP4()
 	return F
 }
 
@@ -55,7 +62,7 @@ func NewFP8fp4s(c *FP4, d *FP4) *FP8 {
 func NewFP8fp4(c *FP4) *FP8 {
 	F := new(FP8)
 	F.a = NewFP4copy(c)
-	F.b = NewFP4int(0)
+	F.b = NewFP4()
 	return F
 }
 
@@ -134,7 +141,7 @@ func (F *FP8) one() {
 func (F *FP8) neg() {
 	F.norm()
 	m := NewFP4copy(F.a)
-	t := NewFP4int(0)
+	t := NewFP4()
 	m.add(F.b)
 	m.neg()
 	t.copy(m)
@@ -235,7 +242,7 @@ func (F *FP8) sqr() {
 func (F *FP8) mul(y *FP8) {
 	t1 := NewFP4copy(F.a)
 	t2 := NewFP4copy(F.b)
-	t3 := NewFP4int(0)
+	t3 := NewFP4()
 	t4 := NewFP4copy(F.b)
 
 	t1.mul(y.a)
@@ -375,8 +382,8 @@ func (F *FP8) xtr_pow(n *BIG) *FP8 {
 	b := NewFP8copy(F)
 	c := NewFP8copy(b)
 	c.xtr_D()
-	t := NewFP8int(0)
-	r := NewFP8int(0)
+	t := NewFP8()
+	r := NewFP8()
 	sf := NewFP8copy(F)
 	sf.norm()
 
@@ -430,8 +437,8 @@ func (F *FP8) xtr_pow2(ck *FP8, ckml *FP8, ckm2l *FP8, a *BIG, b *BIG) *FP8 {
 	cv := NewFP8copy(F)
 	cumv := NewFP8copy(ckml)
 	cum2v := NewFP8copy(ckm2l)
-	r := NewFP8int(0)
-	t := NewFP8int(0)
+	r := NewFP8()
+	t := NewFP8()
 
 	f2 := 0
 	for d.parity() == 0 && e.parity() == 0 {

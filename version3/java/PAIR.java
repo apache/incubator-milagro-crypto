@@ -71,11 +71,11 @@ public final class PAIR {
 			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.D_TYPE)
 			{			
 				b=new FP4(XX);             // L(0,1) | L(0,0) | L(1,0)
-				c=new FP4(0);
+				c=new FP4();
 			}
 			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.M_TYPE)
 			{
-				b=new FP4(0);
+				b=new FP4();
 				c=new FP4(XX); c.times_i();
 			}
 			A.dbl();
@@ -114,17 +114,17 @@ public final class PAIR {
 			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.D_TYPE)
 			{
 				b=new FP4(Y1);
-				c=new FP4(0);
+				c=new FP4();
 			}
 			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.M_TYPE)
 			{
-				b=new FP4(0);
+				b=new FP4();
 				c=new FP4(Y1); c.times_i();
 			}
 			A.add(B);
 		}
 		FP12 r=new FP12(a,b,c);
-		r.settype(FP12.SPARSE);
+		r.settype(FP12.SPARSER);
 		return r;
 	}
 
@@ -462,6 +462,11 @@ public final class PAIR {
 		r.frob(f);
 		r.frob(f);
 		r.mul(lv);
+		if (r.isunity())
+		{
+			r.zero();
+			return r;
+		}
 /* Hard part of final exp */
 		if (CONFIG_CURVE.CURVE_PAIRING_TYPE==CONFIG_CURVE.BN)
 		{

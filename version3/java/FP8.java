@@ -81,10 +81,16 @@ public final class FP8 {
 		return (a.equals(x.a) && b.equals(x.b));
 	}
 /* constructors */
+	public FP8()
+	{
+		a=new FP4();
+		b=new FP4();
+	}
+
 	public FP8(int c)
 	{
 		a=new FP4(c);
-		b=new FP4(0);
+		b=new FP4();
 	}
 
 	public FP8(FP8 x)
@@ -102,7 +108,7 @@ public final class FP8 {
 	public FP8(FP4 c)
 	{
 		a=new FP4(c);
-		b=new FP4(0);
+		b=new FP4();
 	}
 /* copy this=x */
 	public void copy(FP8 x)
@@ -127,7 +133,7 @@ public final class FP8 {
 	{
 		norm();
 		FP4 m=new FP4(a);
-		FP4 t=new FP4(0);
+		FP4 t=new FP4();
 		m.add(b);
 
 		m.neg();
@@ -233,7 +239,7 @@ public final class FP8 {
 	{
 		FP4 t1=new FP4(a);
 		FP4 t2=new FP4(b);
-		FP4 t3=new FP4(0);
+		FP4 t3=new FP4();
 		FP4 t4=new FP4(b);
 
 		t1.mul(y.a);
@@ -377,8 +383,8 @@ public final class FP8 {
 		FP8 b=new FP8(sf);
 		FP8 c=new FP8(b);
 		c.xtr_D();
-		FP8 t=new FP8(0);
-		FP8 r=new FP8(0);
+		FP8 t=new FP8();
+		FP8 r=new FP8();
 		
 		int par=n.parity();
 		BIG v=new BIG(n); v.norm(); v.fshr(1);
@@ -426,8 +432,8 @@ public final class FP8 {
 		FP8 cv=new FP8(this);
 		FP8 cumv=new FP8(ckml);
 		FP8 cum2v=new FP8(ckm2l);
-		FP8 r=new FP8(0);
-		FP8 t=new FP8(0);
+		FP8 r=new FP8();
+		FP8 t=new FP8();
 
 		int f2=0;
 		while (d.parity()==0 && e.parity()==0)

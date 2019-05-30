@@ -27,9 +27,11 @@
 //
 
 public struct AES {
+    var Nk:Int=0
+    var Nr:Int=0
     var mode:Int=0;
-    private var fkey=[UInt32](repeating: 0,count: 44)
-    private var rkey=[UInt32](repeating: 0,count: 44)
+    private var fkey=[UInt32](repeating: 0,count: 60)
+    private var rkey=[UInt32](repeating: 0,count: 60)
     var f=[UInt8](repeating: 0,count: 16)
     
     public init() {}
@@ -49,9 +51,6 @@ public struct AES {
     static public let CTR4:Int=33 
     static public let CTR8:Int=37 
     static public let CTR16:Int=45
-
-    static let KS:Int=16; /* Key Size in bytes */
-    static let BS:Int=16; /* Block Size */
     
     private static let InCo:[UInt8] = [ 0xB,0xD,0x9,0xE]  /* Inverse Coefficients */
     
@@ -313,14 +312,20 @@ public struct AES {
             {for i in 0 ..< 16 {f[i]=iv![i]}} /*??*/
     }
     
-    public mutating func init_it(_ m:Int,_ key:[UInt8],_ iv:[UInt8]?)
+    @discardableResult public mutating func init_it(_ m:Int,_ nkey:Int, _ key:[UInt8],_ iv:[UInt8]?) -> Bool
     {   /* Key=16 bytes */
         /* Key Scheduler. Create expanded encryption key */
-        var CipherKey=[UInt32](repeating: 0,count: 4)
+        var CipherKey=[UInt32](repeating: 0,count: 8)
         var b=[UInt8](repeating: 0,count: 4)
-        let nk=4;
-        reset(m,iv);
-        let N=44;
+        let nk=nkey/4
+        if nk != 4 && nk != 6 && nk != 8 {
+            return false
+        }
+	let nr=6+nk
+	Nk=nk; Nr=nr;
+        
+	reset(m,iv);
+        let N=4*(nr+1)
         
         var j=0
         for  i in 0 ..< nk
@@ -335,12 +340,30 @@ public struct AES {
         while j<N
         {
             fkey[j]=fkey[j-nk]^AES.SubByte(AES.ROTL24(fkey[j-1]))^UInt32(AES.rco[k])
-            var i=1
-            while i<nk && (i+j)<N
-            {
-                fkey[i+j]=fkey[i+j-nk]^fkey[i+j-1]
-                i+=1
-            }
+	    if nk <= 6 {
+                var i=1
+                while i<nk && (i+j)<N
+                {
+                    fkey[i+j]=fkey[i+j-nk]^fkey[i+j-1]
+                    i+=1
+		}
+            } else {
+                var i=1
+                while i<4 && (i+j)<N
+                {
+                    fkey[i+j]=fkey[i+j-nk]^fkey[i+j-1]
+                    i+=1
+		}
+                if (j+4) < N {
+		    fkey[j + 4] = fkey[j + 4 - nk] ^ AES.SubByte(fkey[j + 3])
+		}
+		i=5
+                while i<nk && (i+j)<N 
+		{
+		    fkey[i + j] = fkey[i + j - nk] ^ fkey[i + j - 1]
+		    i+=1
+		}
+	    }
             j+=nk
             k+=1
         }
@@ -356,6 +379,7 @@ public struct AES {
             i+=4
         }
         for j in N-4 ..< N {rkey[j-N+4]=fkey[j]}
+	return true
     }
     
     func getreg() -> [UInt8]
@@ -384,7 +408,7 @@ public struct AES {
         var k=4;
     
     /* State alternates between p and q */
-        for _ in 1 ..< 10
+        for _ in 1 ..< Nr
         {
             q[0]=fkey[k]^AES.ftable[Int(p[0]&0xff)]^AES.ROTL8(AES.ftable[Int((p[1]>>8)&0xff)])^AES.ROTL16(AES.ftable[Int((p[2]>>16)&0xff)])^AES.ROTL24(AES.ftable[Int((p[3]>>24)&0xff)])
             
@@ -439,7 +463,7 @@ public struct AES {
         var k=4
     
     /* State alternates between p and q */
-        for _ in 1 ..< 10
+        for _ in 1 ..< Nr
         {
             
             q[0]=rkey[k]^AES.rtable[Int(p[0]&0xff)]^AES.ROTL8(AES.rtable[Int((p[3]>>8)&0xff)])^AES.ROTL16(AES.rtable[Int((p[2]>>16)&0xff)])^AES.ROTL24(AES.rtable[Int((p[1]>>24)&0xff)])
@@ -632,7 +656,7 @@ public struct AES {
     /* Clean up and delete left-overs */
     public mutating func end()
     { // clean up
-        for i in 0 ..< 44
+        for i in 0 ..< 4*(Nr+1)
             {fkey[i]=0; rkey[i]=0}
         for i in 0 ..< 16
             {f[i]=0}

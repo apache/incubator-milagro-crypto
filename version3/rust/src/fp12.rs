@@ -207,6 +207,14 @@ impl FP12 {
 	self.stype=ONE;
     }
 
+    /* set self=0 */
+    pub fn zero(&mut self) {
+        self.a.zero();
+        self.b.zero();
+        self.c.zero();
+	self.stype=ZERO;
+    }
+
     /* this=conj(this) */
     pub fn conj(&mut self) {
         self.a.conj();

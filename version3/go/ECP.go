@@ -52,12 +52,12 @@ type ECP struct {
 /* Constructors */
 func NewECP() *ECP {
 	E := new(ECP)
-	E.x = NewFPint(0)
+	E.x = NewFP()
 	E.y = NewFPint(1)
 	if CURVETYPE == EDWARDS {
 		E.z = NewFPint(1)
 	} else {
-		E.z = NewFPint(0)
+		E.z = NewFP()
 	}
 	return E
 }
@@ -89,7 +89,7 @@ func NewECPbigs(ix *BIG, iy *BIG) *ECP {
 func NewECPbigint(ix *BIG, s int) *ECP {
 	E := new(ECP)
 	E.x = NewFPbig(ix)
-	E.y = NewFPint(0)
+	E.y = NewFP()
 	E.x.norm()
 	rhs := RHS(E.x)
 	E.z = NewFPint(1)
@@ -109,7 +109,7 @@ func NewECPbigint(ix *BIG, s int) *ECP {
 func NewECPbig(ix *BIG) *ECP {
 	E := new(ECP)
 	E.x = NewFPbig(ix)
-	E.y = NewFPint(0)
+	E.y = NewFP()
 	E.x.norm()
 	rhs := RHS(E.x)
 	E.z = NewFPint(1)
@@ -226,8 +226,8 @@ func (E *ECP) inf() {
 
 /* Test P == Q */
 func (E *ECP) Equals(Q *ECP) bool {
-	a := NewFPint(0)
-	b := NewFPint(0)
+	a := NewFP()
+	b := NewFP()
 	a.copy(E.x)
 	a.mul(Q.z)
 	a.reduce()
@@ -285,7 +285,7 @@ func RHS(x *FP) *FP {
 		r.mul(b)
 	}
 	if CURVETYPE == MONTGOMERY { // x^3+Ax^2+x
-		x3 := NewFPint(0)
+		x3 := NewFP()
 		x3.copy(r)
 		x3.mul(x)
 		r.imul(CURVE_A)
@@ -486,9 +486,9 @@ func (E *ECP) dbl() {
 			t2 := NewFPcopy(E.z)
 			t3 := NewFPcopy(E.x)
 			z3 := NewFPcopy(E.z)
-			y3 := NewFPint(0)
-			x3 := NewFPint(0)
-			b := NewFPint(0)
+			y3 := NewFP()
+			x3 := NewFP()
+			b := NewFP()
 
 			if CURVE_B_I == 0 {
 				b.copy(NewFPbig(NewBIGints(CURVE_B)))
@@ -577,7 +577,7 @@ func (E *ECP) dbl() {
 		C := NewFPcopy(E.x)
 		D := NewFPcopy(E.y)
 		H := NewFPcopy(E.z)
-		J := NewFPint(0)
+		J := NewFP()
 
 		E.x.mul(E.y)
 		E.x.add(E.x)
@@ -607,9 +607,9 @@ func (E *ECP) dbl() {
 	if CURVETYPE == MONTGOMERY {
 		A := NewFPcopy(E.x)
 		B := NewFPcopy(E.x)
-		AA := NewFPint(0)
-		BB := NewFPint(0)
-		C := NewFPint(0)
+		AA := NewFP()
+		BB := NewFP()
+		C := NewFP()
 
 		A.add(E.z)
 		A.norm()
@@ -723,10 +723,10 @@ func (E *ECP) Add(Q *ECP) {
 			t2 := NewFPcopy(E.z)
 			t3 := NewFPcopy(E.x)
 			t4 := NewFPcopy(Q.x)
-			z3 := NewFPint(0)
+			z3 := NewFP()
 			y3 := NewFPcopy(Q.x)
 			x3 := NewFPcopy(Q.y)
-			b := NewFPint(0)
+			b := NewFP()
 
 			if CURVE_B_I == 0 {
 				b.copy(NewFPbig(NewBIGints(CURVE_B)))
@@ -838,12 +838,12 @@ func (E *ECP) Add(Q *ECP) {
 	if CURVETYPE == EDWARDS {
 		b := NewFPbig(NewBIGints(CURVE_B))
 		A := NewFPcopy(E.z)
-		B := NewFPint(0)
+		B := NewFP()
 		C := NewFPcopy(E.x)
 		D := NewFPcopy(E.y)
-		EE := NewFPint(0)
-		F := NewFPint(0)
-		G := NewFPint(0)
+		EE := NewFP()
+		F := NewFP()
+		G := NewFP()
 
 		A.mul(Q.z)
 		B.copy(A)
@@ -902,8 +902,8 @@ func (E *ECP) dadd(Q *ECP, W *ECP) {
 	B := NewFPcopy(E.x)
 	C := NewFPcopy(Q.x)
 	D := NewFPcopy(Q.x)
-	DA := NewFPint(0)
-	CB := NewFPint(0)
+	DA := NewFP()
+	CB := NewFP()
 
 	A.add(E.z)
 	B.sub(E.z)

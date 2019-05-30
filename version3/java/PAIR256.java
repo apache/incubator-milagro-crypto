@@ -71,11 +71,11 @@ public final class PAIR256 {
 			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.D_TYPE)
 			{			
 				b=new FP16(XX);             // L(0,1) | L(0,0) | L(1,0)
-				c=new FP16(0);
+				c=new FP16();
 			}
 			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.M_TYPE)
 			{
-				b=new FP16(0);
+				b=new FP16();
 				c=new FP16(XX); c.times_i();
 			}
 			A.dbl();
@@ -114,17 +114,17 @@ public final class PAIR256 {
 			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.D_TYPE)
 			{
 				b=new FP16(Y1);
-				c=new FP16(0);
+				c=new FP16();
 			}
 			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.M_TYPE)
 			{
-				b=new FP16(0);
+				b=new FP16();
 				c=new FP16(Y1); c.times_i();
 			}
 			A.add(B);
 		}
 		FP48 r=new FP48(a,b,c);
-		r.settype(FP48.SPARSE);
+		r.settype(FP48.SPARSER);
 		return r;
 	}
 
@@ -355,7 +355,11 @@ public final class PAIR256 {
 		lv.copy(r);
 		r.frob(f,8);
 		r.mul(lv);
-
+		if (r.isunity())
+		{
+			r.zero();
+			return r;
+		}
 		FP48 t0,t1,t2,t3,t4,t5,t6,t7;
 /* Hard part of final exp */	
 // Ghamman & Fouotsa Method
@@ -658,7 +662,7 @@ public final class PAIR256 {
 			g[0]=new FP48(d);
 			for (i=1;i<16;i++)
 			{
-				g[i]=new FP48(0); g[i].copy(g[i-1]);
+				g[i]=new FP48(); g[i].copy(g[i-1]);
 				g[i].frob(f,1);
 			}
 			for (i=0;i<16;i++)

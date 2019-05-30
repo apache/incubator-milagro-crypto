@@ -92,6 +92,14 @@ void FP24_YYY_one(FP24_YYY *w)
 	w->type=FP_UNITY;
 }
 
+void FP24_YYY_zero(FP24_YYY *w)
+{
+    FP8_YYY_zero(&(w->a));
+    FP8_YYY_zero(&(w->b));
+    FP8_YYY_zero(&(w->c));
+	w->type=FP_ZERO;
+}
+
 /* return 1 if x==y, else 0 */
 /* SU= 16 */
 int FP24_YYY_equals(FP24_YYY *x,FP24_YYY *y)

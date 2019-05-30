@@ -81,10 +81,16 @@ public final class FP4 {
 		return (a.equals(x.a) && b.equals(x.b));
 	}
 /* constructors */
+	public FP4()
+	{
+		a=new FP2();
+		b=new FP2();
+	}
+
 	public FP4(int c)
 	{
 		a=new FP2(c);
-		b=new FP2(0);
+		b=new FP2();
 	}
 
 	public FP4(FP4 x)
@@ -102,7 +108,7 @@ public final class FP4 {
 	public FP4(FP2 c)
 	{
 		a=new FP2(c);
-		b=new FP2(0);
+		b=new FP2();
 	}
 /* copy this=x */
 	public void copy(FP4 x)
@@ -127,7 +133,7 @@ public final class FP4 {
 	{
 		norm();
 		FP2 m=new FP2(a);
-		FP2 t=new FP2(0);
+		FP2 t=new FP2();
 		m.add(b);
 		m.neg();
 		t.copy(m); t.add(b);
@@ -218,7 +224,7 @@ public final class FP4 {
 	{
 		FP2 t1=new FP2(a);
 		FP2 t2=new FP2(b);
-		FP2 t3=new FP2(0);
+		FP2 t3=new FP2();
 		FP2 t4=new FP2(b);
 
 		t1.mul(y.a);
@@ -355,8 +361,8 @@ public final class FP4 {
 		FP4 b=new FP4(sf);
 		FP4 c=new FP4(b);
 		c.xtr_D();
-		FP4 t=new FP4(0);
-		FP4 r=new FP4(0);
+		FP4 t=new FP4();
+		FP4 r=new FP4();
 
 		int par=n.parity();
 		BIG v=new BIG(n); v.norm(); v.fshr(1);
@@ -404,8 +410,8 @@ public final class FP4 {
 		FP4 cv=new FP4(this);
 		FP4 cumv=new FP4(ckml);
 		FP4 cum2v=new FP4(ckm2l);
-		FP4 r=new FP4(0);
-		FP4 t=new FP4(0);
+		FP4 r=new FP4();
+		FP4 t=new FP4();
 
 		int f2=0;
 		while (d.parity()==0 && e.parity()==0)

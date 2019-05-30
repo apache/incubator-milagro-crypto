@@ -33,6 +33,10 @@ class Fp12:
     def one():
         return Fp12(Fp4(Fp2(Fp(1))))
 
+    def zero():
+        return Fp12(Fp4(Fp2(Fp(0))))
+
+
     def get(self):
         return(self.a, self.b, self.c)
 

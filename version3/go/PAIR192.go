@@ -68,10 +68,10 @@ func line(A *ECP4, B *ECP4, Qx *FP, Qy *FP) *FP24 {
 		if SEXTIC_TWIST == D_TYPE {
 
 			b = NewFP8fp4(XX) // L(0,1) | L(0,0) | L(1,0)
-			c = NewFP8int(0)
+			c = NewFP8()
 		}
 		if SEXTIC_TWIST == M_TYPE {
-			b = NewFP8int(0)
+			b = NewFP8()
 			c = NewFP8fp4(XX)
 			c.times_i()
 		}
@@ -113,10 +113,10 @@ func line(A *ECP4, B *ECP4, Qx *FP, Qy *FP) *FP24 {
 		a = NewFP8fp4s(X1, T2) // (X1-Z1.X2).Ys  |  (Y1-Z1.Y2).X2 - (X1-Z1.X2).Y2  | - (Y1-Z1.Y2).Xs
 		if SEXTIC_TWIST == D_TYPE {
 			b = NewFP8fp4(Y1)
-			c = NewFP8int(0)
+			c = NewFP8()
 		}
 		if SEXTIC_TWIST == M_TYPE {
-			b = NewFP8int(0)
+			b = NewFP8()
 			c = NewFP8fp4(Y1)
 			c.times_i()
 		}
@@ -336,7 +336,10 @@ func Fexp(m *FP24) *FP24 {
 	lv.Copy(r)
 	r.frob(f, 4)
 	r.Mul(lv)
-
+	if r.Isunity() {
+		r.zero()
+		return r
+	}
 	/* Hard part of final exp */
 	// Ghamman & Fouotsa Method
 
@@ -549,7 +552,7 @@ func GTpow(d *FP24, e *BIG) *FP24 {
 
 		g = append(g, NewFP24copy(d))
 		for i := 1; i < 8; i++ {
-			g = append(g, NewFP24int(0))
+			g = append(g, NewFP24())
 			g[i].Copy(g[i-1])
 			g[i].frob(f, 1)
 		}

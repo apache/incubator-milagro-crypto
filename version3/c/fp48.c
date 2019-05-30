@@ -93,6 +93,14 @@ void FP48_YYY_one(FP48_YYY *w)
 	w->type=FP_UNITY;
 }
 
+void FP48_YYY_zero(FP48_YYY *w)
+{
+    FP16_YYY_zero(&(w->a));
+    FP16_YYY_zero(&(w->b));
+    FP16_YYY_zero(&(w->c));
+	w->type=FP_ZERO;
+}
+
 /* return 1 if x==y, else 0 */
 /* SU= 16 */
 int FP48_YYY_equals(FP48_YYY *x,FP48_YYY *y)

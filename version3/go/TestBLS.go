@@ -23,12 +23,12 @@ package main
 
 import "fmt"
 
-import "github.com/milagro-crypto/amcl/version3/go/amcl"
+import "github.com/miracl/amcl/version3/go/amcl"
 
-import "github.com/milagro-crypto/amcl/version3/go/amcl/BN254"
-import "github.com/milagro-crypto/amcl/version3/go/amcl/BLS383"
-import "github.com/milagro-crypto/amcl/version3/go/amcl/BLS24"
-import "github.com/milagro-crypto/amcl/version3/go/amcl/BLS48"
+import "github.com/miracl/amcl/version3/go/amcl/BN254"
+import "github.com/miracl/amcl/version3/go/amcl/BLS383"
+import "github.com/miracl/amcl/version3/go/amcl/BLS24"
+import "github.com/miracl/amcl/version3/go/amcl/BLS48"
 
 func printBinary(array []byte) {
 	for i := 0; i < len(array); i++ {

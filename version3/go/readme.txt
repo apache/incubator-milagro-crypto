@@ -13,14 +13,17 @@ Make sure that the GOPATH environmental variable is set.
 
 Then clone the AMCL repository by executing
 
-go get github.com/milagro-crypto/amcl
+go get github.com/miracl/amcl
 
 Ignore the warning message about "no Go files"
 
 This assumes that Git is installed on your machine - see 
 https://git-scm.com/download/
 
-Next navigate to $GOPATH/src/github.com/milagro-crypto/amcl/version3/go
+Next navigate to $GOPATH/src/github.com/miracl/amcl/version3/go
+
+NOTE: If the repository address changes, then change the above, and also
+change import statements at the start of some files.
 
 To build the library and see it in action, execute the python3 
 script config32.py or config64.py (depending om whether you want a 

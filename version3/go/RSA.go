@@ -22,7 +22,7 @@ under the License.
 package XXX
 
 //import "fmt"
-import "github.com/milagro-crypto/amcl/version3/go/amcl"
+import "github.com/miracl/amcl/version3/go/amcl"
 
 const RFS int = int(MODBYTES) * FFLEN
 

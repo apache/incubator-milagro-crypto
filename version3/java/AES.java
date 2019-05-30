@@ -350,11 +350,25 @@ public class AES {
 			CipherKey[i]=pack(b);
 		}
 		for (i=0;i<nk;i++) fkey[i]=CipherKey[i];
+
 		for (j=nk,k=0;j<N;j+=nk,k++)
 		{
 			fkey[j]=fkey[j-nk]^SubByte(ROTL24(fkey[j-1]))^((int)rco[k])&0xff;
-			for (i=1;i<nk && (i+j)<N;i++)
-				fkey[i+j]=fkey[i+j-nk]^fkey[i+j-1];
+			if (nk<=6)
+			{
+				for (i=1;i<nk && (i+j)<N;i++)
+					fkey[i+j]=fkey[i+j-nk]^fkey[i+j-1];
+			} else {
+				for (i = 1; i < 4 && (i + j) < N; i++) {
+					fkey[i + j] = fkey[i + j - nk] ^ fkey[i + j - 1];
+				}
+				if ((j + 4) < N) {
+					fkey[j + 4] = fkey[j + 4 - nk] ^ SubByte(fkey[j + 3]);
+				}
+				for (i = 5; i < nk && (i + j) < N; i++) {
+					fkey[i + j] = fkey[i + j - nk] ^ fkey[i + j - 1];
+				}
+			}
 		}
 
  /* now for the expanded decrypt key in reverse order */

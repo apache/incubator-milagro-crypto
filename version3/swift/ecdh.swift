@@ -215,7 +215,7 @@ public struct ECDH
     
         var C=[UInt8](repeating: 0,count: clen)
     
-        a.init_it(AES.CBC,K,nil)
+        a.init_it(AES.CBC,K.count,K,nil)
     
         var ipt=0; var opt=0;
         var fin=false;
@@ -258,7 +258,7 @@ public struct ECDH
     
         var ipt=0; var opt=0;
     
-        a.init_it(AES.CBC,K,nil);
+        a.init_it(AES.CBC,K.count,K,nil);
     
         if C.count==0 {return [UInt8]()}
         var ch=C[ipt]; ipt+=1

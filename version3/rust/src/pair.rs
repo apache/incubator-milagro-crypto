@@ -439,6 +439,11 @@ pub fn fexp(m: &FP12) -> FP12 {
     r.frob(&f);
     r.frob(&f);
     r.mul(&lv);
+    if r.isunity() {
+	r.zero();
+	return r;
+    }
+
     /* Hard part of final exp */
     if ecp::CURVE_PAIRING_TYPE == CurvePairingType::BN {
         lv.copy(&r);

@@ -69,16 +69,24 @@ public struct FP48
     init(_ d:FP16)
     {
         a=FP16(d)
-        b=FP16(0)
-        c=FP16(0)
+        b=FP16()
+        c=FP16()
         stype=FP48.SPARSER        
     }
     
+    init()
+    {
+        a=FP16()
+        b=FP16()
+        c=FP16()
+        stype=FP48.ZERO      
+    }
+
     init(_ d:Int)
     {
         a=FP16(d)
-        b=FP16(0)
-        c=FP16(0)
+        b=FP16()
+        c=FP16()
         if (d==1) {stype=FP48.ONE}
         else {stype=FP48.SPARSER}        
     }
@@ -186,6 +194,16 @@ public struct FP48
         c.zero()
         stype=FP48.ONE        
     }
+
+    /* set self=0 */
+    mutating func zero()
+    {
+        a.zero()
+        b.zero()
+        c.zero()
+        stype=FP48.ZERO
+    }
+
     /* self=conj(self) */
     mutating func conj()
     {
@@ -200,7 +218,7 @@ public struct FP48
         var A=FP16(a)
         var B=FP16(c)
         var C=FP16(b)
-        var D=FP16(0)
+        var D=FP16()
     
         a.sqr()
         D.copy(a); D.add(a)
@@ -282,9 +300,9 @@ public struct FP48
     mutating func mul(_ y:FP48)
     {
         var z0=FP16(a)
-        var z1=FP16(0)
+        var z1=FP16()
         var z2=FP16(b)
-        var z3=FP16(0)
+        var z3=FP16()
         var t0=FP16(a)
         var t1=FP16(y.a)
     
@@ -351,15 +369,15 @@ public struct FP48
         }
         if y.stype>=FP48.SPARSE {
             var z0=FP16(a)
-            var z1=FP16(0)
-            var z2=FP16(0)
-            var z3=FP16(0)
+            var z1=FP16()
+            var z2=FP16()
+            var z3=FP16()
             z0.mul(y.a)
 
             if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.M_TYPE {  
                 if y.stype==FP48.SPARSE || stype==FP48.SPARSE {
-                    var ga=FP8(0)
-                    var gb=FP8(0)
+                    var ga=FP8()
+                    var gb=FP8()
 
                     gb.copy(b.getb())
                     gb.mul(y.b.getb())
@@ -410,8 +428,8 @@ public struct FP48
 
             if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.D_TYPE {  
                 if y.stype==FP48.SPARSE || stype==FP48.SPARSE {
-                    var ga=FP8(0)
-                    var gb=FP8(0)
+                    var ga=FP8()
+                    var gb=FP8()
 
                     ga.copy(c.geta())
                     ga.mul(y.c.geta())
@@ -451,7 +469,7 @@ public struct FP48
                 var z0=FP16(a)
                 var z2=FP16(b)
                 var z3=FP16(b)
-                var t0=FP16(0)
+                var t0=FP16()
                 var t1=FP16(y.a)
                 z0.mul(y.a)
                 z2.pmul(y.b.real())
@@ -484,11 +502,11 @@ public struct FP48
             }
             if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.M_TYPE {
                 var z0=FP16(a)
-                var z1=FP16(0)
-                var z2=FP16(0)
-                var z3=FP16(0)
+                var z1=FP16()
+                var z2=FP16()
+                var z3=FP16()
                 var t0=FP16(a)
-                var t1=FP16(0)
+                var t1=FP16()
         
                 z0.mul(y.a)
                 t0.add(b); t0.norm()
@@ -644,7 +662,7 @@ public struct FP48
         var f0=FP16(a)
         var f1=FP16(b)
         var f2=FP16(a)
-        var f3=FP16(0)
+        var f3=FP16()
     
         //norm()
         f0.sqr()
@@ -703,7 +721,7 @@ public struct FP48
     /* trace function */
     func trace() -> FP16
     {
-        var t=FP16(0)
+        var t=FP16()
         t.copy(a)
         t.imul(3)
         t.reduce()
@@ -1137,14 +1155,14 @@ public struct FP48
 
         
         for _ in 0 ..< 8 {
-            g1.append(FP48(0))
-            g2.append(FP48(0))       
-            g3.append(FP48(0))
-            g4.append(FP48(0))                    
+            g1.append(FP48())
+            g2.append(FP48())       
+            g3.append(FP48())
+            g4.append(FP48())                    
         }
         
-        var r=FP48(0)
-        var p=FP48(0)
+        var r=FP48()
+        var p=FP48()
         
         var t=[BIG]()
         for i in 0 ..< 16 {

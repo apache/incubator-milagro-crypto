@@ -42,6 +42,13 @@ extern void FP24_YYY_copy(FP24_YYY *x,FP24_YYY *y);
 	@param x FP24 instance to be set to one
  */
 extern void FP24_YYY_one(FP24_YYY *x);
+
+/**	@brief Set FP24 to zero
+ *
+	@param x FP24 instance to be set to zero
+ */
+extern void FP24_YYY_zero(FP24_YYY *x);
+
 /**	@brief Tests for equality of two FP24s
  *
 	@param x FP24 instance to be compared

@@ -68,10 +68,10 @@ func line(A *ECP2, B *ECP2, Qx *FP, Qy *FP) *FP12 {
 		if SEXTIC_TWIST == D_TYPE {
 
 			b = NewFP4fp2(XX) // L(0,1) | L(0,0) | L(1,0)
-			c = NewFP4int(0)
+			c = NewFP4()
 		}
 		if SEXTIC_TWIST == M_TYPE {
-			b = NewFP4int(0)
+			b = NewFP4()
 			c = NewFP4fp2(XX)
 			c.times_i()
 		}
@@ -113,10 +113,10 @@ func line(A *ECP2, B *ECP2, Qx *FP, Qy *FP) *FP12 {
 		a = NewFP4fp2s(X1, T2) // (X1-Z1.X2).Ys  |  (Y1-Z1.Y2).X2 - (X1-Z1.X2).Y2  | - (Y1-Z1.Y2).Xs
 		if SEXTIC_TWIST == D_TYPE {
 			b = NewFP4fp2(Y1)
-			c = NewFP4int(0)
+			c = NewFP4()
 		}
 		if SEXTIC_TWIST == M_TYPE {
-			b = NewFP4int(0)
+			b = NewFP4()
 			c = NewFP4fp2(Y1)
 			c.times_i()
 		}
@@ -429,6 +429,10 @@ func Fexp(m *FP12) *FP12 {
 	r.frob(f)
 	r.frob(f)
 	r.Mul(lv)
+	if r.Isunity() {
+		r.zero()
+		return r
+	}
 	/* Hard part of final exp */
 	if CURVE_PAIRING_TYPE == BN {
 		lv.Copy(r)
@@ -725,7 +729,7 @@ func GTpow(d *FP12, e *BIG) *FP12 {
 
 		g = append(g, NewFP12copy(d))
 		for i := 1; i < 4; i++ {
-			g = append(g, NewFP12int(0))
+			g = append(g, NewFP12())
 			g[i].Copy(g[i-1])
 			g[i].frob(f)
 		}

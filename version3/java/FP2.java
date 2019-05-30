@@ -64,10 +64,16 @@ public final class FP2 {
 	}
 
 /* Constructors */
+	public FP2()
+	{
+		a=new FP();
+		b=new FP();
+	}
+
 	public FP2(int c)
 	{
 		a=new FP(c);
-		b=new FP(0);
+		b=new FP();
 	}
 
 	public FP2(FP2 x)
@@ -91,13 +97,13 @@ public final class FP2 {
 	public FP2(FP c)
 	{
 		a=new FP(c);
-		b=new FP(0);
+		b=new FP();
 	}
 
 	public FP2(BIG c)
 	{
 		a=new FP(c);
-		b=new FP(0);
+		b=new FP();
 	}
 
 /* extract a */
@@ -137,7 +143,7 @@ public final class FP2 {
 	public void neg()
 	{
 		FP m=new FP(a);
-		FP t=new FP(0);
+		FP t=new FP();
 
 		m.add(b);
 		m.neg();
@@ -327,7 +333,7 @@ public final class FP2 {
 
 	public void div_ip2()
 	{
-		FP2 t=new FP2(0);
+		FP2 t=new FP2();
 		norm();
 		t.a.copy(a); t.a.add(b);
 		t.b.copy(b); t.b.sub(a);
@@ -338,7 +344,7 @@ public final class FP2 {
 /* w/=(1+sqrt(-1)) */
 	public void div_ip()
 	{
-		FP2 t=new FP2(0);
+		FP2 t=new FP2();
 		norm();
 		t.a.copy(a); t.a.add(b);
 		t.b.copy(b); t.b.sub(a);

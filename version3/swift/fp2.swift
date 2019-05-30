@@ -35,10 +35,16 @@ public struct FP2
     private var b:FP
 
     /* Constructors */
+    init()
+    {
+        a=FP()
+        b=FP()
+    }
+
     init(_ c: Int)
     {
         a=FP(c)
-        b=FP(0)
+        b=FP()
     }
     
     init(_ x:FP2)
@@ -62,13 +68,13 @@ public struct FP2
     init(_ c:FP)
     {
         a=FP(c)
-        b=FP(0)
+        b=FP()
     }
     
     init(_ c:BIG)
     {
         a=FP(c)
-        b=FP(0)
+        b=FP()
     }
 
     /* test this=0 ? */
@@ -148,7 +154,7 @@ public struct FP2
     mutating func neg()
     {
         var m=FP(a)
-        var t=FP(0)
+        var t=FP()
     
         m.add(b)
         m.neg()
@@ -334,7 +340,7 @@ public struct FP2
     /* w/=(1+sqrt(-1)) */
     mutating func div_ip()
     {
-        var t=FP2(0)
+        var t=FP2()
         norm()
         t.a.copy(a); t.a.add(b)
         t.b.copy(b); t.b.sub(a)
@@ -344,7 +350,7 @@ public struct FP2
     
     mutating func div_ip2()
     {
-        var t=FP2(0)
+        var t=FP2()
         norm()
         t.a.copy(a); t.a.add(b)
         t.b.copy(b); t.b.sub(a)

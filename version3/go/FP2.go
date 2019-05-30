@@ -31,10 +31,17 @@ type FP2 struct {
 }
 
 /* Constructors */
+func NewFP2() *FP2 {
+	F := new(FP2)
+	F.a = NewFP()
+	F.b = NewFP()
+	return F
+}
+
 func NewFP2int(a int) *FP2 {
 	F := new(FP2)
 	F.a = NewFPint(a)
-	F.b = NewFPint(0)
+	F.b = NewFP()
 	return F
 }
 
@@ -62,14 +69,14 @@ func NewFP2bigs(c *BIG, d *BIG) *FP2 {
 func NewFP2fp(c *FP) *FP2 {
 	F := new(FP2)
 	F.a = NewFPcopy(c)
-	F.b = NewFPint(0)
+	F.b = NewFP()
 	return F
 }
 
 func NewFP2big(c *BIG) *FP2 {
 	F := new(FP2)
 	F.a = NewFPbig(c)
-	F.b = NewFPint(0)
+	F.b = NewFP()
 	return F
 }
 
@@ -137,7 +144,7 @@ func (F *FP2) one() {
 /* negate this mod Modulus */
 func (F *FP2) neg() {
 	m := NewFPcopy(F.a)
-	t := NewFPint(0)
+	t := NewFP()
 
 	m.add(F.b)
 	m.neg()
@@ -335,7 +342,7 @@ func (F *FP2) mul_ip() {
 }
 
 func (F *FP2) div_ip2() {
-	t := NewFP2int(0)
+	t := NewFP2()
 	F.norm()
 	t.a.copy(F.a)
 	t.a.add(F.b)
@@ -347,7 +354,7 @@ func (F *FP2) div_ip2() {
 
 /* w/=(1+sqrt(-1)) */
 func (F *FP2) div_ip() {
-	t := NewFP2int(0)
+	t := NewFP2()
 	F.norm()
 	t.a.copy(F.a)
 	t.a.add(F.b)

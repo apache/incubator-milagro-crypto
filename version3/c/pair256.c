@@ -373,6 +373,12 @@ void PAIR_ZZZ_fexp(FP48_YYY *r)
 
     FP48_YYY_mul(r,&t7);
 
+	if (FP48_YYY_isunity(r))
+	{
+		FP48_YYY_zero(r);
+		return;
+	}
+
 // f^e0.f^e1^p.f^e2^p^2.. .. f^e14^p^14.f^e15^p^15
 
 	FP48_YYY_usqr(&t7,r);			// t7=f^2

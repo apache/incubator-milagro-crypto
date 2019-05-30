@@ -30,7 +30,9 @@ var FP = function(ctx) {
             this.XES = x.XES;
         } else {
             this.f = new ctx.BIG(x);
-            this.nres();
+			this.XES = 1;
+			if (x!=0)
+				this.nres();
         }
     };
 
@@ -472,7 +474,7 @@ var FP = function(ctx) {
                 tb=[],
                 t=new ctx.BIG(e),
                 nb, lsbs, r;
-
+			this.norm();
             t.norm();
             nb= 1 + Math.floor((t.nbits() + 3) / 4);
 

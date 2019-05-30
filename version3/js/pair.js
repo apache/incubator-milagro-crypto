@@ -444,7 +444,11 @@ var PAIR = function(ctx) {
             r.frob(f);
             r.frob(f);
             r.mul(lv);
-
+			if (r.isunity())
+			{
+				r.zero();
+				return r;
+			}
             /* Hard part of final exp */
             if (ctx.ECP.CURVE_PAIRING_TYPE == ctx.ECP.BN) {
                 lv.copy(r);

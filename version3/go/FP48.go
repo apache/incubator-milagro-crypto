@@ -32,11 +32,20 @@ type FP48 struct {
 }
 
 /* Constructors */
+func NewFP48() *FP48 {
+	F := new(FP48)
+	F.a = NewFP16()
+	F.b = NewFP16()
+	F.c = NewFP16()
+	F.stype=FP_ZERO
+	return F
+}
+
 func NewFP48fp16(d *FP16) *FP48 {
 	F := new(FP48)
 	F.a = NewFP16copy(d)
-	F.b = NewFP16int(0)
-	F.c = NewFP16int(0)
+	F.b = NewFP16()
+	F.c = NewFP16()
 	F.stype=FP_SPARSER
 	return F
 }
@@ -44,8 +53,8 @@ func NewFP48fp16(d *FP16) *FP48 {
 func NewFP48int(d int) *FP48 {
 	F := new(FP48)
 	F.a = NewFP16int(d)
-	F.b = NewFP16int(0)
-	F.c = NewFP16int(0)
+	F.b = NewFP16()
+	F.c = NewFP16()
 	if d==1 {
 		F.stype=FP_ONE
 	} else {
@@ -164,6 +173,14 @@ func (F *FP48) one() {
 	F.c.zero()
 }
 
+/* set this=0 */
+func (F *FP48) zero() {
+	F.stype=FP_ZERO
+	F.a.zero()
+	F.b.zero()
+	F.c.zero()
+}
+
 /* this=conj(this) */
 func (F *FP48) conj() {
 	F.a.conj()
@@ -176,7 +193,7 @@ func (F *FP48) usqr() {
 	A := NewFP16copy(F.a)
 	B := NewFP16copy(F.c)
 	C := NewFP16copy(F.b)
-	D := NewFP16int(0)
+	D := NewFP16()
 
 	F.a.sqr()
 	D.copy(F.a)
@@ -264,9 +281,9 @@ func (F *FP48) sqr() {
 /* FP48 full multiplication this=this*y */
 func (F *FP48) Mul(y *FP48) {
 	z0 := NewFP16copy(F.a)
-	z1 := NewFP16int(0)
+	z1 := NewFP16()
 	z2 := NewFP16copy(F.b)
-	z3 := NewFP16int(0)
+	z3 := NewFP16()
 	t0 := NewFP16copy(F.a)
 	t1 := NewFP16copy(y.a)
 
@@ -343,9 +360,9 @@ func (F *FP48) ssmul(y *FP48) {
 	}
 	if y.stype>=FP_SPARSE {
 		z0:=NewFP16copy(F.a)
-		z1:=NewFP16int(0)
-		z2:=NewFP16int(0)
-		z3:=NewFP16int(0)
+		z1:=NewFP16()
+		z2:=NewFP16()
+		z3:=NewFP16()
 		z0.mul(y.a)
 
 		if SEXTIC_TWIST==M_TYPE {
@@ -435,7 +452,7 @@ func (F *FP48) ssmul(y *FP48) {
 			z0:=NewFP16copy(F.a)
 			z2:=NewFP16copy(F.b)
 			z3:=NewFP16copy(F.b)
-			t0:=NewFP16int(0)
+			t0:=NewFP16()
 			t1:=NewFP16copy(y.a)
 			z0.mul(y.a)
 			z2.pmul(y.b.real())
@@ -468,11 +485,11 @@ func (F *FP48) ssmul(y *FP48) {
 		}
 		if SEXTIC_TWIST==M_TYPE {
 			z0:=NewFP16copy(F.a)
-			z1:=NewFP16int(0)
-			z2:=NewFP16int(0)
-			z3:=NewFP16int(0)
+			z1:=NewFP16()
+			z2:=NewFP16()
+			z3:=NewFP16()
 			t0:=NewFP16copy(F.a)
-			t1:=NewFP16int(0)
+			t1:=NewFP16()
 		
 			z0.mul(y.a)
 			t0.add(F.b); t0.norm()
@@ -627,7 +644,7 @@ func (F *FP48) Inverse() {
 	f0 := NewFP16copy(F.a)
 	f1 := NewFP16copy(F.b)
 	f2 := NewFP16copy(F.a)
-	f3 := NewFP16int(0)
+	f3 := NewFP16()
 
 	//F.norm()
 	f0.sqr()
@@ -701,7 +718,7 @@ func (F *FP48) frob(f *FP2, n int) {
 
 /* trace function */
 func (F *FP48) trace() *FP16 {
-	t := NewFP16int(0)
+	t := NewFP16()
 	t.copy(F.a)
 	t.imul(3)
 	t.reduce()
@@ -1305,8 +1322,8 @@ func pow16(q []*FP48, u []*BIG) *FP48 {
 	var w4 [NLEN*int(BASEBITS) + 1]int8
 	var s4 [NLEN*int(BASEBITS) + 1]int8
 	var t []*BIG
-	r := NewFP48int(0)
-	p := NewFP48int(0)
+	r := NewFP48()
+	p := NewFP48()
 	mt := NewBIGint(0)
 	var bt int8
 	var k int

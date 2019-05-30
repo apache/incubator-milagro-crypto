@@ -33,12 +33,12 @@ public struct ECP {
    /* Constructor - set to O */
     init()
     {
-        x=FP(0)
+        x=FP()
         y=FP(1)
         if CONFIG_CURVE.CURVETYPE==CONFIG_CURVE.EDWARDS {
 	       z=FP(1)
 	   } else {
-	       z=FP(0)
+	       z=FP()
 	   }
     }
     
@@ -130,8 +130,8 @@ public struct ECP {
     /* Test P == Q */
     func equals(_ Q: ECP) -> Bool
     {
-        var a=FP(0)
-        var b=FP(0)
+        var a=FP()
+        var b=FP()
         a.copy(x); a.mul(Q.z)
         b.copy(Q.x); b.mul(z)
         if !a.equals(b) {return false}
@@ -192,7 +192,7 @@ public struct ECP {
         }
         if CONFIG_CURVE.CURVETYPE == CONFIG_CURVE.MONTGOMERY
         { // x^3+Ax^2+x
-            var x3=FP(0)
+            var x3=FP()
             x3.copy(r);
             x3.mul(x);
             r.imul(ROM.CURVE_A);
@@ -231,7 +231,7 @@ public struct ECP {
         x=FP(ix)
         x.norm()
         var rhs=ECP.RHS(x)
-        y=FP(0)
+        y=FP()
         z=FP(1)
 
         if rhs.jacobi()==1
@@ -249,7 +249,7 @@ public struct ECP {
         x=FP(ix)
         x.norm()
         var rhs=ECP.RHS(x)
-        y=FP(0)
+        y=FP()
         z=FP(1)
         if rhs.jacobi()==1
         {
@@ -416,9 +416,9 @@ public struct ECP {
                 var t2=FP(z)
                 var t3=FP(x)
                 var z3=FP(z)
-                var y3=FP(0)
-                var x3=FP(0)
-                var b=FP(0)
+                var y3=FP()
+                var x3=FP()
+                var b=FP()
 
                 if ROM.CURVE_B_I==0
                 {
@@ -489,7 +489,7 @@ public struct ECP {
             var C=FP(x)
             var D=FP(y)
             var H=FP(z)
-            var J=FP(0)
+            var J=FP()
     
             x.mul(y); x.add(x); x.norm()
             C.sqr()
@@ -509,9 +509,9 @@ public struct ECP {
         {
             var A=FP(x)
             var B=FP(x);
-            var AA=FP(0);
-            var BB=FP(0);
-            var C=FP(0);
+            var AA=FP();
+            var BB=FP();
+            var C=FP();
         
             A.add(z); A.norm()
             AA.copy(A); AA.sqr()
@@ -593,10 +593,10 @@ public struct ECP {
                     var t2=FP(z)
                     var t3=FP(x)
                     var t4=FP(Q.x)
-                    var z3=FP(0)
+                    var z3=FP()
                     var y3=FP(Q.x)
                     var x3=FP(Q.y)
-                    var b=FP(0)
+                    var b=FP()
 
                     if ROM.CURVE_B_I==0
                     {
@@ -681,12 +681,12 @@ public struct ECP {
         {
             let b=FP(BIG(ROM.CURVE_B))
             var A=FP(z)
-            var B=FP(0)
+            var B=FP()
             var C=FP(x)
             var D=FP(y)
-            var E=FP(0)
-            var F=FP(0)
-            var G=FP(0)
+            var E=FP()
+            var F=FP()
+            var G=FP()
     
             A.mul(Q.z)
             B.copy(A); B.sqr()
@@ -733,8 +733,8 @@ public struct ECP {
         var B=FP(x)
         var C=FP(Q.x)
         var D=FP(Q.x)
-        var DA=FP(0)
-        var CB=FP(0)
+        var DA=FP()
+        var CB=FP()
     
         A.add(z)
         B.sub(z)

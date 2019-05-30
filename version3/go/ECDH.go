@@ -22,7 +22,7 @@ under the License.
 package XXX
 
 //import "fmt"
-import "github.com/milagro-crypto/amcl/version3/go/amcl"
+import "github.com/miracl/amcl/version3/go/amcl"
 
 const INVALID_PUBLIC_KEY int = -2
 const ERROR int = -3

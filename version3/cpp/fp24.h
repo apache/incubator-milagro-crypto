@@ -52,6 +52,13 @@ extern void FP24_copy(FP24 *x,FP24 *y);
 	@param x FP24 instance to be set to one
  */
 extern void FP24_one(FP24 *x);
+
+/**	@brief Set FP24 to zero
+ *
+	@param x FP24 instance to be set to zero
+ */
+extern void FP24_zero(FP24 *x);
+
 /**	@brief Tests for equality of two FP24s
  *
 	@param x FP24 instance to be compared

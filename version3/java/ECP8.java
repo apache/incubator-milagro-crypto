@@ -28,9 +28,9 @@ public final class ECP8 {
 
 /* Constructor - set this=O */
 	public ECP8() {
-		x=new FP8(0);
+		x=new FP8();
 		y=new FP8(1);
-		z=new FP8(0);
+		z=new FP8();
 	}
 
     public ECP8(ECP8 e) {

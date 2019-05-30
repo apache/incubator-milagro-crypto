@@ -81,10 +81,16 @@ public final class FP16 {
 		return (a.equals(x.a) && b.equals(x.b));
 	}
 /* constructors */
+	public FP16()
+	{
+		a=new FP8();
+		b=new FP8();
+	}
+
 	public FP16(int c)
 	{
 		a=new FP8(c);
-		b=new FP8(0);
+		b=new FP8();
 	}
 
 	public FP16(FP16 x)
@@ -102,7 +108,7 @@ public final class FP16 {
 	public FP16(FP8 c)
 	{
 		a=new FP8(c);
-		b=new FP8(0);
+		b=new FP8();
 	}
 /* copy this=x */
 	public void copy(FP16 x)
@@ -128,7 +134,7 @@ public final class FP16 {
 	{
 		norm();
 		FP8 m=new FP8(a);
-		FP8 t=new FP8(0);
+		FP8 t=new FP8();
 		m.add(b);
 		m.neg();
 		t.copy(m); t.add(b);
@@ -227,7 +233,7 @@ public final class FP16 {
 	{
 		FP8 t1=new FP8(a);
 		FP8 t2=new FP8(b);
-		FP8 t3=new FP8(0);
+		FP8 t3=new FP8();
 		FP8 t4=new FP8(b);
 
 		t1.mul(y.a);
@@ -375,8 +381,8 @@ public final class FP16 {
 		FP16 b=new FP16(sf);
 		FP16 c=new FP16(b);
 		c.xtr_D();
-		FP16 t=new FP16(0);
-		FP16 r=new FP16(0);
+		FP16 t=new FP16();
+		FP16 r=new FP16();
 
 		
 		int par=n.parity();
@@ -423,8 +429,8 @@ public final class FP16 {
 		FP16 cv=new FP16(this);
 		FP16 cumv=new FP16(ckml);
 		FP16 cum2v=new FP16(ckm2l);
-		FP16 r=new FP16(0);
-		FP16 t=new FP16(0);
+		FP16 r=new FP16();
+		FP16 t=new FP16();
 
 		int f2=0;
 		while (d.parity()==0 && e.parity()==0)

@@ -30,9 +30,9 @@ public final class ECP2 {
 /* Constructor - set this=O */
 	public ECP2() {
 		INF=true;
-		x=new FP2(0);
+		x=new FP2();
 		y=new FP2(1);
-		z=new FP2(0);
+		z=new FP2();
 	}
 
 /* Test this=O? */

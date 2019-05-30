@@ -545,6 +545,7 @@ public final class FP {
 	{
 		byte[] w=new byte[1+(BIG.NLEN*CONFIG_BIG.BASEBITS+3)/4];
 		FP [] tb=new FP[16];
+		norm();
 		BIG t=new BIG(e);
 		t.norm();
 		int nb=1+(t.nbits()+3)/4;

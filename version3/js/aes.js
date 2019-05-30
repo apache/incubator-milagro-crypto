@@ -122,10 +122,25 @@ var AES = function() {
 
             for (j = nk, k = 0; j < N; j += nk, k++) {
                 this.fkey[j] = this.fkey[j - nk] ^ AES.SubByte(AES.ROTL24(this.fkey[j - 1])) ^ (AES.rco[k]) & 0xff;
-                for (i = 1; i < nk && (i + j) < N; i++) {
-                    this.fkey[i + j] = this.fkey[i + j - nk] ^ this.fkey[i + j - 1];
-                }
+
+				if (nk<=6)
+				{
+					for (i = 1; i < nk && (i + j) < N; i++) {
+						this.fkey[i + j] = this.fkey[i + j - nk] ^ this.fkey[i + j - 1];
+					}
+				} else {
+					for (i = 1; i < 4 && (i + j) < N; i++) {
+						this.fkey[i + j] = this.fkey[i + j - nk] ^ this.fkey[i + j - 1];
+					}
+					if ((j + 4) < N) {
+						this.fkey[j + 4] = this.fkey[j + 4 - nk] ^ AES.SubByte(this.fkey[j + 3]);
+					}
+					for (i = 5; i < nk && (i + j) < N; i++) {
+						this.fkey[i + j] = this.fkey[i + j - nk] ^ this.fkey[i + j - 1];
+					}
+				}
             }
+
 
             /* now for the expanded decrypt key in reverse order */
 
