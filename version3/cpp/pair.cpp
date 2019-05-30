@@ -491,6 +491,11 @@ void ZZZ::PAIR_fexp(FP12 *r)
     FP12_frob(r,&X);
     FP12_mul(r,&t0);
 
+	if (FP12_isunity(r))
+	{
+		FP12_zero(r);
+		return;
+	}
     /* Hard part of final exp - see Duquesne & Ghamman eprint 2015/192.pdf */
 #if PAIRING_FRIENDLY_ZZZ==BN
     FP12_pow(&t0,r,x); // t0=f^-u

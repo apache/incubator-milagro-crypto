@@ -48,3 +48,19 @@ swift -I. -L. -lamcl -led25519 -lnist256 -lgoldilocks -lbn254 -lbls383 -lbls24 -
 Also
 
 swift -I. -L. -lamcl TestNHS.swift
+
+(Alternatively compile using swiftc rather than swift. However to run the 
+programs the individual libraries need to be moved to /usr/lib (or somewhere 
+OS specific). Note that the regular swiftc compiler seems to be more robust 
+than the JIT swift compiler (there is a known bug in swift 5.0)
+
+So for example
+
+swiftc -I. -L. -lamcl -lbn254 -lbls383 -lbls24 -lbls48 TestBLS.swift 
+
+// sudo cp lib*.so /usr/lib/.
+
+./TestBLS
+
+)
+

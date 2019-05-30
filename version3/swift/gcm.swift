@@ -165,13 +165,13 @@ struct GCM {
     }
     
     /* Initialize GCM mode */
-    mutating func init_it(_ key: [UInt8],_ niv: Int,_ iv: [UInt8])
+    mutating func init_it(_ nk: Int,_ key: [UInt8],_ niv: Int,_ iv: [UInt8])
     { /* iv size niv is usually 12 bytes (96 bits). AES key size nk can be 16,24 or 32 bytes */
         var H=[UInt8](repeating: 0,count: 16)
         
         for i in 0 ..< 16 {H[i]=0; stateX[i]=0}
         
-        a.init_it(AES.ECB,key,iv)
+        a.init_it(AES.ECB,nk,key,iv)
         a.ecb_encrypt(&H);    /* E(K,0) */
         precompute(H)
         

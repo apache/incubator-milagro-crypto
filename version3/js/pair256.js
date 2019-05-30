@@ -335,7 +335,11 @@ var PAIR256 = function(ctx) {
             lv.copy(r);
             r.frob(f,8);
             r.mul(lv);
-
+			if (r.isunity())
+			{
+				r.zero();
+				return r;
+			}
             /* Hard part of final exp */
             // Ghamman & Fouotsa Method
             t7=new ctx.FP48(r); t7.usqr();

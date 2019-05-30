@@ -145,6 +145,16 @@ public final class FP12 {
 		c.zero();
 		type=ONE;
 	}
+
+/* set this=0 */
+	public void zero()
+	{
+		a.zero();
+		b.zero();
+		c.zero();
+		type=ZERO;
+	}
+
 /* this=conj(this) */
 	public void conj()
 	{
@@ -156,16 +166,24 @@ public final class FP12 {
 	public FP12(FP4 d)
 	{
 		a=new FP4(d);
-		b=new FP4(0);
-		c=new FP4(0);
+		b=new FP4();
+		c=new FP4();
 		type=SPARSER;
+	}
+
+	public FP12()
+	{
+		a=new FP4();
+		b=new FP4();
+		c=new FP4();
+		type=ZERO;
 	}
 
 	public FP12(int d)
 	{
 		a=new FP4(d);
-		b=new FP4(0);
-		c=new FP4(0);
+		b=new FP4();
+		c=new FP4();
 		if (d==1)
 			type=ONE;
 		else
@@ -194,7 +212,7 @@ public final class FP12 {
 		FP4 A=new FP4(a);
 		FP4 B=new FP4(c);
 		FP4 C=new FP4(b);
-		FP4 D=new FP4(0);
+		FP4 D=new FP4();
 
 		a.sqr();
 		D.copy(a); D.add(a);
@@ -279,9 +297,9 @@ public final class FP12 {
 	public void mul(FP12 y)
 	{
 		FP4 z0=new FP4(a);
-		FP4 z1=new FP4(0);
+		FP4 z1=new FP4();
 		FP4 z2=new FP4(b);
-		FP4 z3=new FP4(0);
+		FP4 z3=new FP4();
 		FP4 t0=new FP4(a);
 		FP4 t1=new FP4(y.a);
 
@@ -464,9 +482,9 @@ public final class FP12 {
 		if (y.type>=SPARSE)
 		{
 			FP4 z0=new FP4(a);
-			FP4 z1=new FP4(0);
-			FP4 z2=new FP4(0);
-			FP4 z3=new FP4(0);
+			FP4 z1=new FP4();
+			FP4 z2=new FP4();
+			FP4 z3=new FP4();
 			z0.mul(y.a);
 
 			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.M_TYPE)
@@ -566,7 +584,7 @@ public final class FP12 {
 				FP4 z0=new FP4(a);
 				FP4 z2=new FP4(b);
 				FP4 z3=new FP4(b);
-				FP4 t0=new FP4(0);
+				FP4 t0=new FP4();
 				FP4 t1=new FP4(y.a);
 				z0.mul(y.a);
 				z2.pmul(y.b.real());
@@ -600,11 +618,11 @@ public final class FP12 {
 			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.M_TYPE)
 			{
 				FP4 z0=new FP4(a);
-				FP4 z1=new FP4(0);
-				FP4 z2=new FP4(0);
-				FP4 z3=new FP4(0);
+				FP4 z1=new FP4();
+				FP4 z2=new FP4();
+				FP4 z3=new FP4();
 				FP4 t0=new FP4(a);
-				FP4 t1=new FP4(0);
+				FP4 t1=new FP4();
 		
 				z0.mul(y.a);
 				t0.add(b); t0.norm();
@@ -654,7 +672,7 @@ public final class FP12 {
 			FP4 z0=new FP4(a);
 			FP4 z2=new FP4(b);
 			FP4 z3=new FP4(b);
-			FP4 t0=new FP4(0);
+			FP4 t0=new FP4();
 			FP4 t1=new FP4(y.a);
 			z0.mul(y.a);
 			z2.pmul(y.b.real());
@@ -689,11 +707,11 @@ public final class FP12 {
 		if (type==CONFIG_CURVE.M_TYPE)
 		{
 			FP4 z0=new FP4(a);
-			FP4 z1=new FP4(0);
-			FP4 z2=new FP4(0);
-			FP4 z3=new FP4(0);
+			FP4 z1=new FP4();
+			FP4 z2=new FP4();
+			FP4 z3=new FP4();
 			FP4 t0=new FP4(a);
-			FP4 t1=new FP4(0);
+			FP4 t1=new FP4();
 		
 			z0.mul(y.a);
 			t0.add(b);
@@ -746,7 +764,7 @@ public final class FP12 {
 		FP4 f0=new FP4(a);
 		FP4 f1=new FP4(b);
 		FP4 f2=new FP4(a);
-		FP4 f3=new FP4(0);
+		FP4 f3=new FP4();
 
 		norm();
 		f0.sqr();
@@ -803,7 +821,7 @@ public final class FP12 {
 /* trace function */
 	public FP4 trace()
 	{
-		FP4 t=new FP4(0);
+		FP4 t=new FP4();
 		t.copy(a);
 		t.imul(3);
 		t.reduce();

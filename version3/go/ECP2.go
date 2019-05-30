@@ -31,9 +31,9 @@ type ECP2 struct {
 
 func NewECP2() *ECP2 {
 	E := new(ECP2)
-	E.x = NewFP2int(0)
+	E.x = NewFP2()
 	E.y = NewFP2int(1)
-	E.z = NewFP2int(0)
+	E.z = NewFP2()
 	return E
 }
 

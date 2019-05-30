@@ -95,6 +95,14 @@ void YYY::FP12_one(FP12 *w)
 	w->type=FP_UNITY;
 }
 
+void YYY::FP12_zero(FP12 *w)
+{
+    FP4_zero(&(w->a));
+    FP4_zero(&(w->b));
+    FP4_zero(&(w->c));
+	w->type=FP_ZERO;
+}
+
 /* return 1 if x==y, else 0 */
 /* SU= 16 */
 int YYY::FP12_equals(FP12 *x,FP12 *y)

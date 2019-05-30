@@ -832,37 +832,89 @@ impl ECP8 {
         T1[7].copy(&W);
         T1[7].add(&mut Q[3]); // Q[0]+Q[1]+Q[2]+Q[3]
 
-        // Use frobenius
-        let f = ECP8::frob_constants();
-        for i in 0..8 {
-            T2[i].copy(&T1[i]);
-            T2[i].frob(&f, 4);
-            T3[i].copy(&T2[i]);
-            T3[i].frob(&f, 4);
-            T4[i].copy(&T3[i]);
-            T4[i].frob(&f, 4);
-        }
+        T2[0].copy(&Q[4]);
+        W.copy(&T2[0]);
+        T2[1].copy(&W);
+        T2[1].add(&mut Q[5]); // Q[0]+Q[1]
+        T2[2].copy(&W);
+        T2[2].add(&mut Q[6]);
+        W.copy(&T2[1]); // Q[0]+Q[2]
+        T2[3].copy(&W);
+        T2[3].add(&mut Q[6]);
+        W.copy(&T2[0]); // Q[0]+Q[1]+Q[2]
+        T2[4].copy(&W);
+        T2[4].add(&mut Q[7]);
+        W.copy(&T2[1]); // Q[0]+Q[3]
+        T2[5].copy(&W);
+        T2[5].add(&mut Q[7]);
+        W.copy(&T2[2]); // Q[0]+Q[1]+Q[3]
+        T2[6].copy(&W);
+        T2[6].add(&mut Q[7]);
+        W.copy(&T2[3]); // Q[0]+Q[2]+Q[3]
+        T2[7].copy(&W);
+        T2[7].add(&mut Q[7]); // Q[0]+Q[1]+Q[2]+Q[3]
+
+        T3[0].copy(&Q[8]);
+        W.copy(&T3[0]);
+        T3[1].copy(&W);
+        T3[1].add(&mut Q[9]); // Q[0]+Q[1]
+        T3[2].copy(&W);
+        T3[2].add(&mut Q[10]);
+        W.copy(&T3[1]); // Q[0]+Q[2]
+        T3[3].copy(&W);
+        T3[3].add(&mut Q[10]);
+        W.copy(&T3[0]); // Q[0]+Q[1]+Q[2]
+        T3[4].copy(&W);
+        T3[4].add(&mut Q[11]);
+        W.copy(&T3[1]); // Q[0]+Q[3]
+        T3[5].copy(&W);
+        T3[5].add(&mut Q[11]);
+        W.copy(&T3[2]); // Q[0]+Q[1]+Q[3]
+        T3[6].copy(&W);
+        T3[6].add(&mut Q[11]);
+        W.copy(&T3[3]); // Q[0]+Q[2]+Q[3]
+        T3[7].copy(&W);
+        T3[7].add(&mut Q[11]); // Q[0]+Q[1]+Q[2]+Q[3]
+
+        T4[0].copy(&Q[12]);
+        W.copy(&T4[0]);
+        T4[1].copy(&W);
+        T4[1].add(&mut Q[13]); // Q[0]+Q[1]
+        T4[2].copy(&W);
+        T4[2].add(&mut Q[14]);
+        W.copy(&T4[1]); // Q[0]+Q[2]
+        T4[3].copy(&W);
+        T4[3].add(&mut Q[14]);
+        W.copy(&T4[0]); // Q[0]+Q[1]+Q[2]
+        T4[4].copy(&W);
+        T4[4].add(&mut Q[15]);
+        W.copy(&T4[1]); // Q[0]+Q[3]
+        T4[5].copy(&W);
+        T4[5].add(&mut Q[15]);
+        W.copy(&T4[2]); // Q[0]+Q[1]+Q[3]
+        T4[6].copy(&W);
+        T4[6].add(&mut Q[15]);
+        W.copy(&T4[3]); // Q[0]+Q[2]+Q[3]
+        T4[7].copy(&W);
+        T4[7].add(&mut Q[15]); // Q[0]+Q[1]+Q[2]+Q[3]
 
         // Make it odd
         let pb1 = 1 - t[0].parity();
         t[0].inc(pb1);
-        t[0].norm();
 
         let pb2 = 1 - t[4].parity();
         t[4].inc(pb2);
-        t[4].norm();
 
         let pb3 = 1 - t[8].parity();
         t[8].inc(pb3);
-        t[8].norm();
 
         let pb4 = 1 - t[12].parity();
         t[12].inc(pb4);
-        t[12].norm();
 
         // Number of bits
         mt.zero();
         for i in 0..16 {
+	    t[i].norm();
             mt.or(&t[i]);
         }
 

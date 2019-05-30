@@ -31,9 +31,9 @@ type ECP8 struct {
 
 func NewECP8() *ECP8 {
 	E := new(ECP8)
-	E.x = NewFP8int(0)
+	E.x = NewFP8()
 	E.y = NewFP8int(1)
-	E.z = NewFP8int(0)
+	E.z = NewFP8()
 	return E
 }
 

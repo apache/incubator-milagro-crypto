@@ -377,6 +377,11 @@ void PAIR_ZZZ_fexp(FP24_YYY *r)
 
     FP24_YYY_mul(r,&t0);
 
+	if (FP24_YYY_isunity(r))
+	{
+		FP24_YYY_zero(r);
+		return;
+	}
 // Ghamman & Fouotsa Method - (completely garbled in  https://eprint.iacr.org/2016/130)
 
 	FP24_YYY_usqr(&t7,r);			// t7=f^2

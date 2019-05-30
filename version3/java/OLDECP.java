@@ -54,9 +54,9 @@ public final class ECP {
 /* Constructor - set to O */
 	public ECP() {
 		INF=true;
-		x=new FP(0);
+		x=new FP();
 		y=new FP(1);
-		z=new FP(0);
+		z=new FP();
 	}
 /* test for O point-at-infinity */
 	public boolean is_infinity() {
@@ -142,8 +142,8 @@ public final class ECP {
 		if (is_infinity() && Q.is_infinity()) return true;
 		if (is_infinity() || Q.is_infinity()) return false;
 
-		FP a=new FP(0);                                        // Edits made
-		FP b=new FP(0);
+		FP a=new FP();                                        // Edits made
+		FP b=new FP();
 		a.copy(x); a.mul(Q.z); 
 		b.copy(Q.x); b.mul(z); 
 		if (!a.equals(b)) return false;
@@ -221,7 +221,7 @@ public final class ECP {
 		}
 		if (CURVETYPE==MONTGOMERY)
 		{ // x^3+Ax^2+x
-			FP x3=new FP(0);
+			FP x3=new FP();
 			x3.copy(r);
 			x3.mul(x);
 			r.imul(ROM.CURVE_A);
@@ -256,7 +256,7 @@ public final class ECP {
 	public ECP(BIG ix,int s) {
 		x=new FP(ix);
 		FP rhs=RHS(x);
-		y=new FP(0);
+		y=new FP();
 		z=new FP(1);
 		if (rhs.jacobi()==1)
 		{
@@ -272,7 +272,7 @@ public final class ECP {
 	public ECP(BIG ix) {
 		x=new FP(ix);
 		FP rhs=RHS(x);
-		y=new FP(0);
+		y=new FP();
 		z=new FP(1);
 		if (rhs.jacobi()==1)
 		{
@@ -423,9 +423,9 @@ public final class ECP {
 				FP t2=new FP(z);
 				FP t3=new FP(x);
 				FP z3=new FP(z);
-				FP y3=new FP(0);
-				FP x3=new FP(0);
-				FP b=new FP(0);
+				FP y3=new FP();
+				FP x3=new FP();
+				FP b=new FP();
 
 				if (ROM.CURVE_B_I==0)
 					b.copy(new FP(new BIG(ROM.CURVE_B)));
@@ -491,7 +491,7 @@ public final class ECP {
 			FP C=new FP(x);
 			FP D=new FP(y);
 			FP H=new FP(z);
-			FP J=new FP(0);
+			FP J=new FP();
 
 			x.mul(y); x.add(x); x.norm();
 			C.sqr();
@@ -517,9 +517,9 @@ public final class ECP {
 		{
 			FP A=new FP(x);
 			FP B=new FP(x);		
-			FP AA=new FP(0);
-			FP BB=new FP(0);
-			FP C=new FP(0);
+			FP AA=new FP();
+			FP BB=new FP();
+			FP C=new FP();
 
 			A.add(z); A.norm();
 			AA.copy(A); AA.sqr();
@@ -609,10 +609,10 @@ public final class ECP {
 				FP t2=new FP(z);
 				FP t3=new FP(x);
 				FP t4=new FP(Q.x);
-				FP z3=new FP(0);
+				FP z3=new FP();
 				FP y3=new FP(Q.x);
 				FP x3=new FP(Q.y);
-				FP b=new FP(0);
+				FP b=new FP();
 
 				if (ROM.CURVE_B_I==0)
 					b.copy(new FP(new BIG(ROM.CURVE_B)));
@@ -689,12 +689,12 @@ public final class ECP {
 		{
 //System.out.println("Into add");
 			FP A=new FP(z);
-			FP B=new FP(0);
+			FP B=new FP();
 			FP C=new FP(x);
 			FP D=new FP(y);
-			FP E=new FP(0);
-			FP F=new FP(0);
-			FP G=new FP(0);
+			FP E=new FP();
+			FP F=new FP();
+			FP G=new FP();
 
 			A.mul(Q.z);   
 			B.copy(A); B.sqr();    
@@ -749,8 +749,8 @@ public final class ECP {
 		FP B=new FP(x);
 		FP C=new FP(Q.x);
 		FP D=new FP(Q.x);
-		FP DA=new FP(0);
-		FP CB=new FP(0);	
+		FP DA=new FP();
+		FP CB=new FP();	
 			
 		A.add(z); 
 		B.sub(z); 

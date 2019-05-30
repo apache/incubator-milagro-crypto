@@ -33,9 +33,9 @@ public struct ECP8 {
     /* Constructor - set self=O */
     init()
     {
-        x=FP8(0)
+        x=FP8()
         y=FP8(1)
-        z=FP8(0)
+        z=FP8()
     }
     /* Test self=O? */
     public func is_infinity() -> Bool

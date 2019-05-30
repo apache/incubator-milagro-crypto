@@ -42,6 +42,13 @@ extern void FP48_YYY_copy(FP48_YYY *x,FP48_YYY *y);
 	@param x FP48 instance to be set to one
  */
 extern void FP48_YYY_one(FP48_YYY *x);
+
+/**	@brief Set FP48 to zero
+ *
+	@param x FP48 instance to be set to zero
+ */
+extern void FP48_YYY_zero(FP48_YYY *x);
+
 /**	@brief Tests for equality of two FP48s
  *
 	@param x FP48 instance to be compared

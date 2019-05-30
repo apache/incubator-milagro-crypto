@@ -68,6 +68,13 @@ extern void FP12_YYY_copy(FP12_YYY *x,FP12_YYY *y);
 	@param x FP12 instance to be set to one
  */
 extern void FP12_YYY_one(FP12_YYY *x);
+
+/**	@brief Set FP12 to zero
+ *
+	@param x FP12 instance to be set to zero
+ */
+extern void FP12_YYY_zero(FP12_YYY *x);
+
 /**	@brief Tests for equality of two FP12s
  *
 	@param x FP12 instance to be compared

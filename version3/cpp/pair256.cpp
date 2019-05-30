@@ -384,7 +384,11 @@ void ZZZ::PAIR_fexp(FP48 *r)
 
     FP48_mul(r,&t7);
 
-
+	if (FP48_isunity(r))
+	{
+		FP48_zero(r);
+		return;
+	}
 // f^e0.f^e1^p.f^e2^p^2.. .. f^e14^p^14.f^e15^p^15
 
 	FP48_usqr(&t7,r);			// t7=f^2

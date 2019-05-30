@@ -341,7 +341,10 @@ pub fn fexp(m: &FP24) -> FP24 {
     lv.copy(&r);
     r.frob(&f, 4);
     r.mul(&lv);
-
+    if r.isunity() {
+	r.zero();
+	return r;
+    }
     /* Hard part of final exp */
     // Ghamman & Fouotsa Method
 

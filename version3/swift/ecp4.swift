@@ -33,9 +33,9 @@ public struct ECP4 {
     /* Constructor - set self=O */
     init()
     {
-        x=FP4(0)
+        x=FP4()
         y=FP4(1)
-        z=FP4(0)
+        z=FP4()
     }
     /* Test self=O? */
     public func is_infinity() -> Bool

@@ -33,10 +33,16 @@ public struct FP8 {
     private var b:FP4
 
     /* constructors */
+    init()
+    {
+        a=FP4()
+        b=FP4()
+    }
+
     init(_ c:Int)
     {
         a=FP4(c)
-        b=FP4(0)
+        b=FP4()
     }
     
     init(_ x:FP8)
@@ -54,7 +60,7 @@ public struct FP8 {
     init(_ c:FP4)
     {
         a=FP4(c)
-        b=FP4(0)
+        b=FP4()
     }
     /* reduce all components of this mod Modulus */
     mutating func reduce()
@@ -152,7 +158,7 @@ public struct FP8 {
     {
         norm()
         var m=FP4(a)
-        var t=FP4(0)
+        var t=FP4()
         m.add(b)
         m.neg()
         t.copy(m); t.add(b)
@@ -258,7 +264,7 @@ public struct FP8 {
     {
         var t1=FP4(a)
         var t2=FP4(b)
-        var t3=FP4(0)
+        var t3=FP4()
         var t4=FP4(b)
     
         t1.mul(y.a)
@@ -396,8 +402,8 @@ public struct FP8 {
         var b=FP8(self)
         var c=FP8(b)
         c.xtr_D()
-        var t=FP8(0)
-        var r=FP8(0)
+        var t=FP8()
+        var r=FP8()
         var sf=FP8(self)
     
         let par=n.parity()
@@ -450,8 +456,8 @@ public struct FP8 {
         var cv=FP8(self)
         var cumv=FP8(ckml)
         var cum2v=FP8(ckm2l)
-        var r=FP8(0)
-        var t=FP8(0)
+        var r=FP8()
+        var t=FP8()
     
         var f2:Int=0
         while d.parity()==0 && e.parity()==0

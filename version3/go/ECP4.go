@@ -31,9 +31,9 @@ type ECP4 struct {
 
 func NewECP4() *ECP4 {
 	E := new(ECP4)
-	E.x = NewFP4int(0)
+	E.x = NewFP4()
 	E.y = NewFP4int(1)
-	E.z = NewFP4int(0)
+	E.z = NewFP4()
 	return E
 }
 

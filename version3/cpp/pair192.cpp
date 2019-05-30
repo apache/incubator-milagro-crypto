@@ -388,6 +388,11 @@ void ZZZ::PAIR_fexp(FP24 *r)
 
     FP24_mul(r,&t0);
 
+	if (FP24_isunity(r))
+	{
+		FP24_zero(r);
+		return;
+	}
 // Ghamman & Fouotsa Method - (completely garbled in  https://eprint.iacr.org/2016/130)
 
 	FP24_usqr(&t7,r);			// t7=f^2

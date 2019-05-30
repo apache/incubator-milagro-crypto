@@ -328,13 +328,28 @@ func (A *AES) Init(m int, nk int, key []byte, iv []byte) bool {
 	for i := 0; i < nk; i++ {
 		A.fkey[i] = CipherKey[i]
 	}
+
 	j = nk
 	for k := 0; j < N; k++ {
 		A.fkey[j] = A.fkey[j-nk] ^ aes_SubByte(aes_ROTL24(A.fkey[j-1])) ^ uint32(aes_rco[k])
-		for i := 1; i < nk && (i+j) < N; i++ {
-			A.fkey[i+j] = A.fkey[i+j-nk] ^ A.fkey[i+j-1]
+		if nk<=6 {
+			for i := 1; i < nk && (i+j) < N; i++ {
+				A.fkey[i+j] = A.fkey[i+j-nk] ^ A.fkey[i+j-1]
+			}
+		} else {
+			i:=0
+			for i = 1; i < 4 && (i + j) < N; i++ {
+				A.fkey[i + j] = A.fkey[i + j - nk] ^ A.fkey[i + j - 1];
+			}
+			if (j + 4) < N {
+				A.fkey[j + 4] = A.fkey[j + 4 - nk] ^ aes_SubByte(A.fkey[j + 3]);
+			}
+			for i = 5; i < nk && (i + j) < N; i++ {
+				A.fkey[i + j] = A.fkey[i + j - nk] ^ A.fkey[i + j - 1];
+			}
 		}
 		j += nk
+		
 	}
 
 	/* now for the expanded decrypt key in reverse order */

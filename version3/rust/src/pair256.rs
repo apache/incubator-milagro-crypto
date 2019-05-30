@@ -339,7 +339,10 @@ pub fn fexp(m: &FP48) -> FP48 {
     lv.copy(&r);
     r.frob(&f, 8);
     r.mul(&lv);
-
+    if r.isunity() {
+	r.zero();
+	return r;
+    }
     /* Hard part of final exp */
     // Ghamman & Fouotsa Method
 

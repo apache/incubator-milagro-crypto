@@ -28,9 +28,9 @@ public final class ECP4 {
 
 /* Constructor - set this=O */
 	public ECP4() {
-		x=new FP4(0);
+		x=new FP4();
 		y=new FP4(1);
-		z=new FP4(0);
+		z=new FP4();
 	}
 
     public ECP4(ECP4 e) {

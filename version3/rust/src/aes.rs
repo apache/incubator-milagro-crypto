@@ -325,17 +325,37 @@ impl AES {
         for i in 0..nk {
             self.fkey[i] = cipherkey[i]
         }
+
         j = nk;
         let mut k = 0;
         while j < n {
             self.fkey[j] =
                 self.fkey[j - nk] ^ AES::subbyte(AES::rotl24(self.fkey[j - 1])) ^ (RCO[k] as u32);
-            for i in 1..nk {
-                if (i + j) >= n {
-                    break;
-                }
-                self.fkey[i + j] = self.fkey[i + j - nk] ^ self.fkey[i + j - 1];
-            }
+            if nk<=6 { 
+		for i in 1..nk {
+			if (i + j) >= n {
+				break;
+			}
+			self.fkey[i + j] = self.fkey[i + j - nk] ^ self.fkey[i + j - 1];
+		}
+	    } else {
+		for i in 1..4  {
+			if (i + j) >= n {
+				break;
+			}
+			self.fkey[i + j] = self.fkey[i + j - nk] ^ self.fkey[i + j - 1];
+		}
+		
+		if (j + 4) < n {
+			self.fkey[j + 4] = self.fkey[j + 4 - nk] ^ AES::subbyte(self.fkey[j + 3]);
+		}
+		for i in 5..nk {
+			if (i + j) >= n {
+				break;
+			}
+			self.fkey[i + j] = self.fkey[i + j - nk] ^ self.fkey[i + j - 1];
+		}	        
+	    }
             j += nk;
             k += 1;
         }

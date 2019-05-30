@@ -144,6 +144,15 @@ public final class FP24 {
 		c.zero();
 		type=ONE;
 	}
+/* set this=0 */
+	public void zero()
+	{
+		a.zero();
+		b.zero();
+		c.zero();
+		type=ZERO;
+	}
+
 /* this=conj(this) */
 	public void conj()
 	{
@@ -155,16 +164,24 @@ public final class FP24 {
 	public FP24(FP8 d)
 	{
 		a=new FP8(d);
-		b=new FP8(0);
-		c=new FP8(0);
+		b=new FP8();
+		c=new FP8();
 		type=SPARSER;
+	}
+
+	public FP24()
+	{
+		a=new FP8();
+		b=new FP8();
+		c=new FP8();
+		type=ZERO;
 	}
 
 	public FP24(int d)
 	{
 		a=new FP8(d);
-		b=new FP8(0);
-		c=new FP8(0);
+		b=new FP8();
+		c=new FP8();
 		if (d==1)
 			type=ONE;
 		else
@@ -193,7 +210,7 @@ public final class FP24 {
 		FP8 A=new FP8(a);
 		FP8 B=new FP8(c);
 		FP8 C=new FP8(b);
-		FP8 D=new FP8(0);
+		FP8 D=new FP8();
 
 		a.sqr();
 		D.copy(a); D.add(a);
@@ -278,9 +295,9 @@ public final class FP24 {
 	public void mul(FP24 y)
 	{
 		FP8 z0=new FP8(a);
-		FP8 z1=new FP8(0);
+		FP8 z1=new FP8();
 		FP8 z2=new FP8(b);
-		FP8 z3=new FP8(0);
+		FP8 z3=new FP8();
 		FP8 t0=new FP8(a);
 		FP8 t1=new FP8(y.a);
 
@@ -464,9 +481,9 @@ public final class FP24 {
 		if (y.type>=SPARSE)
 		{
 			FP8 z0=new FP8(a);
-			FP8 z1=new FP8(0);
-			FP8 z2=new FP8(0);
-			FP8 z3=new FP8(0);
+			FP8 z1=new FP8();
+			FP8 z2=new FP8();
+			FP8 z3=new FP8();
 			z0.mul(y.a);
 
 			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.M_TYPE)
@@ -566,7 +583,7 @@ public final class FP24 {
 				FP8 z0=new FP8(a);
 				FP8 z2=new FP8(b);
 				FP8 z3=new FP8(b);
-				FP8 t0=new FP8(0);
+				FP8 t0=new FP8();
 				FP8 t1=new FP8(y.a);
 				z0.mul(y.a);
 				z2.pmul(y.b.real());
@@ -600,11 +617,11 @@ public final class FP24 {
 			if (CONFIG_CURVE.SEXTIC_TWIST==CONFIG_CURVE.M_TYPE)
 			{
 				FP8 z0=new FP8(a);
-				FP8 z1=new FP8(0);
-				FP8 z2=new FP8(0);
-				FP8 z3=new FP8(0);
+				FP8 z1=new FP8();
+				FP8 z2=new FP8();
+				FP8 z3=new FP8();
 				FP8 t0=new FP8(a);
-				FP8 t1=new FP8(0);
+				FP8 t1=new FP8();
 		
 				z0.mul(y.a);
 				t0.add(b); t0.norm();
@@ -652,7 +669,7 @@ public final class FP24 {
 		FP8 f0=new FP8(a);
 		FP8 f1=new FP8(b);
 		FP8 f2=new FP8(a);
-		FP8 f3=new FP8(0);
+		FP8 f3=new FP8();
 
 		//norm();
 		f0.sqr();
@@ -714,7 +731,7 @@ public final class FP24 {
 /* trace function */
 	public FP8 trace()
 	{
-		FP8 t=new FP8(0);
+		FP8 t=new FP8();
 		t.copy(a);
 		t.imul(3);
 		t.reduce();
@@ -943,8 +960,8 @@ public final class FP24 {
 
 	public FP8 compow(BIG e,BIG r)
 	{
-		FP24 g1=new FP24(0);
-		FP24 g2=new FP24(0);
+		FP24 g1=new FP24();
+		FP24 g2=new FP24();
 		FP2 f=new FP2(new BIG(ROM.Fra),new BIG(ROM.Frb));
 		BIG q=new BIG(ROM.Modulus);
 
@@ -992,7 +1009,7 @@ public final class FP24 {
 		FP24 [] g1=new FP24[8];
 		FP24 [] g2=new FP24[8];
 		FP24 r=new FP24(1);
-		FP24 p=new FP24(0);
+		FP24 p=new FP24();
 		BIG [] t=new BIG[8];
 		BIG mt=new BIG(0);
 		byte[] w1=new byte[BIG.NLEN*CONFIG_BIG.BASEBITS+1];

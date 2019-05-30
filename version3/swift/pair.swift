@@ -71,9 +71,9 @@ public struct PAIR {
         a=FP4(YZ,ZZ)          // -2YZ.Ys | 3b.Z^2-Y^2 | 3X^2.Xs 
         if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.D_TYPE {             
             b=FP4(XX)            // L(0,1) | L(0,0) | L(1,0)
-            c=FP4(0)
+            c=FP4()
         } else { 
-            b=FP4(0)
+            b=FP4()
             c=FP4(XX); c.times_i()
         }        
         A.dbl()
@@ -118,9 +118,9 @@ public struct PAIR {
         a=FP4(X1,T2)       // (X1-Z1.X2).Ys  |  (Y1-Z1.Y2).X2 - (X1-Z1.X2).Y2  | - (Y1-Z1.Y2).Xs
         if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.D_TYPE {              
             b=FP4(Y1)
-            c=FP4(0)
+            c=FP4()
         } else {
-            b=FP4(0)
+            b=FP4()
             c=FP4(Y1); c.times_i()
          }  
         A.add(B)
@@ -423,7 +423,10 @@ public struct PAIR {
         r.frob(f)
         r.frob(f)
         r.mul(lv)
-        
+        if r.isunity() {
+		r.zero()
+		return r
+	}        
     // Hard part of final exp
 	if CONFIG_CURVE.CURVE_PAIRING_TYPE == CONFIG_CURVE.BN {
 		lv.copy(r)
@@ -737,11 +740,11 @@ public struct PAIR {
             var t=BIG(0)
         
             var u=gs(e)
-            g.append(FP12(0))
+            g.append(FP12())
             g[0].copy(d);
             for i in 1 ..< 4
             {
-                g.append(FP12(0)); g[i].copy(g[i-1])
+                g.append(FP12()); g[i].copy(g[i-1])
 				g[i].frob(f)
             }
             for i in 0 ..< 4

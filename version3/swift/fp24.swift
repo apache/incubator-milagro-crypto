@@ -69,16 +69,24 @@ public struct FP24
     init(_ d:FP8)
     {
         a=FP8(d)
-        b=FP8(0)
-        c=FP8(0)
+        b=FP8()
+        c=FP8()
         stype=FP24.SPARSER        
     }
     
+    init()
+    {
+        a=FP8()
+        b=FP8()
+        c=FP8()
+        stype=FP24.ZERO      
+    }
+
     init(_ d:Int)
     {
         a=FP8(d)
-        b=FP8(0)
-        c=FP8(0)
+        b=FP8()
+        c=FP8()
         if (d==1) {stype=FP24.ONE}
         else {stype=FP24.SPARSER}        
     }
@@ -185,6 +193,16 @@ public struct FP24
         c.zero()
        stype=FP24.ONE        
     }
+
+    /* set self=0 */
+    mutating func zero()
+    {
+        a.zero()
+        b.zero()
+        c.zero()
+        stype=FP24.ZERO
+    }
+
     /* self=conj(self) */
     mutating func conj()
     {
@@ -199,7 +217,7 @@ public struct FP24
         var A=FP8(a)
         var B=FP8(c)
         var C=FP8(b)
-        var D=FP8(0)
+        var D=FP8()
     
         a.sqr()
         D.copy(a); D.add(a)
@@ -282,9 +300,9 @@ public struct FP24
     mutating func mul(_ y:FP24)
     {
         var z0=FP8(a)
-        var z1=FP8(0)
+        var z1=FP8()
         var z2=FP8(b)
-        var z3=FP8(0)
+        var z3=FP8()
         var t0=FP8(a)
         var t1=FP8(y.a)
     
@@ -351,15 +369,15 @@ public struct FP24
         }
         if y.stype>=FP24.SPARSE {
             var z0=FP8(a)
-            var z1=FP8(0)
-            var z2=FP8(0)
-            var z3=FP8(0)
+            var z1=FP8()
+            var z2=FP8()
+            var z3=FP8()
             z0.mul(y.a)
 
             if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.M_TYPE {  
                 if y.stype==FP24.SPARSE || stype==FP24.SPARSE {
-                    var ga=FP4(0)
-                    var gb=FP4(0)
+                    var ga=FP4()
+                    var gb=FP4()
 
                     gb.copy(b.getb())
                     gb.mul(y.b.getb())
@@ -410,8 +428,8 @@ public struct FP24
 
             if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.D_TYPE {  
                 if y.stype==FP24.SPARSE || stype==FP24.SPARSE {
-                    var ga=FP4(0)
-                    var gb=FP4(0)
+                    var ga=FP4()
+                    var gb=FP4()
 
                     ga.copy(c.geta())
                     ga.mul(y.c.geta())
@@ -451,7 +469,7 @@ public struct FP24
                 var z0=FP8(a)
                 var z2=FP8(b)
                 var z3=FP8(b)
-                var t0=FP8(0)
+                var t0=FP8()
                 var t1=FP8(y.a)
                 z0.mul(y.a)
                 z2.pmul(y.b.real())
@@ -484,11 +502,11 @@ public struct FP24
             }
             if CONFIG_CURVE.SEXTIC_TWIST == CONFIG_CURVE.M_TYPE {
                 var z0=FP8(a)
-                var z1=FP8(0)
-                var z2=FP8(0)
-                var z3=FP8(0)
+                var z1=FP8()
+                var z2=FP8()
+                var z3=FP8()
                 var t0=FP8(a)
-                var t1=FP8(0)
+                var t1=FP8()
         
                 z0.mul(y.a)
                 t0.add(b); t0.norm()
@@ -643,7 +661,7 @@ public struct FP24
         var f0=FP8(a)
         var f1=FP8(b)
         var f2=FP8(a)
-        var f3=FP8(0)
+        var f3=FP8()
     
         //norm()
         f0.sqr()
@@ -700,7 +718,7 @@ public struct FP24
     /* trace function */
     func trace() -> FP8
     {
-        var t=FP8(0)
+        var t=FP8()
         t.copy(a)
         t.imul(3)
         t.reduce()
@@ -978,12 +996,12 @@ public struct FP24
         var g2=[FP24]()        
         
         for _ in 0 ..< 8 {
-            g1.append(FP24(0))
-            g2.append(FP24(0))            
+            g1.append(FP24())
+            g2.append(FP24())            
         }
         
-        var r=FP24(0)
-        var p=FP24(0)
+        var r=FP24()
+        var p=FP24()
         
         var t=[BIG]()
         for i in 0 ..< 8 {

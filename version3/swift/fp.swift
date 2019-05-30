@@ -419,7 +419,7 @@ public struct FP {
         var bw=0; var w=1; while w<c {w*=2; bw+=1}
         var k=w-c
 
-        var i=10; var key=FP(0)
+        var i=10; var key=FP()
 
         if k != 0 {
             while ac[i]>k {i-=1}
@@ -440,7 +440,7 @@ public struct FP {
 
         var j=3; var m=8
         let nw=n-bw
-        var t=FP(0)
+        var t=FP()
 
         while 2*m<nw {
             t.copy(xp[j]); j+=1
