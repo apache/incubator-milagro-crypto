@@ -135,6 +135,15 @@
         }
         return 0;
     }
+    /* set x = x mod 2^m */
+    mutating func mod2m(_ m: UInt)
+    {
+        let wd=Int(m/CONFIG_BIG.BASEBITS)
+        let bt=m%CONFIG_BIG.BASEBITS
+        let msk=Chunk(1<<bt)-1;
+        w[wd]&=msk;
+        for i in wd+1 ..< CONFIG_BIG.DNLEN {w[i]=0}
+    }
     /* normalise BIG - force all digits < 2^BASEBITS */
     mutating func norm()
     {

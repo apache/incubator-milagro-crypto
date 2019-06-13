@@ -26,27 +26,32 @@ var FP12 = function(ctx) {
 
     /* general purpose constructor */
     var FP12 = function(d, e, f) {
-		if (!isNaN(d))
-		{
-			this.a = new ctx.FP4(d);
-			this.b = new ctx.FP4(0);
-			this.c = new ctx.FP4(0);
-			if (d==1) this.stype=ctx.FP.ONE;
-			else this.stype=ctx.FP.SPARSER;
-		}
-		else
-		{
-			if (d instanceof FP12) {
-				this.a = new ctx.FP4(d.a);
-				this.b = new ctx.FP4(d.b);
-				this.c = new ctx.FP4(d.c);
-			} else {
-				this.a = new ctx.FP4(d);
-				this.b = new ctx.FP4(e);
-				this.c = new ctx.FP4(f);
-			}
-			this.stype=ctx.FP.DENSE;
-		}
+        if (d instanceof FP12) {
+            // ignore e, d, which are assumed be undefined in this case
+            this.a = new ctx.FP4(d.a);
+            this.b = new ctx.FP4(d.b);
+            this.c = new ctx.FP4(d.c);
+            this.stype=ctx.FP.DENSE;
+        } else if (typeof d !== "undefined" && typeof e !== "undefined" && typeof f !== "undefined") {
+            // all 3 components set to (can be anything that the FP4 constructor supports)
+            this.a = new ctx.FP4(d);
+            this.b = new ctx.FP4(e);
+            this.c = new ctx.FP4(f);
+            this.stype=ctx.FP.DENSE;
+        } else if (typeof d === "number") {
+            // first component is number
+            this.a = new ctx.FP4(d);
+            this.b = new ctx.FP4(0);
+            this.c = new ctx.FP4(0);
+            if (d==1) this.stype=ctx.FP.ONE;
+            else this.stype=ctx.FP.SPARSER;
+        } else {
+            // other cases, including `new ctx.FP12()` fall back to zero
+            this.a = new ctx.FP4(0);
+            this.b = new ctx.FP4(0);
+            this.c = new ctx.FP4(0);
+            this.stype=ctx.FP.ZERO;
+        }
     };
 
     FP12.prototype = {

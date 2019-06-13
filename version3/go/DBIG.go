@@ -169,6 +169,17 @@ func (r *DBIG) shr(k uint) {
 	}
 }
 
+/* set x = x mod 2^m */
+func (r *BIG) mod2m(m uint) {
+	wd := int(m / BASEBITS)
+	bt := m % BASEBITS
+	msk := (Chunk(1) << bt) - 1
+	r.w[wd] &= msk
+	for i := wd + 1; i < DNLEN; i++ {
+		r.w[i] = 0
+	}
+}
+
 /* reduces this DBIG mod a BIG, and returns the BIG */
 func (r *DBIG) mod(c *BIG) *BIG {
 	r.norm()

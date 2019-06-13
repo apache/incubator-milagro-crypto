@@ -226,6 +226,16 @@ public class DBIG {
 		return new BIG(this);
 	}
 
+	/* set x = x mod 2^m */
+	public void mod2m(int m)
+	{
+		int i,wd,bt;
+		wd=m/CONFIG_BIG.BASEBITS;
+		bt=m%CONFIG_BIG.BASEBITS;
+		w[wd]&=((cast_to_chunk(1)<<bt)-1);
+		for (i=wd+1;i<BIG.DNLEN;i++) w[i]=0;
+	}
+
 /* return this/c */
 	public BIG div(BIG c)
 	{
