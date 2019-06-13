@@ -1439,6 +1439,20 @@ void XXX::BIG_mod2m(BIG x,int m)
     for (i=wd+1; i<NLEN_XXX; i++) x[i]=0;
 }
 
+/* set x = x mod 2^m */
+void XXX::BIG_dmod2m(DBIG x,int m)
+{
+    int i,wd,bt;
+    chunk msk;
+	BIG_norm(x);
+
+    wd=m/BASEBITS_XXX;
+    bt=m%BASEBITS_XXX;
+    msk=((chunk)1<<bt)-1;
+    x[wd]&=msk;
+    for (i=wd+1; i<DNLEN_XXX; i++) x[i]=0;
+}
+
 // new
 /* Convert to DBIG number from byte array of given length */
 void XXX::BIG_dfromBytesLen(DBIG a,char *b,int s)

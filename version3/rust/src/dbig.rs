@@ -22,8 +22,13 @@ use super::big;
 use super::big::BIG;
 use super::super::arch::Chunk;
 
+#[derive(Copy)]
 pub struct DBIG {
     pub w: [Chunk; big::DNLEN],
+}
+
+impl Clone for DBIG {
+    fn clone(&self) -> DBIG { *self }
 }
 
 impl DBIG {
@@ -241,6 +246,17 @@ impl DBIG {
             k -= 1;
         }
         return a;
+    }
+
+    /* set x = x mod 2^m */
+    pub fn mod2m(&mut self, m: usize) {
+        let wd = m / big::BASEBITS;
+        let bt = m % big::BASEBITS;
+        let msk = (1 << bt) - 1;
+        self.w[wd] &= msk;
+        for i in wd + 1..big::DNLEN {
+            self.w[i] = 0
+        }
     }
 
     /* return number of bits */

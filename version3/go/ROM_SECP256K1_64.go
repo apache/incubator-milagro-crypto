@@ -19,7 +19,7 @@ under the License.
 
 /* Fixed Data in ROM - Field and Curve parameters */
 
-package NIST256
+package SECP256K1
 
 // Base Bits= 56
 

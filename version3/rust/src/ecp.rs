@@ -192,20 +192,11 @@ impl ECP {
 
     /* test for O point-at-infinity */
     pub fn is_infinity(&self) -> bool {
-        let xx = FP::new_copy(&self.x);
-        let zz = FP::new_copy(&self.z);
-
-        if CURVETYPE == CurveType::EDWARDS {
-            let yy = FP::new_copy(&self.y);
-            return xx.iszilch() && yy.equals(&zz);
+        match CURVETYPE {
+            CurveType::EDWARDS=> self.x.iszilch() && self.y.equals(&self.z),
+            CurveType::WEIERSTRASS => self.x.iszilch() && self.z.iszilch(),
+            CurveType::MONTGOMERY => self.z.iszilch(),
         }
-        if CURVETYPE == CurveType::WEIERSTRASS {
-            return xx.iszilch() && zz.iszilch();
-        }
-        if CURVETYPE == CurveType::MONTGOMERY {
-            return zz.iszilch();
-        }
-        return true;
     }
 
     /* Conditional swap of P and Q dependant on d */
@@ -1202,6 +1193,7 @@ impl ECP {
         return S;
     }
 
+    // Multiply itself by cofactor of the curve
     pub fn cfp(&mut self) {
         let cf = rom::CURVE_COF_I;
         if cf == 1 {
@@ -1223,6 +1215,7 @@ impl ECP {
         self.copy(&P);
     }
 
+    // Map a given byte slice to a point on the curve. The byte slice should be atleast the size of the modulus
     #[allow(non_snake_case)]
     pub fn mapit(h: &[u8]) -> ECP {
         let mut q = BIG::new_ints(&rom::MODULUS);

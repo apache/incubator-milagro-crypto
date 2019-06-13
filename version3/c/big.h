@@ -553,6 +553,14 @@ extern void BIG_XXX_invmodp(BIG_XXX x,BIG_XXX y,BIG_XXX n);
 */
 extern void BIG_XXX_mod2m(BIG_XXX x,int m);
 
+/** @brief Calculate x=x mod 2^m
+ *
+	Truncation
+	@param x DBIG number, on reduced mod 2^m
+	@param m new truncated size
+*/
+extern void BIG_XXX_dmod2m(DBIG_XXX x,int m);
+
 /**	@brief Calculates a*b+c+*d
  *
 	Calculate partial product of a.b, add in carry c, and add total to d
