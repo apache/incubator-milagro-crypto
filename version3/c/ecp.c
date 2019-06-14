@@ -252,7 +252,7 @@ int ECP_ZZZ_get(BIG_XXX x,ECP_ZZZ *P)
     ECP_ZZZ_copy(&W,P);
     ECP_ZZZ_affine(&W);
     if (ECP_ZZZ_isinf(&W)) return -1;
-    FP_YYY_redc(x,&(W));
+    FP_YYY_redc(x,&(W.x));
     return 0;
 }
 
