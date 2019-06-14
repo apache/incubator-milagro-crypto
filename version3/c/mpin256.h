@@ -18,7 +18,7 @@ under the License.
 */
 
 /**
- * @file mpin.h
+ * @file mpin_ZZZ.h
  * @author Mike Scott and Kealan McCusker
  * @date 2nd June 2015
  * @brief M-Pin Header file

@@ -128,9 +128,9 @@ void ECP2_ZZZ_affine(ECP2_ZZZ *P)
 /* SU= 16 */
 int ECP2_ZZZ_get(FP2_YYY *x,FP2_YYY *y,ECP2_ZZZ *P)
 {
-	ECP2_ZZZ W;
-	ECP2_ZZZ_copy(&W,P);
-	ECP2_ZZZ_affine(&W);
+    ECP2_ZZZ W;
+    ECP2_ZZZ_copy(&W,P);
+    ECP2_ZZZ_affine(&W);
     if (ECP2_ZZZ_isinf(&W)) return -1;
     FP2_YYY_copy(y,&(W.y));
     FP2_YYY_copy(x,&(W.x));
@@ -259,7 +259,7 @@ int ECP2_ZZZ_set(ECP2_ZZZ *P,FP2_YYY *x,FP2_YYY *y)
 
     if (!FP2_YYY_equals(&y2,&rhs))
     {
-		ECP2_ZZZ_inf(P);
+        ECP2_ZZZ_inf(P);
         return 0;
     }
 
@@ -279,7 +279,7 @@ int ECP2_ZZZ_setx(ECP2_ZZZ *P,FP2_YYY *x)
 
     if (!FP2_YYY_sqrt(&y,&y))
     {
-		ECP2_ZZZ_inf(P);
+        ECP2_ZZZ_inf(P);
         return 0;
     }
 
@@ -444,9 +444,9 @@ int ECP2_ZZZ_add(ECP2_ZZZ *P,ECP2_ZZZ *Q)
 /* SU= 16 */
 void ECP2_ZZZ_sub(ECP2_ZZZ *P,ECP2_ZZZ *Q)
 {
-	ECP2_ZZZ NQ;
-	ECP2_ZZZ_copy(&NQ,Q);
-	ECP2_ZZZ_neg(&NQ);
+    ECP2_ZZZ NQ;
+    ECP2_ZZZ_copy(&NQ,Q);
+    ECP2_ZZZ_neg(&NQ);
     ECP2_ZZZ_add(P,&NQ);
 }
 
@@ -534,15 +534,15 @@ void ECP2_ZZZ_frob(ECP2_ZZZ *P,FP2_YYY *X)
 
 // Bos & Costello https://eprint.iacr.org/2013/458.pdf
 // Faz-Hernandez & Longa & Sanchez  https://eprint.iacr.org/2013/158.pdf
-// Side channel attack secure 
+// Side channel attack secure
 
 void ECP2_ZZZ_mul4(ECP2_ZZZ *P,ECP2_ZZZ Q[4],BIG_XXX u[4])
 {
     int i,j,k,nb,pb,bt;
-	ECP2_ZZZ T[8],W;
+    ECP2_ZZZ T[8],W;
     BIG_XXX t[4],mt;
-	sign8 w[NLEN_XXX*BASEBITS_XXX+1];
-	sign8 s[NLEN_XXX*BASEBITS_XXX+1];
+    sign8 w[NLEN_XXX*BASEBITS_XXX+1];
+    sign8 s[NLEN_XXX*BASEBITS_XXX+1];
 
     for (i=0; i<4; i++)
     {
@@ -552,24 +552,24 @@ void ECP2_ZZZ_mul4(ECP2_ZZZ *P,ECP2_ZZZ Q[4],BIG_XXX u[4])
 // Precomputed table
     ECP2_ZZZ_copy(&T[0],&Q[0]); // Q[0]
     ECP2_ZZZ_copy(&T[1],&T[0]);
-	ECP2_ZZZ_add(&T[1],&Q[1]);	// Q[0]+Q[1]
+    ECP2_ZZZ_add(&T[1],&Q[1]);	// Q[0]+Q[1]
     ECP2_ZZZ_copy(&T[2],&T[0]);
-	ECP2_ZZZ_add(&T[2],&Q[2]);	// Q[0]+Q[2]
-	ECP2_ZZZ_copy(&T[3],&T[1]);
-	ECP2_ZZZ_add(&T[3],&Q[2]);	// Q[0]+Q[1]+Q[2]
-	ECP2_ZZZ_copy(&T[4],&T[0]);
-	ECP2_ZZZ_add(&T[4],&Q[3]);  // Q[0]+Q[3]
-	ECP2_ZZZ_copy(&T[5],&T[1]);
-	ECP2_ZZZ_add(&T[5],&Q[3]);	// Q[0]+Q[1]+Q[3]
-	ECP2_ZZZ_copy(&T[6],&T[2]);
-	ECP2_ZZZ_add(&T[6],&Q[3]);	// Q[0]+Q[2]+Q[3]
-	ECP2_ZZZ_copy(&T[7],&T[3]);
-	ECP2_ZZZ_add(&T[7],&Q[3]);	// Q[0]+Q[1]+Q[2]+Q[3]
+    ECP2_ZZZ_add(&T[2],&Q[2]);	// Q[0]+Q[2]
+    ECP2_ZZZ_copy(&T[3],&T[1]);
+    ECP2_ZZZ_add(&T[3],&Q[2]);	// Q[0]+Q[1]+Q[2]
+    ECP2_ZZZ_copy(&T[4],&T[0]);
+    ECP2_ZZZ_add(&T[4],&Q[3]);  // Q[0]+Q[3]
+    ECP2_ZZZ_copy(&T[5],&T[1]);
+    ECP2_ZZZ_add(&T[5],&Q[3]);	// Q[0]+Q[1]+Q[3]
+    ECP2_ZZZ_copy(&T[6],&T[2]);
+    ECP2_ZZZ_add(&T[6],&Q[3]);	// Q[0]+Q[2]+Q[3]
+    ECP2_ZZZ_copy(&T[7],&T[3]);
+    ECP2_ZZZ_add(&T[7],&Q[3]);	// Q[0]+Q[1]+Q[2]+Q[3]
 
 // Make it odd
-	pb=1-BIG_XXX_parity(t[0]);
-	BIG_XXX_inc(t[0],pb);
-	BIG_XXX_norm(t[0]);
+    pb=1-BIG_XXX_parity(t[0]);
+    BIG_XXX_inc(t[0],pb);
+    BIG_XXX_norm(t[0]);
 
 // Number of bits
     BIG_XXX_zero(mt);
@@ -579,33 +579,33 @@ void ECP2_ZZZ_mul4(ECP2_ZZZ *P,ECP2_ZZZ Q[4],BIG_XXX u[4])
     }
     nb=1+BIG_XXX_nbits(mt);
 
-// Sign pivot 
-	s[nb-1]=1;
-	for (i=0;i<nb-1;i++)
-	{
+// Sign pivot
+    s[nb-1]=1;
+    for (i=0; i<nb-1; i++)
+    {
         BIG_XXX_fshr(t[0],1);
-		s[i]=2*BIG_XXX_parity(t[0])-1;
-	}
+        s[i]=2*BIG_XXX_parity(t[0])-1;
+    }
 
 // Recoded exponent
     for (i=0; i<nb; i++)
     {
-		w[i]=0;
-		k=1;
-		for (j=1; j<4; j++)
-		{
-			bt=s[i]*BIG_XXX_parity(t[j]);
-			BIG_XXX_fshr(t[j],1);
+        w[i]=0;
+        k=1;
+        for (j=1; j<4; j++)
+        {
+            bt=s[i]*BIG_XXX_parity(t[j]);
+            BIG_XXX_fshr(t[j],1);
 
-			BIG_XXX_dec(t[j],(bt>>1));
-			BIG_XXX_norm(t[j]);
-			w[i]+=bt*k;
-			k*=2;
+            BIG_XXX_dec(t[j],(bt>>1));
+            BIG_XXX_norm(t[j]);
+            w[i]+=bt*k;
+            k*=2;
         }
-    }		
+    }
 
 // Main loop
-	ECP2_ZZZ_select(P,T,2*w[nb-1]+1);
+    ECP2_ZZZ_select(P,T,2*w[nb-1]+1);
     for (i=nb-2; i>=0; i--)
     {
         ECP2_ZZZ_select(&W,T,2*w[i]+s[i]);
@@ -614,9 +614,9 @@ void ECP2_ZZZ_mul4(ECP2_ZZZ *P,ECP2_ZZZ Q[4],BIG_XXX u[4])
     }
 
 // apply correction
-	ECP2_ZZZ_copy(&W,P);   
-	ECP2_ZZZ_sub(&W,&Q[0]);
-	ECP2_ZZZ_cmove(P,&W,pb);
+    ECP2_ZZZ_copy(&W,P);
+    ECP2_ZZZ_sub(&W,&Q[0]);
+    ECP2_ZZZ_cmove(P,&W,pb);
 
     ECP2_ZZZ_affine(P);
 }
@@ -713,12 +713,12 @@ void ECP2_ZZZ_mapit(ECP2_ZZZ *Q,octet *W)
 
 void ECP2_ZZZ_generator(ECP2_ZZZ *G)
 {
-	FP2_YYY wx,wy;
+    FP2_YYY wx,wy;
 
-    FP_YYY_rcopy(&(wx.a),CURVE_Pxa_ZZZ); 
-    FP_YYY_rcopy(&(wx.b),CURVE_Pxb_ZZZ); 
-    FP_YYY_rcopy(&(wy.a),CURVE_Pya_ZZZ); 
-    FP_YYY_rcopy(&(wy.b),CURVE_Pyb_ZZZ);     
+    FP_YYY_rcopy(&(wx.a),CURVE_Pxa_ZZZ);
+    FP_YYY_rcopy(&(wx.b),CURVE_Pxb_ZZZ);
+    FP_YYY_rcopy(&(wy.a),CURVE_Pya_ZZZ);
+    FP_YYY_rcopy(&(wy.b),CURVE_Pyb_ZZZ);
 
-	ECP2_ZZZ_set(G,&wx,&wy);
+    ECP2_ZZZ_set(G,&wx,&wy);
 }

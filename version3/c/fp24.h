@@ -12,7 +12,7 @@ typedef struct
     FP8_YYY a; /**< first part of FP12 */
     FP8_YYY b; /**< second part of FP12 */
     FP8_YYY c; /**< third part of FP12 */
-	int type;
+    int type;
 } FP24_YYY;
 
 extern const BIG_XXX Fra_YYY; /**< real part of BN curve Frobenius Constant */
@@ -134,7 +134,7 @@ extern void FP24_YYY_pow(FP24_YYY *r,FP24_YYY *x,BIG_XXX b);
  */
 extern void FP24_YYY_pinpow(FP24_YYY *x,int i,int b);
 
-/**	@brief Raises an FP24 instance x to a BIG power, compressed to FP8 
+/**	@brief Raises an FP24 instance x to a BIG power, compressed to FP8
  *
 	@param c FP8 instance, on exit = x^(e mod r) as FP8
 	@param x FP24 input

@@ -110,7 +110,7 @@ void FP4_YYY_neg(FP4_YYY *w,FP4_YYY *x)
 {
     /* Just one field neg */
     FP2_YYY m,t;
-	FP4_YYY_norm(x);
+    FP4_YYY_norm(x);
     FP2_YYY_add(&m,&(x->a),&(x->b));
     FP2_YYY_neg(&m,&m);
     FP2_YYY_add(&t,&m,&(x->b));
@@ -334,7 +334,7 @@ void FP4_YYY_pow(FP4_YYY *r,FP4_YYY* a,BIG_XXX b)
     BIG_XXX_copy(z,b);
     BIG_XXX_norm(z);
     FP4_YYY_copy(&w,a);
-	FP4_YYY_norm(&w);
+    FP4_YYY_norm(&w);
     FP4_YYY_one(r);
 
     while(1)
@@ -397,14 +397,14 @@ void FP4_YYY_xtr_pow(FP4_YYY *r,FP4_YYY *x,BIG_XXX n)
     FP2_YYY_from_BIG(&w,v);
     FP4_YYY_from_FP2(&a,&w);
 
-	FP4_YYY_copy(&sf,x);
-	FP4_YYY_norm(&sf);
+    FP4_YYY_copy(&sf,x);
+    FP4_YYY_norm(&sf);
     FP4_YYY_copy(&b,&sf);
     FP4_YYY_xtr_D(&c,&sf);
 
     par=BIG_XXX_parity(n);
     BIG_XXX_copy(v,n);
-	BIG_XXX_norm(v);
+    BIG_XXX_norm(v);
     BIG_XXX_shr(v,1);
     if (par==0)
     {
@@ -600,7 +600,7 @@ int FP4_YYY_sqrt(FP4_YYY *r,FP4_YYY* x)
     FP4_YYY_copy(r,x);
     if (FP4_YYY_iszilch(x))
         return 1;
-    
+
     FP2_YYY_copy(&a,&(x->a));
     FP2_YYY_copy(&s,&(x->b));
 
@@ -662,14 +662,14 @@ void FP4_YYY_div_i(FP4_YYY *f)
 
 void FP4_YYY_div_2i(FP4_YYY *f)
 {
-	FP2_YYY u,v;
-	FP2_YYY_copy(&u,&(f->a));
-	FP2_YYY_copy(&v,&(f->b));
-	FP2_YYY_div_ip2(&u);
-	FP2_YYY_add(&v,&v,&v);
-	FP2_YYY_norm(&v);
-	FP2_YYY_copy(&(f->a),&v);
-	FP2_YYY_copy(&(f->b),&u);
+    FP2_YYY u,v;
+    FP2_YYY_copy(&u,&(f->a));
+    FP2_YYY_copy(&v,&(f->b));
+    FP2_YYY_div_ip2(&u);
+    FP2_YYY_add(&v,&v,&v);
+    FP2_YYY_norm(&v);
+    FP2_YYY_copy(&(f->a),&v);
+    FP2_YYY_copy(&(f->b),&u);
 }
 
 #endif

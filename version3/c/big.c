@@ -143,7 +143,7 @@ void BIG_XXX_toBytes(char *b,BIG_XXX a)
     int i;
     BIG_XXX c;
     BIG_XXX_copy(c,a);
-	BIG_XXX_norm(c);
+    BIG_XXX_norm(c);
     for (i=MODBYTES_XXX-1; i>=0; i--)
     {
         b[i]=c[0]&0xff;
@@ -371,8 +371,8 @@ void BIG_XXX_add(BIG_XXX c,BIG_XXX a,BIG_XXX b)
 void BIG_XXX_or(BIG_XXX c,BIG_XXX a,BIG_XXX b)
 {
     int i;
-	BIG_XXX_norm(a);
-	BIG_XXX_norm(b);
+    BIG_XXX_norm(a);
+    BIG_XXX_norm(b);
     for (i=0; i<NLEN_XXX; i++)
         c[i]=a[i]|b[i];
 #ifdef DEBUG_NORM
@@ -876,28 +876,28 @@ void BIG_XXX_shr(BIG_XXX a,int k)
 /* Fast combined shift, subtract and norm. Return sign of result */
 int BIG_XXX_ssn(BIG_XXX r,BIG_XXX a,BIG_XXX m)
 {
-	int i,n=NLEN_XXX-1;
-	chunk carry;
-	m[0]=(m[0]>>1)|((m[1]<<(BASEBITS_XXX-1))&BMASK_XXX);
-	r[0]=a[0]-m[0];
+    int i,n=NLEN_XXX-1;
+    chunk carry;
+    m[0]=(m[0]>>1)|((m[1]<<(BASEBITS_XXX-1))&BMASK_XXX);
+    r[0]=a[0]-m[0];
     carry=r[0]>>BASEBITS_XXX;
     r[0]&=BMASK_XXX;
-    
-	for (i=1;i<n;i++)
-	{
-		m[i]=(m[i]>>1)|((m[i+1]<<(BASEBITS_XXX-1))&BMASK_XXX);
-		r[i]=a[i]-m[i]+carry;
-		carry=r[i]>>BASEBITS_XXX;
-		r[i]&=BMASK_XXX;
-	}
-	
-	m[n]>>=1;
-	r[n]=a[n]-m[n]+carry;
+
+    for (i=1; i<n; i++)
+    {
+        m[i]=(m[i]>>1)|((m[i+1]<<(BASEBITS_XXX-1))&BMASK_XXX);
+        r[i]=a[i]-m[i]+carry;
+        carry=r[i]>>BASEBITS_XXX;
+        r[i]&=BMASK_XXX;
+    }
+
+    m[n]>>=1;
+    r[n]=a[n]-m[n]+carry;
 #ifdef DEBUG_NORM
     r[MPV_XXX]=1;
     r[MNV_XXX]=0;
 #endif
-	return ((r[n]>>(CHUNK-1))&1);
+    return ((r[n]>>(CHUNK-1))&1);
 }
 
 /* Faster shift right of a by k bits. Return shifted out part */
@@ -1040,9 +1040,9 @@ int BIG_XXX_dcomp(DBIG_XXX a,DBIG_XXX b)
 int BIG_XXX_nbits(BIG_XXX a)
 {
     int bts,k=NLEN_XXX-1;
-	BIG_XXX t;
+    BIG_XXX t;
     chunk c;
-	BIG_XXX_copy(t,a);
+    BIG_XXX_copy(t,a);
     BIG_XXX_norm(t);
     while (k>=0 && t[k]==0) k--;
     if (k<0) return 0;
@@ -1060,9 +1060,9 @@ int BIG_XXX_nbits(BIG_XXX a)
 int BIG_XXX_dnbits(DBIG_XXX a)
 {
     int bts,k=DNLEN_XXX-1;
-	DBIG_XXX t;
+    DBIG_XXX t;
     chunk c;
-	BIG_XXX_dcopy(t,a);
+    BIG_XXX_dcopy(t,a);
     BIG_XXX_dnorm(t);
     while (k>=0 && t[k]==0) k--;
     if (k<0) return 0;
@@ -1083,8 +1083,8 @@ void BIG_XXX_mod(BIG_XXX b,BIG_XXX c1)
 {
     int k=0;
     BIG_XXX r; /**/
-	BIG_XXX c;
-	BIG_XXX_copy(c,c1);
+    BIG_XXX c;
+    BIG_XXX_copy(c,c1);
 
     BIG_XXX_norm(b);
     if (BIG_XXX_comp(b,c)<0)
@@ -1300,9 +1300,9 @@ void BIG_XXX_randomnum(BIG_XXX m,BIG_XXX q,csprng *rng)
 void BIG_XXX_modmul(BIG_XXX r,BIG_XXX a1,BIG_XXX b1,BIG_XXX m)
 {
     DBIG_XXX d;
-	BIG_XXX a,b;
-	BIG_XXX_copy(a,a1);
-	BIG_XXX_copy(b,b1);
+    BIG_XXX a,b;
+    BIG_XXX_copy(a,a1);
+    BIG_XXX_copy(b,b1);
     BIG_XXX_mod(a,m);
     BIG_XXX_mod(b,m);
 
@@ -1315,8 +1315,8 @@ void BIG_XXX_modmul(BIG_XXX r,BIG_XXX a1,BIG_XXX b1,BIG_XXX m)
 void BIG_XXX_modsqr(BIG_XXX r,BIG_XXX a1,BIG_XXX m)
 {
     DBIG_XXX d;
-	BIG_XXX a;
-	BIG_XXX_copy(a,a1);
+    BIG_XXX a;
+    BIG_XXX_copy(a,a1);
     BIG_XXX_mod(a,m);
     BIG_XXX_sqr(d,a);
     BIG_XXX_dmod(r,d,m);
@@ -1326,8 +1326,8 @@ void BIG_XXX_modsqr(BIG_XXX r,BIG_XXX a1,BIG_XXX m)
 /* SU= 16 */
 void BIG_XXX_modneg(BIG_XXX r,BIG_XXX a1,BIG_XXX m)
 {
-	BIG_XXX a;
-	BIG_XXX_copy(a,a1);
+    BIG_XXX a;
+    BIG_XXX_copy(a,a1);
     BIG_XXX_mod(a,m);
     BIG_XXX_sub(r,m,a);
 }
@@ -1338,9 +1338,9 @@ void BIG_XXX_moddiv(BIG_XXX r,BIG_XXX a1,BIG_XXX b1,BIG_XXX m)
 {
     DBIG_XXX d;
     BIG_XXX z;
-	BIG_XXX a,b;
-	BIG_XXX_copy(a,a1);
-	BIG_XXX_copy(b,b1);
+    BIG_XXX a,b;
+    BIG_XXX_copy(a,a1);
+    BIG_XXX_copy(b,b1);
 
     BIG_XXX_mod(a,m);
     BIG_XXX_invmodp(z,b,m);

@@ -137,7 +137,7 @@ int MPIN_ZZZ_ENCODING(csprng *RNG,octet *E)
         if (su<0) su=-su;
         su%=2;
         map(&W,u,su);
-        ECP_ZZZ_sub(&P,&W); 
+        ECP_ZZZ_sub(&P,&W);
 
         rn=unmap(v,&sv,&P);
         m=RAND_byte(RNG);
@@ -169,7 +169,7 @@ int MPIN_ZZZ_DECODING(octet *D)
         sv=(D->val[0]>>1)&1;
         map(&W,u,su);
         map(&P,v,sv);
-        ECP_ZZZ_add(&P,&W); 
+        ECP_ZZZ_add(&P,&W);
         ECP_ZZZ_toOctet(D,&P,false);
     }
 
@@ -188,7 +188,7 @@ int MPIN_ZZZ_RECOMBINE_G1(octet *R1,octet *R2,octet *R)
     }
     if (res==0)
     {
-        ECP_ZZZ_add(&P,&T); 
+        ECP_ZZZ_add(&P,&T);
         ECP_ZZZ_toOctet(R,&P,false);
     }
     return res;
@@ -203,7 +203,7 @@ int MPIN_ZZZ_RECOMBINE_G2(octet *W1,octet *W2,octet *W)
     if (!ECP2_ZZZ_fromOctet(&T,W2)) res=MPIN_INVALID_POINT;
     if (res==0)
     {
-        ECP2_ZZZ_add(&Q,&T); 
+        ECP2_ZZZ_add(&Q,&T);
         ECP2_ZZZ_toOctet(W,&Q);
     }
     return res;
@@ -246,7 +246,7 @@ int MPIN_ZZZ_EXTRACT_FACTOR(int sha,octet *CID,int factor,int facbits,octet *TOK
         ECP_ZZZ_mapit(&R,&H);
 
         ECP_ZZZ_pinmul(&R,factor,facbits);
-        ECP_ZZZ_sub(&P,&R); 
+        ECP_ZZZ_sub(&P,&R);
 
         ECP_ZZZ_toOctet(TOKEN,&P,false);
     }
@@ -268,7 +268,7 @@ int MPIN_ZZZ_RESTORE_FACTOR(int sha,octet *CID,int factor,int facbits,octet *TOK
         ECP_ZZZ_mapit(&R,&H);
 
         ECP_ZZZ_pinmul(&R,factor,facbits);
-        ECP_ZZZ_add(&P,&R); 
+        ECP_ZZZ_add(&P,&R);
 
         ECP_ZZZ_toOctet(TOKEN,&P,false);
     }
@@ -436,7 +436,7 @@ int MPIN_ZZZ_CLIENT_1(int sha,int date,octet *CLIENT_ID,csprng *RNG,octet *X,int
                 PAIR_ZZZ_G1mul(&P,x);				// P=x.H(ID)
                 ECP_ZZZ_toOctet(xID,&P,false);  // xID
                 PAIR_ZZZ_G1mul(&W,x);               // W=x.H(T|ID)
-                ECP_ZZZ_add(&P,&W); 
+                ECP_ZZZ_add(&P,&W);
             }
             else
             {
@@ -456,9 +456,9 @@ int MPIN_ZZZ_CLIENT_1(int sha,int date,octet *CLIENT_ID,csprng *RNG,octet *X,int
     }
 
     if (res==0)
-	{
+    {
         ECP_ZZZ_toOctet(SEC,&T,false);  // V
-	}
+    }
     return res;
 }
 
@@ -471,7 +471,7 @@ int MPIN_ZZZ_GET_SERVER_SECRET(octet *S,octet *SST)
 
     BIG_XXX_rcopy(r,CURVE_Order_ZZZ);
 
-	ECP2_ZZZ_generator(&Q);
+    ECP2_ZZZ_generator(&Q);
 
     if (res==0)
     {
@@ -531,7 +531,7 @@ void MPIN_ZZZ_SERVER_1(int sha,int date,octet *CID,octet *HID,octet *HTID)
         mhashit(sha,date,&H,&H);
 #endif
         ECP_ZZZ_mapit(&R,&H);
-        ECP_ZZZ_add(&P,&R); 
+        ECP_ZZZ_add(&P,&R);
         ECP_ZZZ_toOctet(HTID,&P,false);
     }
 }
@@ -539,13 +539,13 @@ void MPIN_ZZZ_SERVER_1(int sha,int date,octet *CID,octet *HID,octet *HTID)
 /* Implement M-Pin on server side */
 int MPIN_ZZZ_SERVER_2(int date,octet *HID,octet *HTID,octet *Y,octet *SST,octet *xID,octet *xCID,octet *mSEC,octet *E,octet *F,octet *Pa)
 {
-    BIG_XXX px,py,y;
+    BIG_XXX y;
     FP12_YYY g;
     ECP2_ZZZ Q,sQ;
     ECP_ZZZ P,R;
     int res=0;
 
-	ECP2_ZZZ_generator(&Q);
+    ECP2_ZZZ_generator(&Q);
 
     // key-escrow less scheme: use Pa instead of Q in pairing computation
     // Q left for backward compatiblity
@@ -563,11 +563,11 @@ int MPIN_ZZZ_SERVER_2(int date,octet *HID,octet *HTID,octet *Y,octet *SST,octet 
     {
         if (date)
         {
-			if (!ECP_ZZZ_fromOctet(&R,xCID))  res=MPIN_INVALID_POINT;
+            if (!ECP_ZZZ_fromOctet(&R,xCID))  res=MPIN_INVALID_POINT;
         }
         else
         {
-			if (!ECP_ZZZ_fromOctet(&R,xID))  res=MPIN_INVALID_POINT;
+            if (!ECP_ZZZ_fromOctet(&R,xID))  res=MPIN_INVALID_POINT;
         }
     }
     if (res==0)
@@ -723,7 +723,7 @@ int MPIN_ZZZ_PRECOMPUTE(octet *TOKEN,octet *CID,octet *CP,octet *G1,octet *G2)
         }
         else
         {
-			ECP2_ZZZ_generator(&Q);
+            ECP2_ZZZ_generator(&Q);
         }
     }
     if (res==0)
@@ -921,7 +921,7 @@ int MPIN_ZZZ_GET_DVS_KEYPAIR(csprng *R,octet *Z,octet *Pa)
 
     BIG_XXX_invmodp(z,z,r);
 
-	ECP2_ZZZ_generator(&Q);
+    ECP2_ZZZ_generator(&Q);
 
     if (res==0)
     {

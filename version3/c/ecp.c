@@ -191,7 +191,7 @@ void ECP_ZZZ_rhs(FP_YYY *v,FP_YYY *x)
 
     FP_YYY_mul(&t,v,&t);
     FP_YYY_sub(&t,&t,&one);
-	FP_YYY_norm(&t);
+    FP_YYY_norm(&t);
     if (CURVE_A_ZZZ==1) FP_YYY_sub(v,v,&one);
 
     if (CURVE_A_ZZZ==-1)
@@ -200,10 +200,10 @@ void ECP_ZZZ_rhs(FP_YYY *v,FP_YYY *x)
         FP_YYY_norm(v);
         FP_YYY_neg(v,v);
     }
-	FP_YYY_norm(v);
-	FP_YYY_inv(&t,&t);
-	FP_YYY_mul(v,v,&t);
-	FP_YYY_reduce(v);
+    FP_YYY_norm(v);
+    FP_YYY_inv(&t,&t);
+    FP_YYY_mul(v,v,&t);
+    FP_YYY_reduce(v);
 #endif
 
 #if CURVETYPE_ZZZ==MONTGOMERY
@@ -239,7 +239,7 @@ int ECP_ZZZ_set(ECP_ZZZ *P,BIG_XXX x)
         ECP_ZZZ_inf(P);
         return 0;
     }
- 
+
     FP_YYY_nres(&(P->x),x);
     FP_YYY_one(&(P->z));
     return 1;
@@ -248,11 +248,11 @@ int ECP_ZZZ_set(ECP_ZZZ *P,BIG_XXX x)
 /* Extract x coordinate as BIG */
 int ECP_ZZZ_get(BIG_XXX x,ECP_ZZZ *P)
 {
-	ECP_ZZZ W;
-	ECP_ZZZ_copy(&W,P);
-	ECP_ZZZ_affine(&W);
+    ECP_ZZZ W;
+    ECP_ZZZ_copy(&W,P);
+    ECP_ZZZ_affine(&W);
     if (ECP_ZZZ_isinf(&W)) return -1;
-    FP_YYY_redc(x,&(Wx));
+    FP_YYY_redc(x,&(W));
     return 0;
 }
 
@@ -262,10 +262,10 @@ int ECP_ZZZ_get(BIG_XXX x,ECP_ZZZ *P)
 /* SU=16 */
 int ECP_ZZZ_get(BIG_XXX x,BIG_XXX y,ECP_ZZZ *P)
 {
-	ECP_ZZZ W;
+    ECP_ZZZ W;
     int s;
-	ECP_ZZZ_copy(&W,P);
-	ECP_ZZZ_affine(&W);
+    ECP_ZZZ_copy(&W,P);
+    ECP_ZZZ_affine(&W);
 
     if (ECP_ZZZ_isinf(&W)) return -1;
 
@@ -336,26 +336,27 @@ int ECP_ZZZ_setx(ECP_ZZZ *P,BIG_XXX x,int s)
 #endif
 
 void ECP_ZZZ_cfp(ECP_ZZZ *P)
-{ /* multiply point by curves cofactor */
-	BIG_XXX c;
-	int cf=CURVE_Cof_I_ZZZ;
-	if (cf==1) return;
-	if (cf==4)
-	{
-		ECP_ZZZ_dbl(P);
-		ECP_ZZZ_dbl(P);
-		return;
-	}
-	if (cf==8)
-	{
-		ECP_ZZZ_dbl(P);
-		ECP_ZZZ_dbl(P);
-		ECP_ZZZ_dbl(P);
-		return;
-	}
-	BIG_XXX_rcopy(c,CURVE_Cof_ZZZ);
-	ECP_ZZZ_mul(P,c);
-	return;
+{
+    /* multiply point by curves cofactor */
+    BIG_XXX c;
+    int cf=CURVE_Cof_I_ZZZ;
+    if (cf==1) return;
+    if (cf==4)
+    {
+        ECP_ZZZ_dbl(P);
+        ECP_ZZZ_dbl(P);
+        return;
+    }
+    if (cf==8)
+    {
+        ECP_ZZZ_dbl(P);
+        ECP_ZZZ_dbl(P);
+        ECP_ZZZ_dbl(P);
+        return;
+    }
+    BIG_XXX_rcopy(c,CURVE_Cof_ZZZ);
+    ECP_ZZZ_mul(P,c);
+    return;
 }
 
 /* map BIG to point on curve of correct order */
@@ -364,25 +365,26 @@ void ECP_ZZZ_cfp(ECP_ZZZ *P)
 void ECP_ZZZ_mapit(ECP_ZZZ *P,octet *W)
 {
     BIG_XXX q,x;
-	BIG_XXX_fromBytes(x,W->val);
+    BIG_XXX_fromBytes(x,W->val);
     BIG_XXX_rcopy(q,Modulus_YYY);
     BIG_XXX_mod(x,q);
 
-	for (;;)
-	{
-		for (;;)
-		{
+    for (;;)
+    {
+        for (;;)
+        {
 #if CURVETYPE_ZZZ!=MONTGOMERY
-			ECP_ZZZ_setx(P,x,0);
+            ECP_ZZZ_setx(P,x,0);
 #else
-			ECP_ZZZ_set(P,x);
+            ECP_ZZZ_set(P,x);
 #endif
-			BIG_XXX_inc(x,1); BIG_XXX_norm(x);
-			if (!ECP_ZZZ_isinf(P)) break;
-		}
-		ECP_ZZZ_cfp(P);
-		if (!ECP_ZZZ_isinf(P)) break;
-	}
+            BIG_XXX_inc(x,1);
+            BIG_XXX_norm(x);
+            if (!ECP_ZZZ_isinf(P)) break;
+        }
+        ECP_ZZZ_cfp(P);
+        if (!ECP_ZZZ_isinf(P)) break;
+    }
 }
 
 /* Convert P to Affine, from (x,y,z) to (x,y) */
@@ -390,12 +392,11 @@ void ECP_ZZZ_mapit(ECP_ZZZ *P,octet *W)
 void ECP_ZZZ_affine(ECP_ZZZ *P)
 {
     FP_YYY one,iz;
-    BIG_XXX b;
     if (ECP_ZZZ_isinf(P)) return;
     FP_YYY_one(&one);
     if (FP_YYY_equals(&(P->z),&one)) return;
 
-	FP_YYY_inv(&iz,&(P->z));
+    FP_YYY_inv(&iz,&(P->z));
     FP_YYY_mul(&(P->x),&(P->x),&iz);
 
 #if CURVETYPE_ZZZ==EDWARDS || CURVETYPE_ZZZ==WEIERSTRASS
@@ -514,20 +515,20 @@ void ECP_ZZZ_toOctet(octet *W,ECP_ZZZ *P,bool compress)
 #else
     BIG_XXX x,y;
     ECP_ZZZ_get(x,y,P);
-	if (compress)
-	{
-		W->val[0]=0x02;
-		if (BIG_XXX_parity(y)==1) W->val[0]=0x03;
-		W->len=MODBYTES_XXX+1;
-		BIG_XXX_toBytes(&(W->val[1]),x);
-	}
-	else
-	{
-		W->val[0]=4;
-		W->len=2*MODBYTES_XXX+1;
-		BIG_XXX_toBytes(&(W->val[1]),x);
-		BIG_XXX_toBytes(&(W->val[MODBYTES_XXX+1]),y);
-	}
+    if (compress)
+    {
+        W->val[0]=0x02;
+        if (BIG_XXX_parity(y)==1) W->val[0]=0x03;
+        W->len=MODBYTES_XXX+1;
+        BIG_XXX_toBytes(&(W->val[1]),x);
+    }
+    else
+    {
+        W->val[0]=4;
+        W->len=2*MODBYTES_XXX+1;
+        BIG_XXX_toBytes(&(W->val[1]),x);
+        BIG_XXX_toBytes(&(W->val[MODBYTES_XXX+1]),y);
+    }
 #endif
 }
 
@@ -542,17 +543,17 @@ int ECP_ZZZ_fromOctet(ECP_ZZZ *P,octet *W)
     return 0;
 #else
     BIG_XXX x,y;
-	int typ=W->val[0];
-	BIG_XXX_fromBytes(x,&(W->val[1]));
-	if (typ==0x04)
-	{
-		BIG_XXX_fromBytes(y,&(W->val[MODBYTES_XXX+1]));
-		if (ECP_ZZZ_set(P,x,y)) return 1;
-	}
-	if (typ==0x02 || typ==0x03)
-	{
-		if (ECP_ZZZ_setx(P,x,typ&1)) return 1;
-	}
+    int typ=W->val[0];
+    BIG_XXX_fromBytes(x,&(W->val[1]));
+    if (typ==0x04)
+    {
+        BIG_XXX_fromBytes(y,&(W->val[MODBYTES_XXX+1]));
+        if (ECP_ZZZ_set(P,x,y)) return 1;
+    }
+    if (typ==0x02 || typ==0x03)
+    {
+        if (ECP_ZZZ_setx(P,x,typ&1)) return 1;
+    }
     return 0;
 #endif
 }
@@ -591,7 +592,7 @@ void ECP_ZZZ_dbl(ECP_ZZZ *P)
         FP_YYY_mul(&y3,&y3,&t0);				//y3.mul(t0);
         FP_YYY_add(&y3,&y3,&x3);				//y3.add(x3);
         FP_YYY_mul(&t1,&(P->x),&(P->y));			//t1.mul(y);
-       
+
         FP_YYY_norm(&t0);					//x.norm();
         FP_YYY_mul(&(P->x),&t0,&t1);		//x.mul(t1);
         FP_YYY_add(&(P->x),&(P->x),&(P->x));	//x.add(x);
@@ -780,7 +781,7 @@ void ECP_ZZZ_add(ECP_ZZZ *P,ECP_ZZZ *Q)
         FP_YYY_mul(&t2,&(P->z),&(Q->z));		//t2.mul(Q.z);
         FP_YYY_add(&t3,&(P->x),&(P->y));		//t3.add(y);
         FP_YYY_norm(&t3);					//t3.norm();
- 
+
         FP_YYY_add(&t4,&(Q->x),&(Q->y));		//t4.add(Q.y);
         FP_YYY_norm(&t4);					//t4.norm();
         FP_YYY_mul(&t3,&t3,&t4);			//t3.mul(t4);
@@ -847,7 +848,7 @@ void ECP_ZZZ_add(ECP_ZZZ *P,ECP_ZZZ *Q)
         FP_YYY_add(&t4,&(Q->x),&(Q->y));		//t4.add(Q.y);
         FP_YYY_norm(&t4);					//t4.norm();//5
         FP_YYY_mul(&t3,&t3,&t4);			//t3.mul(t4);//6
-    
+
         FP_YYY_add(&t4,&t0,&t1);			//t4.add(t1); //t4.norm(); //7
         FP_YYY_sub(&t3,&t3,&t4);			//t3.sub(t4);
         FP_YYY_norm(&t3);					//t3.norm(); //8
@@ -914,7 +915,7 @@ void ECP_ZZZ_add(ECP_ZZZ *P,ECP_ZZZ *Q)
         FP_YYY_mul(&x3,&x3,&t3);			//x3.mul(t3);//39
         FP_YYY_sub(&(P->x),&x3,&t1);			//x3.sub(t1);//40
         FP_YYY_mul(&z3,&z3,&t4);			//z3.mul(t4);//41
- 
+
         FP_YYY_mul(&t1,&t3,&t0);			//t1.mul(t0);//42
         FP_YYY_add(&(P->z),&z3,&t1);			//z3.add(t1);
         FP_YYY_norm(&(P->x));				//x.norm();
@@ -981,9 +982,9 @@ void ECP_ZZZ_add(ECP_ZZZ *P,ECP_ZZZ *Q)
 /* SU=16 */
 void  ECP_ZZZ_sub(ECP_ZZZ *P,ECP_ZZZ *Q)
 {
-	ECP_ZZZ NQ;
-	ECP_ZZZ_copy(&NQ,Q);
-	ECP_ZZZ_neg(&NQ);
+    ECP_ZZZ NQ;
+    ECP_ZZZ_copy(&NQ,Q);
+    ECP_ZZZ_neg(&NQ);
     ECP_ZZZ_add(P,&NQ);
 }
 
@@ -1219,13 +1220,13 @@ void ECP_ZZZ_mul2(ECP_ZZZ *P,ECP_ZZZ *Q,BIG_XXX e,BIG_XXX f)
 
 void ECP_ZZZ_generator(ECP_ZZZ *G)
 {
-	BIG_XXX x,y;
-	BIG_XXX_rcopy(x,CURVE_Gx_ZZZ);
+    BIG_XXX x,y;
+    BIG_XXX_rcopy(x,CURVE_Gx_ZZZ);
 #if CURVETYPE_ZZZ!=MONTGOMERY
-	BIG_XXX_rcopy(y,CURVE_Gy_ZZZ);
+    BIG_XXX_rcopy(y,CURVE_Gy_ZZZ);
     ECP_ZZZ_set(G,x,y);
 #else
-	ECP_ZZZ_set(G,x);
+    ECP_ZZZ_set(G,x);
 #endif
 }
 

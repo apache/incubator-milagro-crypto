@@ -11,10 +11,10 @@
 
 typedef struct
 {
- //   int inf; /**< Infinity Flag */
+//   int inf; /**< Infinity Flag */
     FP4_YYY x;   /**< x-coordinate of point */
     FP4_YYY y;   /**< y-coordinate of point */
-	FP4_YYY z;
+    FP4_YYY z;
 } ECP4_ZZZ;
 
 

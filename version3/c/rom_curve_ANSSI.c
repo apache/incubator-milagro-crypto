@@ -10,7 +10,7 @@
 #endif
 
 #if CHUNK==32
-const int CURVE_Cof_I_ANNSI= 1;
+const int CURVE_Cof_I_ANSSI= 1;
 const BIG_256_28 CURVE_Cof_ANSSI= {0x1,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
 const int CURVE_A_ANSSI= -3;
 const int CURVE_B_I_ANSSI= 0;
@@ -21,7 +21,7 @@ const BIG_256_28 CURVE_Gy_ANSSI= {0x4062CFB,0x115A155,0x4C9E183,0xC307E8E,0xF8C2
 #endif
 
 #if CHUNK==64
-const int CURVE_Cof_I_ANNSI= 1;
+const int CURVE_Cof_I_ANSSI= 1;
 const BIG_256_56 CURVE_Cof_ANSSI= {0x1L,0x0L,0x0L,0x0L,0x0L};
 const int CURVE_A_ANSSI= -3;
 const int CURVE_B_I_ANSSI= 0;

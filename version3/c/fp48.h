@@ -12,7 +12,7 @@ typedef struct
     FP16_YYY a; /**< first part of FP12 */
     FP16_YYY b; /**< second part of FP12 */
     FP16_YYY c; /**< third part of FP12 */
-	int type;
+    int type;
 } FP48_YYY;
 
 extern const BIG_XXX Fra_YYY; /**< real part of BN curve Frobenius Constant */
@@ -133,7 +133,7 @@ extern void FP48_YYY_pow(FP48_YYY *r,FP48_YYY *x,BIG_XXX b);
  */
 extern void FP48_YYY_pinpow(FP48_YYY *x,int i,int b);
 
-/**	@brief Raises an FP48 instance x to a BIG_XXX power, compressed to FP16 
+/**	@brief Raises an FP48 instance x to a BIG_XXX power, compressed to FP16
  *
 	@param c FP16 instance, on exit = x^(e mod r) as FP16
 	@param x FP48 input

@@ -18,7 +18,7 @@
 */
 
 /**
- * @file fp.h
+ * @file fp_YYY.h
  * @author Mike Scott
  * @brief FP Header File
  *

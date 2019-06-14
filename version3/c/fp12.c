@@ -82,7 +82,7 @@ void FP12_YYY_copy(FP12_YYY *w,FP12_YYY *x)
     FP4_YYY_copy(&(w->a),&(x->a));
     FP4_YYY_copy(&(w->b),&(x->b));
     FP4_YYY_copy(&(w->c),&(x->c));
-	w->type=x->type;
+    w->type=x->type;
 }
 
 /* FP12 w=1 */
@@ -92,7 +92,7 @@ void FP12_YYY_one(FP12_YYY *w)
     FP4_YYY_one(&(w->a));
     FP4_YYY_zero(&(w->b));
     FP4_YYY_zero(&(w->c));
-	w->type=FP_UNITY;
+    w->type=AMCL_FP_UNITY;
 }
 
 void FP12_YYY_zero(FP12_YYY *w)
@@ -100,7 +100,7 @@ void FP12_YYY_zero(FP12_YYY *w)
     FP4_YYY_zero(&(w->a));
     FP4_YYY_zero(&(w->b));
     FP4_YYY_zero(&(w->c));
-	w->type=FP_ZERO;
+    w->type=AMCL_FP_ZERO;
 }
 
 /* return 1 if x==y, else 0 */
@@ -129,7 +129,7 @@ void FP12_YYY_from_FP4(FP12_YYY *w,FP4_YYY *a)
     FP4_YYY_copy(&(w->a),a);
     FP4_YYY_zero(&(w->b));
     FP4_YYY_zero(&(w->c));
-	w->type=FP_SPARSER;
+    w->type=AMCL_AMCL_FP_SPARSER;
 }
 
 /* Create FP12 from 3 FP4's */
@@ -139,7 +139,7 @@ void FP12_YYY_from_FP4s(FP12_YYY *w,FP4_YYY *a,FP4_YYY *b,FP4_YYY *c)
     FP4_YYY_copy(&(w->a),a);
     FP4_YYY_copy(&(w->b),b);
     FP4_YYY_copy(&(w->c),c);
-	w->type=FP_DENSE;
+    w->type=AMCL_FP_DENSE;
 }
 
 /* Granger-Scott Unitary Squaring. This does not benefit from lazy reduction */
@@ -180,7 +180,7 @@ void FP12_YYY_usqr(FP12_YYY *w,FP12_YYY *x)
     FP4_YYY_add(&(w->b),&B,&(w->b));
     FP4_YYY_add(&(w->c),&C,&(w->c));
 
-	w->type=FP_DENSE;
+    w->type=AMCL_FP_DENSE;
     FP12_YYY_reduce(w);	    /* reduce here as in pow function repeated squarings would trigger multiple reductions */
 }
 
@@ -192,11 +192,11 @@ void FP12_YYY_sqr(FP12_YYY *w,FP12_YYY *x)
 
     FP4_YYY A,B,C,D;
 
-	if (x->type<=FP_UNITY)
-	{
-		FP12_YYY_copy(w,x);
-		return;
-	}
+    if (x->type<=AMCL_FP_UNITY)
+    {
+        FP12_YYY_copy(w,x);
+        return;
+    }
 
     FP4_YYY_sqr(&A,&(x->a));
     FP4_YYY_mul(&B,&(x->b),&(x->c));
@@ -229,10 +229,10 @@ void FP12_YYY_sqr(FP12_YYY *w,FP12_YYY *x)
     FP4_YYY_add(&(w->b),&C,&D);
     FP4_YYY_add(&(w->c),&(w->c),&A);
 
-	if (x->type==FP_SPARSER)
-		w->type=FP_SPARSE;
-	else
-		w->type=FP_DENSE;
+    if (x->type==AMCL_AMCL_FP_SPARSER)
+        w->type=AMCL_FP_SPARSE;
+    else
+        w->type=AMCL_FP_DENSE;
 
     FP12_YYY_norm(w);
 }
@@ -292,7 +292,7 @@ void FP12_YYY_mul(FP12_YYY *w,FP12_YYY *y)
     FP4_YYY_times_i(&z3);
     FP4_YYY_add(&(w->a),&z0,&z3);
 
-	w->type=FP_DENSE;
+    w->type=AMCL_FP_DENSE;
     FP12_YYY_norm(w);
 }
 
@@ -301,278 +301,280 @@ void FP12_YYY_mul(FP12_YYY *w,FP12_YYY *y)
 /* Usually w is denser than y */
 void FP12_YYY_ssmul(FP12_YYY *w,FP12_YYY *y)
 {
-	FP4_YYY z0,z1,z2,z3,t0,t1;
-	if (w->type==FP_UNITY)
-	{
-		FP12_YYY_copy(w,y);
-		return;
-	}
-	if (y->type==FP_UNITY)
-		return;
+    FP4_YYY z0,z1,z2,z3,t0,t1;
+    if (w->type==AMCL_FP_UNITY)
+    {
+        FP12_YYY_copy(w,y);
+        return;
+    }
+    if (y->type==AMCL_FP_UNITY)
+        return;
 
-	if (y->type >= FP_SPARSE)
-	{
-		FP4_YYY_mul(&z0,&(w->a),&(y->a));  // xa.ya   always 11x11
+    if (y->type >= AMCL_FP_SPARSE)
+    {
+        FP4_YYY_mul(&z0,&(w->a),&(y->a));  // xa.ya   always 11x11
 
 #if SEXTIC_TWIST_ZZZ == M_TYPE
-		if (y->type==FP_SPARSE || w->type==FP_SPARSE)
-		{
-			FP2_YYY_mul(&z2.b,&(w->b).b,&(y->b).b);
-			FP2_YYY_zero(&z2.a);
-			if (y->type!=FP_SPARSE)
-				FP2_YYY_mul(&z2.a,&(w->b).b,&(y->b).a);
-			if (w->type!=FP_SPARSE)
-				FP2_YYY_mul(&z2.a,&(w->b).a,&(y->b).b);
-			FP4_YYY_times_i(&z2);
-		}
-		else
+        if (y->type==AMCL_FP_SPARSE || w->type==AMCL_FP_SPARSE)
+        {
+            FP2_YYY_mul(&z2.b,&(w->b).b,&(y->b).b);
+            FP2_YYY_zero(&z2.a);
+            if (y->type!=AMCL_FP_SPARSE)
+                FP2_YYY_mul(&z2.a,&(w->b).b,&(y->b).a);
+            if (w->type!=AMCL_FP_SPARSE)
+                FP2_YYY_mul(&z2.a,&(w->b).a,&(y->b).b);
+            FP4_YYY_times_i(&z2);
+        }
+        else
 #endif
-			FP4_YYY_mul(&z2,&(w->b),&(y->b));  // xb.yb  could be 00x00 or 01x01 or or 10x10 or 11x00 or 11x10 or 11x01 or 11x11 
+            FP4_YYY_mul(&z2,&(w->b),&(y->b));  // xb.yb  could be 00x00 or 01x01 or or 10x10 or 11x00 or 11x10 or 11x01 or 11x11
 
-		FP4_YYY_add(&t0,&(w->a),&(w->b));  // (xa+xb)
-		FP4_YYY_add(&t1,&(y->a),&(y->b));  // (ya+yb)
+        FP4_YYY_add(&t0,&(w->a),&(w->b));  // (xa+xb)
+        FP4_YYY_add(&t1,&(y->a),&(y->b));  // (ya+yb)
 
-		FP4_YYY_norm(&t0);
-		FP4_YYY_norm(&t1);
+        FP4_YYY_norm(&t0);
+        FP4_YYY_norm(&t1);
 
-		FP4_YYY_mul(&z1,&t0,&t1); // (xa+xb)(ya+yb)  always 11x11
-		FP4_YYY_add(&t0,&(w->b),&(w->c));  // (xb+xc)
-		FP4_YYY_add(&t1,&(y->b),&(y->c));  // (yb+yc)
+        FP4_YYY_mul(&z1,&t0,&t1); // (xa+xb)(ya+yb)  always 11x11
+        FP4_YYY_add(&t0,&(w->b),&(w->c));  // (xb+xc)
+        FP4_YYY_add(&t1,&(y->b),&(y->c));  // (yb+yc)
 
-		FP4_YYY_norm(&t0);
-		FP4_YYY_norm(&t1);
+        FP4_YYY_norm(&t0);
+        FP4_YYY_norm(&t1);
 
-		FP4_YYY_mul(&z3,&t0,&t1);	// (xb+xc)(yb+yc)   could be anything...
-		FP4_YYY_neg(&t0,&z0);		// -(xa.ya)
-		FP4_YYY_neg(&t1,&z2);		// -(xb.yb)
+        FP4_YYY_mul(&z3,&t0,&t1);	// (xb+xc)(yb+yc)   could be anything...
+        FP4_YYY_neg(&t0,&z0);		// -(xa.ya)
+        FP4_YYY_neg(&t1,&z2);		// -(xb.yb)
 
-		FP4_YYY_add(&z1,&z1,&t0);  
-		FP4_YYY_add(&(w->b),&z1,&t1); // /wb = (xa+xb)(ya+yb) -(xa.ya) -(xb.yb)						= xa.yb + xb.ya
+        FP4_YYY_add(&z1,&z1,&t0);
+        FP4_YYY_add(&(w->b),&z1,&t1); // /wb = (xa+xb)(ya+yb) -(xa.ya) -(xb.yb)						= xa.yb + xb.ya
 
-		FP4_YYY_add(&z3,&z3,&t1);        // (xb+xc)(yb+yc) -(xb.yb)
-		FP4_YYY_add(&z2,&z2,&t0);        // (xb.yb) - (xa.ya)
+        FP4_YYY_add(&z3,&z3,&t1);        // (xb+xc)(yb+yc) -(xb.yb)
+        FP4_YYY_add(&z2,&z2,&t0);        // (xb.yb) - (xa.ya)
 
-		FP4_YYY_add(&t0,&(w->a),&(w->c));  // (xa+xc)
-		FP4_YYY_add(&t1,&(y->a),&(y->c));  // (ya+yc)
+        FP4_YYY_add(&t0,&(w->a),&(w->c));  // (xa+xc)
+        FP4_YYY_add(&t1,&(y->a),&(y->c));  // (ya+yc)
 
-		FP4_YYY_norm(&t0);
-		FP4_YYY_norm(&t1);
+        FP4_YYY_norm(&t0);
+        FP4_YYY_norm(&t1);
 
-		FP4_YYY_mul(&t0,&t1,&t0);	// (xa+xc)(ya+yc)    always 11x11
-		FP4_YYY_add(&z2,&z2,&t0);	// (xb.yb) - (xa.ya) + (xa+xc)(ya+yc)
+        FP4_YYY_mul(&t0,&t1,&t0);	// (xa+xc)(ya+yc)    always 11x11
+        FP4_YYY_add(&z2,&z2,&t0);	// (xb.yb) - (xa.ya) + (xa+xc)(ya+yc)
 
 #if SEXTIC_TWIST_ZZZ == D_TYPE
-		if (y->type==FP_SPARSE || w->type==FP_SPARSE)
-		{
-			FP2_YYY_mul(&t0.a,&(w->c).a,&(y->c).a);
-			FP2_YYY_zero(&t0.b);
-			if (y->type!=FP_SPARSE)
-				FP2_YYY_mul(&t0.b,&(w->c).a,&(y->c).b);
-			if (w->type!=FP_SPARSE)
-				FP2_YYY_mul(&t0.b,&(w->c).b,&(y->c).a);
-		}
-		else
+        if (y->type==AMCL_FP_SPARSE || w->type==AMCL_FP_SPARSE)
+        {
+            FP2_YYY_mul(&t0.a,&(w->c).a,&(y->c).a);
+            FP2_YYY_zero(&t0.b);
+            if (y->type!=AMCL_FP_SPARSE)
+                FP2_YYY_mul(&t0.b,&(w->c).a,&(y->c).b);
+            if (w->type!=AMCL_FP_SPARSE)
+                FP2_YYY_mul(&t0.b,&(w->c).b,&(y->c).a);
+        }
+        else
 #endif
-			FP4_YYY_mul(&t0,&(w->c),&(y->c)); // (xc.yc)  could be anything
-			
-		FP4_YYY_neg(&t1,&t0);			  // -(xc.yc) 
+            FP4_YYY_mul(&t0,&(w->c),&(y->c)); // (xc.yc)  could be anything
 
-		FP4_YYY_add(&(w->c),&z2,&t1);		// wc = (xb.yb) - (xa.ya) + (xa+xc)(ya+yc) - (xc.yc)	=  xb.yb + xc.ya + xa.yc
-		FP4_YYY_add(&z3,&z3,&t1);			// (xb+xc)(yb+yc) -(xb.yb) - (xc.yc)					=  xb.yc + xc.yb
-		FP4_YYY_times_i(&t0);				// i.(xc.yc)
-		FP4_YYY_add(&(w->b),&(w->b),&t0);   // wb = (xa+xb)(ya+yb) -(xa.ya) -(xb.yb) +i(xc.yc)
-		FP4_YYY_norm(&z3);
-		FP4_YYY_times_i(&z3);				// i[(xb+xc)(yb+yc) -(xb.yb) - (xc.yc)]					= i(xb.yc + xc.yb)
-		FP4_YYY_add(&(w->a),&z0,&z3);		// wa = xa.ya + i(xb.yc + xc.yb)
-	} else {
-		if (w->type==FP_SPARSER)
-		{
-			FP12_YYY_smul(w,y);
-			return;
-		}
- // dense by sparser - 13m 
+        FP4_YYY_neg(&t1,&t0);			  // -(xc.yc)
+
+        FP4_YYY_add(&(w->c),&z2,&t1);		// wc = (xb.yb) - (xa.ya) + (xa+xc)(ya+yc) - (xc.yc)	=  xb.yb + xc.ya + xa.yc
+        FP4_YYY_add(&z3,&z3,&t1);			// (xb+xc)(yb+yc) -(xb.yb) - (xc.yc)					=  xb.yc + xc.yb
+        FP4_YYY_times_i(&t0);				// i.(xc.yc)
+        FP4_YYY_add(&(w->b),&(w->b),&t0);   // wb = (xa+xb)(ya+yb) -(xa.ya) -(xb.yb) +i(xc.yc)
+        FP4_YYY_norm(&z3);
+        FP4_YYY_times_i(&z3);				// i[(xb+xc)(yb+yc) -(xb.yb) - (xc.yc)]					= i(xb.yc + xc.yb)
+        FP4_YYY_add(&(w->a),&z0,&z3);		// wa = xa.ya + i(xb.yc + xc.yb)
+    }
+    else
+    {
+        if (w->type==AMCL_AMCL_FP_SPARSER)
+        {
+            FP12_YYY_smul(w,y);
+            return;
+        }
+// dense by sparser - 13m
 #if SEXTIC_TWIST_ZZZ == D_TYPE
-		FP4_YYY_copy(&z3,&(w->b));
-		FP4_YYY_mul(&z0,&(w->a),&(y->a));
+        FP4_YYY_copy(&z3,&(w->b));
+        FP4_YYY_mul(&z0,&(w->a),&(y->a));
 
-		FP4_YYY_pmul(&z2,&(w->b),&(y->b).a);
-		FP4_YYY_add(&(w->b),&(w->a),&(w->b));
-		FP4_YYY_copy(&t1,&(y->a));
-		FP2_YYY_add(&t1.a,&t1.a,&(y->b).a);
+        FP4_YYY_pmul(&z2,&(w->b),&(y->b).a);
+        FP4_YYY_add(&(w->b),&(w->a),&(w->b));
+        FP4_YYY_copy(&t1,&(y->a));
+        FP2_YYY_add(&t1.a,&t1.a,&(y->b).a);
 
-		FP4_YYY_norm(&t1);
-		FP4_YYY_norm(&(w->b));
+        FP4_YYY_norm(&t1);
+        FP4_YYY_norm(&(w->b));
 
-		FP4_YYY_mul(&(w->b),&(w->b),&t1);
-		FP4_YYY_add(&z3,&z3,&(w->c));
-		FP4_YYY_norm(&z3);
-		FP4_YYY_pmul(&z3,&z3,&(y->b).a);
-		FP4_YYY_neg(&t0,&z0);
-		FP4_YYY_neg(&t1,&z2);
+        FP4_YYY_mul(&(w->b),&(w->b),&t1);
+        FP4_YYY_add(&z3,&z3,&(w->c));
+        FP4_YYY_norm(&z3);
+        FP4_YYY_pmul(&z3,&z3,&(y->b).a);
+        FP4_YYY_neg(&t0,&z0);
+        FP4_YYY_neg(&t1,&z2);
 
-		FP4_YYY_add(&(w->b),&(w->b),&t0);   // z1=z1-z0
-		FP4_YYY_add(&(w->b),&(w->b),&t1);   // z1=z1-z2
+        FP4_YYY_add(&(w->b),&(w->b),&t0);   // z1=z1-z0
+        FP4_YYY_add(&(w->b),&(w->b),&t1);   // z1=z1-z2
 
-		FP4_YYY_add(&z3,&z3,&t1);        // z3=z3-z2
-		FP4_YYY_add(&z2,&z2,&t0);        // z2=z2-z0
+        FP4_YYY_add(&z3,&z3,&t1);        // z3=z3-z2
+        FP4_YYY_add(&z2,&z2,&t0);        // z2=z2-z0
 
-		FP4_YYY_add(&t0,&(w->a),&(w->c));
-		FP4_YYY_norm(&t0);
-		FP4_YYY_norm(&z3);
+        FP4_YYY_add(&t0,&(w->a),&(w->c));
+        FP4_YYY_norm(&t0);
+        FP4_YYY_norm(&z3);
 
-		FP4_YYY_mul(&t0,&(y->a),&t0);
-		FP4_YYY_add(&(w->c),&z2,&t0);
+        FP4_YYY_mul(&t0,&(y->a),&t0);
+        FP4_YYY_add(&(w->c),&z2,&t0);
 
-		FP4_YYY_times_i(&z3);
-		FP4_YYY_add(&(w->a),&z0,&z3);
+        FP4_YYY_times_i(&z3);
+        FP4_YYY_add(&(w->a),&z0,&z3);
 #endif
 #if SEXTIC_TWIST_ZZZ == M_TYPE
-		FP4_YYY_mul(&z0,&(w->a),&(y->a));
-		FP4_YYY_add(&t0,&(w->a),&(w->b));
-		FP4_YYY_norm(&t0);
+        FP4_YYY_mul(&z0,&(w->a),&(y->a));
+        FP4_YYY_add(&t0,&(w->a),&(w->b));
+        FP4_YYY_norm(&t0);
 
-		FP4_YYY_mul(&z1,&t0,&(y->a));
-		FP4_YYY_add(&t0,&(w->b),&(w->c));
-		FP4_YYY_norm(&t0);
+        FP4_YYY_mul(&z1,&t0,&(y->a));
+        FP4_YYY_add(&t0,&(w->b),&(w->c));
+        FP4_YYY_norm(&t0);
 
-		FP4_YYY_pmul(&z3,&t0,&(y->c).b);
-		FP4_YYY_times_i(&z3);
+        FP4_YYY_pmul(&z3,&t0,&(y->c).b);
+        FP4_YYY_times_i(&z3);
 
-		FP4_YYY_neg(&t0,&z0);
-		FP4_YYY_add(&z1,&z1,&t0);   // z1=z1-z0
+        FP4_YYY_neg(&t0,&z0);
+        FP4_YYY_add(&z1,&z1,&t0);   // z1=z1-z0
 
-		FP4_YYY_copy(&(w->b),&z1);
-		FP4_YYY_copy(&z2,&t0);
+        FP4_YYY_copy(&(w->b),&z1);
+        FP4_YYY_copy(&z2,&t0);
 
-		FP4_YYY_add(&t0,&(w->a),&(w->c));
-		FP4_YYY_add(&t1,&(y->a),&(y->c));
+        FP4_YYY_add(&t0,&(w->a),&(w->c));
+        FP4_YYY_add(&t1,&(y->a),&(y->c));
 
-		FP4_YYY_norm(&t0);
-		FP4_YYY_norm(&t1);
+        FP4_YYY_norm(&t0);
+        FP4_YYY_norm(&t1);
 
-		FP4_YYY_mul(&t0,&t1,&t0);
-		FP4_YYY_add(&z2,&z2,&t0);
+        FP4_YYY_mul(&t0,&t1,&t0);
+        FP4_YYY_add(&z2,&z2,&t0);
 
-		FP4_YYY_pmul(&t0,&(w->c),&(y->c).b);
-		FP4_YYY_times_i(&t0);
-		FP4_YYY_neg(&t1,&t0);
-		FP4_YYY_times_i(&t0);
+        FP4_YYY_pmul(&t0,&(w->c),&(y->c).b);
+        FP4_YYY_times_i(&t0);
+        FP4_YYY_neg(&t1,&t0);
+        FP4_YYY_times_i(&t0);
 
-		FP4_YYY_add(&(w->c),&z2,&t1);
-		FP4_YYY_add(&z3,&z3,&t1);
+        FP4_YYY_add(&(w->c),&z2,&t1);
+        FP4_YYY_add(&z3,&z3,&t1);
 
-		FP4_YYY_add(&(w->b),&(w->b),&t0);
-		FP4_YYY_norm(&z3);
-		FP4_YYY_times_i(&z3);
-		FP4_YYY_add(&(w->a),&z0,&z3);
+        FP4_YYY_add(&(w->b),&(w->b),&t0);
+        FP4_YYY_norm(&z3);
+        FP4_YYY_times_i(&z3);
+        FP4_YYY_add(&(w->a),&z0,&z3);
 
 #endif
-	}
-	w->type=FP_DENSE;
+    }
+    w->type=AMCL_FP_DENSE;
     FP12_YYY_norm(w);
 }
 
 /* FP12 multiplication w=w*y */
 /* catering for special case that arises from special form of ATE pairing line function */
-/* w and y are both sparser line functions - cost = 6m */ 
+/* w and y are both sparser line functions - cost = 6m */
 void FP12_YYY_smul(FP12_YYY *w,FP12_YYY *y)
 {
-	FP2_YYY w1,w2,w3,ta,tb,tc,td,te,t;
+    FP2_YYY w1,w2,w3,ta,tb,tc,td,te,t;
 
 //	if (type==D_TYPE)
-//	{ 
+//	{
 #if SEXTIC_TWIST_ZZZ == D_TYPE
-	FP2_YYY_mul(&w1,&(w->a).a,&(y->a).a); // A1.A2
-	FP2_YYY_mul(&w2,&(w->a).b,&(y->a).b); // B1.B2
-	FP2_YYY_mul(&w3,&(w->b).a,&(y->b).a); // C1.C2
+    FP2_YYY_mul(&w1,&(w->a).a,&(y->a).a); // A1.A2
+    FP2_YYY_mul(&w2,&(w->a).b,&(y->a).b); // B1.B2
+    FP2_YYY_mul(&w3,&(w->b).a,&(y->b).a); // C1.C2
 
-	FP2_YYY_add(&ta,&(w->a).a,&(w->a).b); // A1+B1
-	FP2_YYY_add(&tb,&(y->a).a,&(y->a).b); // A2+B2
-	FP2_YYY_norm(&ta);
-	FP2_YYY_norm(&tb);
-	FP2_YYY_mul(&tc,&ta,&tb);			// (A1+B1)(A2+B2)
-	FP2_YYY_add(&t,&w1,&w2);
-	FP2_YYY_neg(&t,&t);
-	FP2_YYY_add(&tc,&tc,&t);			// (A1+B1)(A2+B2)-A1.A2-B1*B2 =  (A1.B2+A2.B1)		
-				
-	FP2_YYY_add(&ta,&(w->a).a,&(w->b).a); // A1+C1
-	FP2_YYY_add(&tb,&(y->a).a,&(y->b).a); // A2+C2
-	FP2_YYY_norm(&ta);
-	FP2_YYY_norm(&tb);
-	FP2_YYY_mul(&td,&ta,&tb);			// (A1+C1)(A2+C2)
-	FP2_YYY_add(&t,&w1,&w3);
-	FP2_YYY_neg(&t,&t);
-	FP2_YYY_add(&td,&td,&t);			// (A1+C1)(A2+C2)-A1.A2-C1*C2 =  (A1.C2+A2.C1)		
+    FP2_YYY_add(&ta,&(w->a).a,&(w->a).b); // A1+B1
+    FP2_YYY_add(&tb,&(y->a).a,&(y->a).b); // A2+B2
+    FP2_YYY_norm(&ta);
+    FP2_YYY_norm(&tb);
+    FP2_YYY_mul(&tc,&ta,&tb);			// (A1+B1)(A2+B2)
+    FP2_YYY_add(&t,&w1,&w2);
+    FP2_YYY_neg(&t,&t);
+    FP2_YYY_add(&tc,&tc,&t);			// (A1+B1)(A2+B2)-A1.A2-B1*B2 =  (A1.B2+A2.B1)
 
-	FP2_YYY_add(&ta,&(w->a).b,&(w->b).a); // B1+C1
-	FP2_YYY_add(&tb,&(y->a).b,&(y->b).a); // B2+C2
-	FP2_YYY_norm(&ta);
-	FP2_YYY_norm(&tb);
-	FP2_YYY_mul(&te,&ta,&tb);			// (B1+C1)(B2+C2)
-	FP2_YYY_add(&t,&w2,&w3);
-	FP2_YYY_neg(&t,&t);
-	FP2_YYY_add(&te,&te,&t);			// (B1+C1)(B2+C2)-B1.B2-C1*C2 =  (B1.C2+B2.C1)		
+    FP2_YYY_add(&ta,&(w->a).a,&(w->b).a); // A1+C1
+    FP2_YYY_add(&tb,&(y->a).a,&(y->b).a); // A2+C2
+    FP2_YYY_norm(&ta);
+    FP2_YYY_norm(&tb);
+    FP2_YYY_mul(&td,&ta,&tb);			// (A1+C1)(A2+C2)
+    FP2_YYY_add(&t,&w1,&w3);
+    FP2_YYY_neg(&t,&t);
+    FP2_YYY_add(&td,&td,&t);			// (A1+C1)(A2+C2)-A1.A2-C1*C2 =  (A1.C2+A2.C1)
 
-	FP2_YYY_mul_ip(&w2);
-	FP2_YYY_add(&w1,&w1,&w2);
-	FP4_YYY_from_FP2s(&(w->a),&w1,&tc);
-	FP4_YYY_from_FP2s(&(w->b),&td,&te); // only norm these 2
-	FP4_YYY_from_FP2(&(w->c),&w3);
+    FP2_YYY_add(&ta,&(w->a).b,&(w->b).a); // B1+C1
+    FP2_YYY_add(&tb,&(y->a).b,&(y->b).a); // B2+C2
+    FP2_YYY_norm(&ta);
+    FP2_YYY_norm(&tb);
+    FP2_YYY_mul(&te,&ta,&tb);			// (B1+C1)(B2+C2)
+    FP2_YYY_add(&t,&w2,&w3);
+    FP2_YYY_neg(&t,&t);
+    FP2_YYY_add(&te,&te,&t);			// (B1+C1)(B2+C2)-B1.B2-C1*C2 =  (B1.C2+B2.C1)
 
-	FP4_YYY_norm(&(w->a));
-	FP4_YYY_norm(&(w->b));
+    FP2_YYY_mul_ip(&w2);
+    FP2_YYY_add(&w1,&w1,&w2);
+    FP4_YYY_from_FP2s(&(w->a),&w1,&tc);
+    FP4_YYY_from_FP2s(&(w->b),&td,&te); // only norm these 2
+    FP4_YYY_from_FP2(&(w->c),&w3);
+
+    FP4_YYY_norm(&(w->a));
+    FP4_YYY_norm(&(w->b));
 #endif
-//	} else { 
+//	} else {
 #if SEXTIC_TWIST_ZZZ == M_TYPE
-	FP2_YYY_mul(&w1,&(w->a).a,&(y->a).a); // A1.A2
-	FP2_YYY_mul(&w2,&(w->a).b,&(y->a).b); // B1.B2
-	FP2_YYY_mul(&w3,&(w->c).b,&(y->c).b); // F1.F2
+    FP2_YYY_mul(&w1,&(w->a).a,&(y->a).a); // A1.A2
+    FP2_YYY_mul(&w2,&(w->a).b,&(y->a).b); // B1.B2
+    FP2_YYY_mul(&w3,&(w->c).b,&(y->c).b); // F1.F2
 
-	FP2_YYY_add(&ta,&(w->a).a,&(w->a).b); // A1+B1
-	FP2_YYY_add(&tb,&(y->a).a,&(y->a).b); // A2+B2
-	FP2_YYY_norm(&ta);
-	FP2_YYY_norm(&tb);
-	FP2_YYY_mul(&tc,&ta,&tb);			// (A1+B1)(A2+B2)
-	FP2_YYY_add(&t,&w1,&w2);
-	FP2_YYY_neg(&t,&t);
-	FP2_YYY_add(&tc,&tc,&t);			// (A1+B1)(A2+B2)-A1.A2-B1*B2 =  (A1.B2+A2.B1)		
-				
-	FP2_YYY_add(&ta,&(w->a).a,&(w->c).b); // A1+F1
-	FP2_YYY_add(&tb,&(y->a).a,&(y->c).b); // A2+F2
-	FP2_YYY_norm(&ta);
-	FP2_YYY_norm(&tb);
-	FP2_YYY_mul(&td,&ta,&tb);			// (A1+F1)(A2+F2)
-	FP2_YYY_add(&t,&w1,&w3);
-	FP2_YYY_neg(&t,&t);
-	FP2_YYY_add(&td,&td,&t);			// (A1+F1)(A2+F2)-A1.A2-F1*F2 =  (A1.F2+A2.F1)		
+    FP2_YYY_add(&ta,&(w->a).a,&(w->a).b); // A1+B1
+    FP2_YYY_add(&tb,&(y->a).a,&(y->a).b); // A2+B2
+    FP2_YYY_norm(&ta);
+    FP2_YYY_norm(&tb);
+    FP2_YYY_mul(&tc,&ta,&tb);			// (A1+B1)(A2+B2)
+    FP2_YYY_add(&t,&w1,&w2);
+    FP2_YYY_neg(&t,&t);
+    FP2_YYY_add(&tc,&tc,&t);			// (A1+B1)(A2+B2)-A1.A2-B1*B2 =  (A1.B2+A2.B1)
 
-	FP2_YYY_add(&ta,&(w->a).b,&(w->c).b); // B1+F1
-	FP2_YYY_add(&tb,&(y->a).b,&(y->c).b); // B2+F2
-	FP2_YYY_norm(&ta);
-	FP2_YYY_norm(&tb);
-	FP2_YYY_mul(&te,&ta,&tb);			// (B1+F1)(B2+F2)
-	FP2_YYY_add(&t,&w2,&w3);
-	FP2_YYY_neg(&t,&t);
-	FP2_YYY_add(&te,&te,&t);			// (B1+F1)(B2+F2)-B1.B2-F1*F2 =  (B1.F2+B2.F1)	
+    FP2_YYY_add(&ta,&(w->a).a,&(w->c).b); // A1+F1
+    FP2_YYY_add(&tb,&(y->a).a,&(y->c).b); // A2+F2
+    FP2_YYY_norm(&ta);
+    FP2_YYY_norm(&tb);
+    FP2_YYY_mul(&td,&ta,&tb);			// (A1+F1)(A2+F2)
+    FP2_YYY_add(&t,&w1,&w3);
+    FP2_YYY_neg(&t,&t);
+    FP2_YYY_add(&td,&td,&t);			// (A1+F1)(A2+F2)-A1.A2-F1*F2 =  (A1.F2+A2.F1)
 
-	FP2_YYY_mul_ip(&w2);
-	FP2_YYY_add(&w1,&w1,&w2);
-	FP4_YYY_from_FP2s(&(w->a),&w1,&tc);
+    FP2_YYY_add(&ta,&(w->a).b,&(w->c).b); // B1+F1
+    FP2_YYY_add(&tb,&(y->a).b,&(y->c).b); // B2+F2
+    FP2_YYY_norm(&ta);
+    FP2_YYY_norm(&tb);
+    FP2_YYY_mul(&te,&ta,&tb);			// (B1+F1)(B2+F2)
+    FP2_YYY_add(&t,&w2,&w3);
+    FP2_YYY_neg(&t,&t);
+    FP2_YYY_add(&te,&te,&t);			// (B1+F1)(B2+F2)-B1.B2-F1*F2 =  (B1.F2+B2.F1)
 
-	FP2_YYY_mul_ip(&w3);
-	FP2_YYY_norm(&w3);
-	FP4_YYY_from_FP2H(&(w->b),&w3);
+    FP2_YYY_mul_ip(&w2);
+    FP2_YYY_add(&w1,&w1,&w2);
+    FP4_YYY_from_FP2s(&(w->a),&w1,&tc);
 
-	FP2_YYY_norm(&te);
-	FP2_YYY_mul_ip(&te);
-	FP4_YYY_from_FP2s(&(w->c),&te,&td);
+    FP2_YYY_mul_ip(&w3);
+    FP2_YYY_norm(&w3);
+    FP4_YYY_from_FP2H(&(w->b),&w3);
 
-	FP4_YYY_norm(&(w->a));
-	FP4_YYY_norm(&(w->c));
+    FP2_YYY_norm(&te);
+    FP2_YYY_mul_ip(&te);
+    FP4_YYY_from_FP2s(&(w->c),&te,&td);
+
+    FP4_YYY_norm(&(w->a));
+    FP4_YYY_norm(&(w->c));
 #endif
 
 //	}
-	w->type=FP_SPARSE;
+    w->type=AMCL_FP_SPARSE;
 }
 
 /* Set w=1/x */
@@ -613,7 +615,7 @@ void FP12_YYY_inv(FP12_YYY *w,FP12_YYY *x)
     FP4_YYY_mul(&(w->a),&f0,&f3);
     FP4_YYY_mul(&(w->b),&f1,&f3);
     FP4_YYY_mul(&(w->c),&f2,&f3);
-	w->type=FP_DENSE;
+    w->type=AMCL_FP_DENSE;
 }
 
 /* constant time powering by small integer of max length bts */
@@ -692,13 +694,13 @@ void FP12_YYY_pow(FP12_YYY *r,FP12_YYY *a,BIG_XXX b)
     FP12_YYY w,sf;
     BIG_XXX b1,b3;
     int i,nb,bt;
-	BIG_XXX_copy(b1,b);
+    BIG_XXX_copy(b1,b);
     BIG_XXX_norm(b1);
     BIG_XXX_pmul(b3,b1,3);
     BIG_XXX_norm(b3);
 
-	FP12_YYY_copy(&sf,a);
-	FP12_YYY_norm(&sf);
+    FP12_YYY_copy(&sf,a);
+    FP12_YYY_norm(&sf);
     FP12_YYY_copy(&w,&sf);
 
 
@@ -729,8 +731,8 @@ void FP12_YYY_pow(FP12_YYY *r,FP12_YYY *a,BIG_XXX b)
 void FP12_YYY_pow4(FP12_YYY *p,FP12_YYY *q,BIG_XXX u[4])
 {
     int i,j,k,nb,pb,bt;
-	FP12_YYY g[8],r;
-	BIG_XXX t[4],mt;
+    FP12_YYY g[8],r;
+    BIG_XXX t[4],mt;
     sign8 w[NLEN_XXX*BASEBITS_XXX+1];
     sign8 s[NLEN_XXX*BASEBITS_XXX+1];
 
@@ -741,24 +743,24 @@ void FP12_YYY_pow4(FP12_YYY *p,FP12_YYY *q,BIG_XXX u[4])
 // Precomputed table
     FP12_YYY_copy(&g[0],&q[0]); // q[0]
     FP12_YYY_copy(&g[1],&g[0]);
-	FP12_YYY_mul(&g[1],&q[1]);	// q[0].q[1]
+    FP12_YYY_mul(&g[1],&q[1]);	// q[0].q[1]
     FP12_YYY_copy(&g[2],&g[0]);
-	FP12_YYY_mul(&g[2],&q[2]);	// q[0].q[2]
-	FP12_YYY_copy(&g[3],&g[1]);
-	FP12_YYY_mul(&g[3],&q[2]);	// q[0].q[1].q[2]
-	FP12_YYY_copy(&g[4],&g[0]);
-	FP12_YYY_mul(&g[4],&q[3]);  // q[0].q[3]
-	FP12_YYY_copy(&g[5],&g[1]);
-	FP12_YYY_mul(&g[5],&q[3]);	// q[0].q[1].q[3]
-	FP12_YYY_copy(&g[6],&g[2]);
-	FP12_YYY_mul(&g[6],&q[3]);	// q[0].q[2].q[3]
-	FP12_YYY_copy(&g[7],&g[3]);
-	FP12_YYY_mul(&g[7],&q[3]);	// q[0].q[1].q[2].q[3]
+    FP12_YYY_mul(&g[2],&q[2]);	// q[0].q[2]
+    FP12_YYY_copy(&g[3],&g[1]);
+    FP12_YYY_mul(&g[3],&q[2]);	// q[0].q[1].q[2]
+    FP12_YYY_copy(&g[4],&g[0]);
+    FP12_YYY_mul(&g[4],&q[3]);  // q[0].q[3]
+    FP12_YYY_copy(&g[5],&g[1]);
+    FP12_YYY_mul(&g[5],&q[3]);	// q[0].q[1].q[3]
+    FP12_YYY_copy(&g[6],&g[2]);
+    FP12_YYY_mul(&g[6],&q[3]);	// q[0].q[2].q[3]
+    FP12_YYY_copy(&g[7],&g[3]);
+    FP12_YYY_mul(&g[7],&q[3]);	// q[0].q[1].q[2].q[3]
 
 // Make it odd
-	pb=1-BIG_XXX_parity(t[0]);
-	BIG_XXX_inc(t[0],pb);
-	BIG_XXX_norm(t[0]);
+    pb=1-BIG_XXX_parity(t[0]);
+    BIG_XXX_inc(t[0],pb);
+    BIG_XXX_norm(t[0]);
 
 // Number of bits
     BIG_XXX_zero(mt);
@@ -768,45 +770,45 @@ void FP12_YYY_pow4(FP12_YYY *p,FP12_YYY *q,BIG_XXX u[4])
     }
     nb=1+BIG_XXX_nbits(mt);
 
-// Sign pivot 
-	s[nb-1]=1;
-	for (i=0;i<nb-1;i++)
-	{
+// Sign pivot
+    s[nb-1]=1;
+    for (i=0; i<nb-1; i++)
+    {
         BIG_XXX_fshr(t[0],1);
-		s[i]=2*BIG_XXX_parity(t[0])-1;
-	}
+        s[i]=2*BIG_XXX_parity(t[0])-1;
+    }
 
 // Recoded exponent
     for (i=0; i<nb; i++)
     {
-		w[i]=0;
-		k=1;
-		for (j=1; j<4; j++)
-		{
-			bt=s[i]*BIG_XXX_parity(t[j]);
-			BIG_XXX_fshr(t[j],1);
+        w[i]=0;
+        k=1;
+        for (j=1; j<4; j++)
+        {
+            bt=s[i]*BIG_XXX_parity(t[j]);
+            BIG_XXX_fshr(t[j],1);
 
-			BIG_XXX_dec(t[j],(bt>>1));
-			BIG_XXX_norm(t[j]);
-			w[i]+=bt*k;
-			k*=2;
+            BIG_XXX_dec(t[j],(bt>>1));
+            BIG_XXX_norm(t[j]);
+            w[i]+=bt*k;
+            k*=2;
         }
-    }		
+    }
 
 // Main loop
-	FP12_YYY_select(p,g,2*w[nb-1]+1);
+    FP12_YYY_select(p,g,2*w[nb-1]+1);
     for (i=nb-2; i>=0; i--)
     {
         FP12_YYY_select(&r,g,2*w[i]+s[i]);
-		FP12_YYY_usqr(p,p);
+        FP12_YYY_usqr(p,p);
         FP12_YYY_mul(p,&r);
     }
 // apply correction
-	FP12_YYY_conj(&r,&q[0]);   
-	FP12_YYY_mul(&r,p);
-	FP12_YYY_cmove(p,&r,pb);
+    FP12_YYY_conj(&r,&q[0]);
+    FP12_YYY_mul(&r,p);
+    FP12_YYY_cmove(p,&r,pb);
 
-	FP12_YYY_reduce(p);
+    FP12_YYY_reduce(p);
 }
 
 /* Set w=w^p using Frobenius */
@@ -823,7 +825,7 @@ void FP12_YYY_frob(FP12_YYY *w,FP2_YYY *f)
 
     FP4_YYY_pmul(&(w->b),&(w->b),f);
     FP4_YYY_pmul(&(w->c),&(w->c),&f2);
-	w->type=FP_DENSE;
+    w->type=AMCL_FP_DENSE;
 }
 
 /* SU= 8 */
@@ -935,7 +937,7 @@ void FP12_YYY_cmove(FP12_YYY *f,FP12_YYY *g,int d)
     FP4_YYY_cmove(&(f->a),&(g->a),d);
     FP4_YYY_cmove(&(f->b),&(g->b),d);
     FP4_YYY_cmove(&(f->c),&(g->c),d);
-	d=~(d-1);
-	f->type^=(f->type^g->type)&d;
+    d=~(d-1);
+    f->type^=(f->type^g->type)&d;
 }
 
