@@ -59,7 +59,7 @@
 
 #define AMCL_FP_ZERO 0
 #define AMCL_FP_UNITY 1
-#define AMCL_AMCL_FP_SPARSER 2
+#define AMCL_FP_SPARSER 2
 #define AMCL_FP_SPARSE 3
 #define AMCL_FP_DENSE 4
 

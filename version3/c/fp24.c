@@ -126,7 +126,7 @@ void FP24_YYY_from_FP8(FP24_YYY *w,FP8_YYY *a)
     FP8_YYY_copy(&(w->a),a);
     FP8_YYY_zero(&(w->b));
     FP8_YYY_zero(&(w->c));
-    w->type=AMCL_AMCL_FP_SPARSER;
+    w->type=AMCL_FP_SPARSER;
 }
 
 /* Create FP24 from 3 FP8's */
@@ -227,7 +227,7 @@ void FP24_YYY_sqr(FP24_YYY *w,FP24_YYY *x)
     FP8_YYY_add(&(w->b),&C,&D);
     FP8_YYY_add(&(w->c),&(w->c),&A);
 
-    if (x->type==AMCL_AMCL_FP_SPARSER)
+    if (x->type==AMCL_FP_SPARSER)
         w->type=AMCL_FP_SPARSE;
     else
         w->type=AMCL_FP_DENSE;
@@ -384,7 +384,7 @@ void FP24_YYY_ssmul(FP24_YYY *w,FP24_YYY *y)
     }
     else
     {
-        if (w->type==AMCL_AMCL_FP_SPARSER)
+        if (w->type==AMCL_FP_SPARSER)
         {
             FP24_YYY_smul(w,y);
             return;

@@ -129,7 +129,7 @@ static void PAIR_ZZZ_line(FP48_YYY *v,ECP8_ZZZ *A,ECP8_ZZZ *B,FP_YYY *Qx,FP_YYY 
     }
 
     FP48_YYY_from_FP16s(v,&a,&b,&c);
-    v->type=AMCL_AMCL_FP_SPARSER;
+    v->type=AMCL_FP_SPARSER;
 }
 
 /* prepare ate parameter, n=6u+2 (BN) or n=u (BLS), n3=3*n */

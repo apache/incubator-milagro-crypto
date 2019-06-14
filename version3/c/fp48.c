@@ -127,7 +127,7 @@ void FP48_YYY_from_FP16(FP48_YYY *w,FP16_YYY *a)
     FP16_YYY_copy(&(w->a),a);
     FP16_YYY_zero(&(w->b));
     FP16_YYY_zero(&(w->c));
-    w->type=AMCL_AMCL_FP_SPARSER;
+    w->type=AMCL_FP_SPARSER;
 }
 
 /* Create FP48 from 3 FP16's */
@@ -228,7 +228,7 @@ void FP48_YYY_sqr(FP48_YYY *w,FP48_YYY *x)
     FP16_YYY_add(&(w->b),&C,&D);
     FP16_YYY_add(&(w->c),&(w->c),&A);
 
-    if (x->type==AMCL_AMCL_FP_SPARSER)
+    if (x->type==AMCL_FP_SPARSER)
         w->type=AMCL_FP_SPARSE;
     else
         w->type=AMCL_FP_DENSE;
@@ -385,7 +385,7 @@ void FP48_YYY_ssmul(FP48_YYY *w,FP48_YYY *y)
     }
     else
     {
-        if (w->type==AMCL_AMCL_FP_SPARSER)
+        if (w->type==AMCL_FP_SPARSER)
         {
             FP48_YYY_smul(w,y);
             return;
