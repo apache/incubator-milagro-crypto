@@ -229,7 +229,7 @@ void FP12_YYY_sqr(FP12_YYY *w,FP12_YYY *x)
     FP4_YYY_add(&(w->b),&C,&D);
     FP4_YYY_add(&(w->c),&(w->c),&A);
 
-    if (x->type==AMCL_AMCL_FP_SPARSER)
+    if (x->type==AMCL_FP_SPARSER)
         w->type=AMCL_FP_SPARSE;
     else
         w->type=AMCL_FP_DENSE;
