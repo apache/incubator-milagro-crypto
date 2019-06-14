@@ -131,7 +131,7 @@ static void PAIR_ZZZ_line(FP12_YYY *v,ECP2_ZZZ *A,ECP2_ZZZ *B,FP_YYY *Qx,FP_YYY 
     }
 
     FP12_YYY_from_FP4s(v,&a,&b,&c);
-    v->type=AMCL_AMCL_FP_SPARSER;
+    v->type=AMCL_FP_SPARSER;
 }
 
 

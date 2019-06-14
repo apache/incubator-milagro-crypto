@@ -129,7 +129,7 @@ void FP12_YYY_from_FP4(FP12_YYY *w,FP4_YYY *a)
     FP4_YYY_copy(&(w->a),a);
     FP4_YYY_zero(&(w->b));
     FP4_YYY_zero(&(w->c));
-    w->type=AMCL_AMCL_FP_SPARSER;
+    w->type=AMCL_FP_SPARSER;
 }
 
 /* Create FP12 from 3 FP4's */
@@ -387,7 +387,7 @@ void FP12_YYY_ssmul(FP12_YYY *w,FP12_YYY *y)
     }
     else
     {
-        if (w->type==AMCL_AMCL_FP_SPARSER)
+        if (w->type==AMCL_FP_SPARSER)
         {
             FP12_YYY_smul(w,y);
             return;
