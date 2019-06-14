@@ -18,7 +18,7 @@ under the License.
 */
 
 /**
- * @file mpin.h
+ * @file mpin_ZZZ.h
  * @author Mike Scott
  * @brief M-Pin Header file
  *

@@ -100,14 +100,14 @@ void FP16_YYY_neg(FP16_YYY *w,FP16_YYY *x)
 {
     /* Just one field neg */
     FP8_YYY m,t;
-	FP16_YYY_norm(x);
+    FP16_YYY_norm(x);
     FP8_YYY_add(&m,&(x->a),&(x->b));
-	FP8_YYY_norm(&m);
+    FP8_YYY_norm(&m);
     FP8_YYY_neg(&m,&m);
     FP8_YYY_add(&t,&m,&(x->b));
     FP8_YYY_add(&(w->b),&m,&(x->a));
     FP8_YYY_copy(&(w->a),&t);
-	FP16_YYY_norm(w);
+    FP16_YYY_norm(w);
 }
 
 /* Set w=conj(x) */
@@ -115,7 +115,7 @@ void FP16_YYY_conj(FP16_YYY *w,FP16_YYY *x)
 {
     FP8_YYY_copy(&(w->a), &(x->a));
     FP8_YYY_neg(&(w->b), &(x->b));
-	FP16_YYY_norm(w);
+    FP16_YYY_norm(w);
 }
 
 /* Set w=-conj(x) */
@@ -123,7 +123,7 @@ void FP16_YYY_nconj(FP16_YYY *w,FP16_YYY *x)
 {
     FP8_YYY_copy(&(w->b),&(x->b));
     FP8_YYY_neg(&(w->a), &(x->a));
-	FP16_YYY_norm(w);
+    FP16_YYY_norm(w);
 }
 
 /* Set w=x+y */
@@ -192,8 +192,8 @@ void FP16_YYY_sqr(FP16_YYY *w,FP16_YYY *x)
 
     FP8_YYY_add(&t2,&(x->a),&t2);
 
-	FP8_YYY_norm(&t1);  // 2
-	FP8_YYY_norm(&t2);  // 2
+    FP8_YYY_norm(&t1);  // 2
+    FP8_YYY_norm(&t2);  // 2
 
     FP8_YYY_mul(&(w->a),&t1,&t2);
 
@@ -202,7 +202,7 @@ void FP16_YYY_sqr(FP16_YYY *w,FP16_YYY *x)
 
     FP8_YYY_add(&t2,&t2,&t3);
 
-	FP8_YYY_norm(&t2);  // 2
+    FP8_YYY_norm(&t2);  // 2
     FP8_YYY_neg(&t2,&t2);
     FP8_YYY_add(&(w->a),&(w->a),&t2);  /* a=(a+b)(a+i^2.b)-i^2.ab-ab = a*a+ib*ib */
     FP8_YYY_add(&(w->b),&t3,&t3);  /* b=2ab */
@@ -216,23 +216,23 @@ void FP16_YYY_mul(FP16_YYY *w,FP16_YYY *x,FP16_YYY *y)
 {
 
     FP8_YYY t1,t2,t3,t4;
-    FP8_YYY_mul(&t1,&(x->a),&(y->a)); 
-    FP8_YYY_mul(&t2,&(x->b),&(y->b)); 
+    FP8_YYY_mul(&t1,&(x->a),&(y->a));
+    FP8_YYY_mul(&t2,&(x->b),&(y->b));
 
     FP8_YYY_add(&t3,&(y->b),&(y->a));
     FP8_YYY_add(&t4,&(x->b),&(x->a));
 
-	FP8_YYY_norm(&t4); // 2
-	FP8_YYY_norm(&t3); // 2
+    FP8_YYY_norm(&t4); // 2
+    FP8_YYY_norm(&t3); // 2
 
     FP8_YYY_mul(&t4,&t4,&t3); /* (xa+xb)(ya+yb) */
 
-	FP8_YYY_neg(&t3,&t1);  // 1
-	FP8_YYY_add(&t4,&t4,&t3);  //t4E=3
+    FP8_YYY_neg(&t3,&t1);  // 1
+    FP8_YYY_add(&t4,&t4,&t3);  //t4E=3
     FP8_YYY_norm(&t4);
 
-	FP8_YYY_neg(&t3,&t2);  // 1
-	FP8_YYY_add(&(w->b),&t4,&t3); //wbE=3
+    FP8_YYY_neg(&t3,&t2);  // 1
+    FP8_YYY_add(&(w->b),&t4,&t3); //wbE=3
 
     FP8_YYY_times_i(&t2);
     FP8_YYY_add(&(w->a),&t2,&t1);
@@ -266,56 +266,57 @@ void FP16_YYY_inv(FP16_YYY *w,FP16_YYY *x)
     FP8_YYY_sqr(&t1,&(x->a));
     FP8_YYY_sqr(&t2,&(x->b));
     FP8_YYY_times_i(&t2);
-	FP8_YYY_norm(&t2);
+    FP8_YYY_norm(&t2);
 
     FP8_YYY_sub(&t1,&t1,&t2);
-	FP8_YYY_norm(&t1);
+    FP8_YYY_norm(&t1);
 
     FP8_YYY_inv(&t1,&t1);
 
     FP8_YYY_mul(&(w->a),&t1,&(x->a));
     FP8_YYY_neg(&t1,&t1);
-	FP8_YYY_norm(&t1);
+    FP8_YYY_norm(&t1);
     FP8_YYY_mul(&(w->b),&t1,&(x->b));
 }
 
 /* w*=i where i = sqrt(sqrt(-1+sqrt(-1))) */
 void FP16_YYY_times_i(FP16_YYY *w)
 {
-	FP8_YYY s,t;
-	FP8_YYY_copy(&s,&(w->b));
-	FP8_YYY_copy(&t,&(w->a));
-	FP8_YYY_times_i(&s);
-	FP8_YYY_copy(&(w->a),&s);
-	FP8_YYY_copy(&(w->b),&t);
-	FP16_YYY_norm(w);
+    FP8_YYY s,t;
+    FP8_YYY_copy(&s,&(w->b));
+    FP8_YYY_copy(&t,&(w->a));
+    FP8_YYY_times_i(&s);
+    FP8_YYY_copy(&(w->a),&s);
+    FP8_YYY_copy(&(w->b),&t);
+    FP16_YYY_norm(w);
 }
 
 void FP16_YYY_times_i2(FP16_YYY *w)
 {
-	FP8_YYY_times_i(&(w->a));
-	FP8_YYY_times_i(&(w->b));
+    FP8_YYY_times_i(&(w->a));
+    FP8_YYY_times_i(&(w->b));
 }
 
 void FP16_YYY_times_i4(FP16_YYY *w)
 {
-	FP8_YYY_times_i2(&(w->a));
-	FP8_YYY_times_i2(&(w->b));
+    FP8_YYY_times_i2(&(w->a));
+    FP8_YYY_times_i2(&(w->b));
 }
 
 /* Set w=w^p using Frobenius */
 void FP16_YYY_frob(FP16_YYY *w,FP2_YYY *f)
-{ // f=(i+1)^(p-3)/8
-	FP2_YYY ff;
+{
+    // f=(i+1)^(p-3)/8
+    FP2_YYY ff;
 
-	FP2_YYY_sqr(&ff,f);  // (i+1)^(p-3)/4
-	FP2_YYY_norm(&ff);
+    FP2_YYY_sqr(&ff,f);  // (i+1)^(p-3)/4
+    FP2_YYY_norm(&ff);
 
-	FP8_YYY_frob(&(w->a),&ff);
-	FP8_YYY_frob(&(w->b),&ff);
+    FP8_YYY_frob(&(w->a),&ff);
+    FP8_YYY_frob(&(w->b),&ff);
 
-	FP8_YYY_qmul(&(w->b),&(w->b),f);  // times (1+i)^(p-3)/8
-	FP8_YYY_times_i(&(w->b));		// (i+1)^(p-1)/8
+    FP8_YYY_qmul(&(w->b),&(w->b),f);  // times (1+i)^(p-3)/8
+    FP8_YYY_times_i(&(w->b));		// (i+1)^(p-1)/8
 }
 
 /* Set r=a^b mod m */
@@ -358,10 +359,10 @@ void FP16_YYY_xtr_A(FP16_YYY *r,FP16_YYY *w,FP16_YYY *x,FP16_YYY *y,FP16_YYY *z)
 
     FP16_YYY_copy(r,x);
     FP16_YYY_sub(&t1,w,y);
-	FP16_YYY_norm(&t1);
+    FP16_YYY_norm(&t1);
     FP16_YYY_pmul(&t1,&t1,&(r->a));
     FP16_YYY_add(&t2,w,y);
-	FP16_YYY_norm(&t2);
+    FP16_YYY_norm(&t2);
     FP16_YYY_pmul(&t2,&t2,&(r->b));
     FP16_YYY_times_i(&t2);
 
@@ -379,7 +380,7 @@ void FP16_YYY_xtr_D(FP16_YYY *r,FP16_YYY *x)
     FP16_YYY_conj(&w,r);
     FP16_YYY_add(&w,&w,&w);
     FP16_YYY_sqr(r,r);
-	FP16_YYY_norm(&w);
+    FP16_YYY_norm(&w);
     FP16_YYY_sub(r,r,&w);
     FP16_YYY_reduce(r);    /* reduce here as multiple calls trigger automatic reductions */
 }
@@ -390,20 +391,20 @@ void FP16_YYY_xtr_pow(FP16_YYY *r,FP16_YYY *x,BIG_XXX n)
     int i,par,nb;
     BIG_XXX v;
     FP2_YYY w2;
-	FP4_YYY w4;
-	FP8_YYY w8;
+    FP4_YYY w4;
+    FP8_YYY w8;
     FP16_YYY t,a,b,c,sf;
 
     BIG_XXX_zero(v);
     BIG_XXX_inc(v,3);
-	BIG_XXX_norm(v);
+    BIG_XXX_norm(v);
     FP2_YYY_from_BIG(&w2,v);
     FP4_YYY_from_FP2(&w4,&w2);
-	FP8_YYY_from_FP4(&w8,&w4);
+    FP8_YYY_from_FP4(&w8,&w4);
     FP16_YYY_from_FP8(&a,&w8);
-	FP16_YYY_copy(&sf,x);
-	FP16_YYY_norm(&sf);
-	FP16_YYY_copy(&b,&sf);
+    FP16_YYY_copy(&sf,x);
+    FP16_YYY_norm(&sf);
+    FP16_YYY_copy(&b,&sf);
     FP16_YYY_xtr_D(&c,&sf);
 
 
@@ -455,7 +456,7 @@ void FP16_YYY_xtr_pow2(FP16_YYY *r,FP16_YYY *ck,FP16_YYY *cl,FP16_YYY *ckml,FP16
     BIG_XXX_copy(e,a);
     BIG_XXX_copy(d,b);
     BIG_XXX_norm(d);
-	BIG_XXX_norm(e);
+    BIG_XXX_norm(e);
     FP16_YYY_copy(&cu,ck);
     FP16_YYY_copy(&cv,cl);
     FP16_YYY_copy(&cumv,ckml);

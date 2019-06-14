@@ -80,7 +80,7 @@ void FP48_YYY_copy(FP48_YYY *w,FP48_YYY *x)
     FP16_YYY_copy(&(w->a),&(x->a));
     FP16_YYY_copy(&(w->b),&(x->b));
     FP16_YYY_copy(&(w->c),&(x->c));
-	w->type=x->type;
+    w->type=x->type;
 }
 
 /* FP48 w=1 */
@@ -90,7 +90,7 @@ void FP48_YYY_one(FP48_YYY *w)
     FP16_YYY_one(&(w->a));
     FP16_YYY_zero(&(w->b));
     FP16_YYY_zero(&(w->c));
-	w->type=FP_UNITY;
+    w->type=AMCL_FP_UNITY;
 }
 
 void FP48_YYY_zero(FP48_YYY *w)
@@ -98,7 +98,7 @@ void FP48_YYY_zero(FP48_YYY *w)
     FP16_YYY_zero(&(w->a));
     FP16_YYY_zero(&(w->b));
     FP16_YYY_zero(&(w->c));
-	w->type=FP_ZERO;
+    w->type=AMCL_FP_ZERO;
 }
 
 /* return 1 if x==y, else 0 */
@@ -127,7 +127,7 @@ void FP48_YYY_from_FP16(FP48_YYY *w,FP16_YYY *a)
     FP16_YYY_copy(&(w->a),a);
     FP16_YYY_zero(&(w->b));
     FP16_YYY_zero(&(w->c));
-	w->type=FP_SPARSER;
+    w->type=AMCL_AMCL_FP_SPARSER;
 }
 
 /* Create FP48 from 3 FP16's */
@@ -137,7 +137,7 @@ void FP48_YYY_from_FP16s(FP48_YYY *w,FP16_YYY *a,FP16_YYY *b,FP16_YYY *c)
     FP16_YYY_copy(&(w->a),a);
     FP16_YYY_copy(&(w->b),b);
     FP16_YYY_copy(&(w->c),c);
-	w->type=FP_DENSE;
+    w->type=AMCL_FP_DENSE;
 }
 
 /* Granger-Scott Unitary Squaring. This does not benefit from lazy reduction */
@@ -177,7 +177,7 @@ void FP48_YYY_usqr(FP48_YYY *w,FP48_YYY *x)
     FP16_YYY_add(&(w->c),&(w->c),&(w->c));
     FP16_YYY_add(&(w->b),&B,&(w->b));
     FP16_YYY_add(&(w->c),&C,&(w->c));
-	w->type=FP_DENSE;
+    w->type=AMCL_FP_DENSE;
     FP48_YYY_reduce(w);	    /* reduce here as in pow function repeated squarings would trigger multiple reductions */
 }
 
@@ -189,16 +189,16 @@ void FP48_YYY_sqr(FP48_YYY *w,FP48_YYY *x)
 
     FP16_YYY A,B,C,D;
 
-	if (x->type<=FP_UNITY)
-	{
-		FP48_YYY_copy(w,x);
-		return;
-	}
+    if (x->type<=AMCL_FP_UNITY)
+    {
+        FP48_YYY_copy(w,x);
+        return;
+    }
 
     FP16_YYY_sqr(&A,&(x->a));
     FP16_YYY_mul(&B,&(x->b),&(x->c));
     FP16_YYY_add(&B,&B,&B);
-	FP16_YYY_norm(&B);
+    FP16_YYY_norm(&B);
     FP16_YYY_sqr(&C,&(x->c));
 
     FP16_YYY_mul(&D,&(x->a),&(x->b));
@@ -206,7 +206,7 @@ void FP48_YYY_sqr(FP48_YYY *w,FP48_YYY *x)
 
     FP16_YYY_add(&(w->c),&(x->a),&(x->c));
     FP16_YYY_add(&(w->c),&(x->b),&(w->c));
-	FP16_YYY_norm(&(w->c));	
+    FP16_YYY_norm(&(w->c));
 
     FP16_YYY_sqr(&(w->c),&(w->c));
 
@@ -228,10 +228,10 @@ void FP48_YYY_sqr(FP48_YYY *w,FP48_YYY *x)
     FP16_YYY_add(&(w->b),&C,&D);
     FP16_YYY_add(&(w->c),&(w->c),&A);
 
-	if (x->type==FP_SPARSER)
-		w->type=FP_SPARSE;
-	else
-		w->type=FP_DENSE;
+    if (x->type==AMCL_AMCL_FP_SPARSER)
+        w->type=AMCL_FP_SPARSE;
+    else
+        w->type=AMCL_FP_DENSE;
 
     FP48_YYY_norm(w);
 }
@@ -251,15 +251,15 @@ void FP48_YYY_mul(FP48_YYY *w,FP48_YYY *y)
     FP16_YYY_add(&t0,&(w->a),&(w->b));
     FP16_YYY_add(&t1,&(y->a),&(y->b));  //
 
-	FP16_YYY_norm(&t0);
-	FP16_YYY_norm(&t1);
+    FP16_YYY_norm(&t0);
+    FP16_YYY_norm(&t1);
 
     FP16_YYY_mul(&z1,&t0,&t1);
     FP16_YYY_add(&t0,&(w->b),&(w->c));
     FP16_YYY_add(&t1,&(y->b),&(y->c));  //
 
-	FP16_YYY_norm(&t0);
-	FP16_YYY_norm(&t1);
+    FP16_YYY_norm(&t0);
+    FP16_YYY_norm(&t1);
 
     FP16_YYY_mul(&z3,&t0,&t1);
 
@@ -274,8 +274,8 @@ void FP48_YYY_mul(FP48_YYY *w,FP48_YYY *y)
     FP16_YYY_add(&t0,&(w->a),&(w->c));
     FP16_YYY_add(&t1,&(y->a),&(y->c));
 
-	FP16_YYY_norm(&t0);
-	FP16_YYY_norm(&t1);
+    FP16_YYY_norm(&t0);
+    FP16_YYY_norm(&t1);
 
     FP16_YYY_mul(&t0,&t1,&t0);
     FP16_YYY_add(&z2,&z2,&t0);
@@ -287,10 +287,10 @@ void FP48_YYY_mul(FP48_YYY *w,FP48_YYY *y)
     FP16_YYY_add(&z3,&z3,&t1);
     FP16_YYY_times_i(&t0);
     FP16_YYY_add(&(w->b),&(w->b),&t0);
-	FP16_YYY_norm(&z3);
+    FP16_YYY_norm(&z3);
     FP16_YYY_times_i(&z3);
     FP16_YYY_add(&(w->a),&z0,&z3);
-	w->type=FP_DENSE;
+    w->type=AMCL_FP_DENSE;
     FP48_YYY_norm(w);
 }
 
@@ -299,274 +299,276 @@ void FP48_YYY_mul(FP48_YYY *w,FP48_YYY *y)
 /* Usually w is denser than y */
 void FP48_YYY_ssmul(FP48_YYY *w,FP48_YYY *y)
 {
-	FP16_YYY z0,z1,z2,z3,t0,t1;
-	if (w->type==FP_UNITY)
-	{
-		FP48_YYY_copy(w,y);
-		return;
-	}
-	if (y->type==FP_UNITY)
-		return;
+    FP16_YYY z0,z1,z2,z3,t0,t1;
+    if (w->type==AMCL_FP_UNITY)
+    {
+        FP48_YYY_copy(w,y);
+        return;
+    }
+    if (y->type==AMCL_FP_UNITY)
+        return;
 
-	if (y->type >= FP_SPARSE)
-	{
-		FP16_YYY_mul(&z0,&(w->a),&(y->a));  // xa.ya   always 11x11
+    if (y->type >= AMCL_FP_SPARSE)
+    {
+        FP16_YYY_mul(&z0,&(w->a),&(y->a));  // xa.ya   always 11x11
 
 #if SEXTIC_TWIST_ZZZ == M_TYPE
-		if (y->type==FP_SPARSE || w->type==FP_SPARSE)
-		{
-			FP8_YYY_mul(&z2.b,&(w->b).b,&(y->b).b);
-			FP8_YYY_zero(&z2.a);
-			if (y->type!=FP_SPARSE)
-				FP8_YYY_mul(&z2.a,&(w->b).b,&(y->b).a);
-			if (w->type!=FP_SPARSE)
-				FP8_YYY_mul(&z2.a,&(w->b).a,&(y->b).b);
-			FP16_YYY_times_i(&z2);
-		}
-		else
-#endif 
-			FP16_YYY_mul(&z2,&(w->b),&(y->b));  // xb.yb  could be 00x00 or 01x01 or or 10x10 or 11x00 or 11x10 or 11x01 or 11x11 
-
-		FP16_YYY_add(&t0,&(w->a),&(w->b));  // (xa+xb)
-		FP16_YYY_add(&t1,&(y->a),&(y->b));  // (ya+yb)
-
-		FP16_YYY_norm(&t0);
-		FP16_YYY_norm(&t1);
-
-		FP16_YYY_mul(&z1,&t0,&t1); // (xa+xb)(ya+yb)  always 11x11
-		FP16_YYY_add(&t0,&(w->b),&(w->c));  // (xb+xc)
-		FP16_YYY_add(&t1,&(y->b),&(y->c));  // (yb+yc)
-
-		FP16_YYY_norm(&t0);
-		FP16_YYY_norm(&t1);
-
-		FP16_YYY_mul(&z3,&t0,&t1);	// (xb+xc)(yb+yc)   could be anything...
-		FP16_YYY_neg(&t0,&z0);		// -(xa.ya)
-		FP16_YYY_neg(&t1,&z2);		// -(xb.yb)
-
-		FP16_YYY_add(&z1,&z1,&t0);  
-		FP16_YYY_add(&(w->b),&z1,&t1); // /wb = (xa+xb)(ya+yb) -(xa.ya) -(xb.yb)						= xa.yb + xb.ya
-
-		FP16_YYY_add(&z3,&z3,&t1);        // (xb+xc)(yb+yc) -(xb.yb)
-		FP16_YYY_add(&z2,&z2,&t0);        // (xb.yb) - (xa.ya)
-
-		FP16_YYY_add(&t0,&(w->a),&(w->c));  // (xa+xc)
-		FP16_YYY_add(&t1,&(y->a),&(y->c));  // (ya+yc)
-
-		FP16_YYY_norm(&t0);
-		FP16_YYY_norm(&t1);
-
-		FP16_YYY_mul(&t0,&t1,&t0);	// (xa+xc)(ya+yc)    always 11x11
-		FP16_YYY_add(&z2,&z2,&t0);	// (xb.yb) - (xa.ya) + (xa+xc)(ya+yc)
-
-#if SEXTIC_TWIST_ZZZ == D_TYPE
-		if (y->type==FP_SPARSE || w->type==FP_SPARSE)
-		{
-			FP8_YYY_mul(&t0.a,&(w->c).a,&(y->c).a);
-			FP8_YYY_zero(&t0.b);
-			if (y->type!=FP_SPARSE)
-				FP8_YYY_mul(&t0.b,&(w->c).a,&(y->c).b);
-			if (w->type!=FP_SPARSE)
-				FP8_YYY_mul(&t0.b,&(w->c).b,&(y->c).a);
-		}
-		else
+        if (y->type==AMCL_FP_SPARSE || w->type==AMCL_FP_SPARSE)
+        {
+            FP8_YYY_mul(&z2.b,&(w->b).b,&(y->b).b);
+            FP8_YYY_zero(&z2.a);
+            if (y->type!=AMCL_FP_SPARSE)
+                FP8_YYY_mul(&z2.a,&(w->b).b,&(y->b).a);
+            if (w->type!=AMCL_FP_SPARSE)
+                FP8_YYY_mul(&z2.a,&(w->b).a,&(y->b).b);
+            FP16_YYY_times_i(&z2);
+        }
+        else
 #endif
-			FP16_YYY_mul(&t0,&(w->c),&(y->c)); // (xc.yc)  could be anything
-			
-		FP16_YYY_neg(&t1,&t0);			  // -(xc.yc) 
+            FP16_YYY_mul(&z2,&(w->b),&(y->b));  // xb.yb  could be 00x00 or 01x01 or or 10x10 or 11x00 or 11x10 or 11x01 or 11x11
 
-		FP16_YYY_add(&(w->c),&z2,&t1);		// wc = (xb.yb) - (xa.ya) + (xa+xc)(ya+yc) - (xc.yc)	=  xb.yb + xc.ya + xa.yc
-		FP16_YYY_add(&z3,&z3,&t1);			// (xb+xc)(yb+yc) -(xb.yb) - (xc.yc)					=  xb.yc + xc.yb
-		FP16_YYY_times_i(&t0);				// i.(xc.yc)
-		FP16_YYY_add(&(w->b),&(w->b),&t0);   // wb = (xa+xb)(ya+yb) -(xa.ya) -(xb.yb) +i(xc.yc)
-		FP16_YYY_norm(&z3);
-		FP16_YYY_times_i(&z3);				// i[(xb+xc)(yb+yc) -(xb.yb) - (xc.yc)]					= i(xb.yc + xc.yb)
-		FP16_YYY_add(&(w->a),&z0,&z3);		// wa = xa.ya + i(xb.yc + xc.yb)
-	} else {
-		if (w->type==FP_SPARSER)
-		{
-			FP48_YYY_smul(w,y);
-			return;
-		}
-// dense by sparser - 13m 
+        FP16_YYY_add(&t0,&(w->a),&(w->b));  // (xa+xb)
+        FP16_YYY_add(&t1,&(y->a),&(y->b));  // (ya+yb)
+
+        FP16_YYY_norm(&t0);
+        FP16_YYY_norm(&t1);
+
+        FP16_YYY_mul(&z1,&t0,&t1); // (xa+xb)(ya+yb)  always 11x11
+        FP16_YYY_add(&t0,&(w->b),&(w->c));  // (xb+xc)
+        FP16_YYY_add(&t1,&(y->b),&(y->c));  // (yb+yc)
+
+        FP16_YYY_norm(&t0);
+        FP16_YYY_norm(&t1);
+
+        FP16_YYY_mul(&z3,&t0,&t1);	// (xb+xc)(yb+yc)   could be anything...
+        FP16_YYY_neg(&t0,&z0);		// -(xa.ya)
+        FP16_YYY_neg(&t1,&z2);		// -(xb.yb)
+
+        FP16_YYY_add(&z1,&z1,&t0);
+        FP16_YYY_add(&(w->b),&z1,&t1); // /wb = (xa+xb)(ya+yb) -(xa.ya) -(xb.yb)						= xa.yb + xb.ya
+
+        FP16_YYY_add(&z3,&z3,&t1);        // (xb+xc)(yb+yc) -(xb.yb)
+        FP16_YYY_add(&z2,&z2,&t0);        // (xb.yb) - (xa.ya)
+
+        FP16_YYY_add(&t0,&(w->a),&(w->c));  // (xa+xc)
+        FP16_YYY_add(&t1,&(y->a),&(y->c));  // (ya+yc)
+
+        FP16_YYY_norm(&t0);
+        FP16_YYY_norm(&t1);
+
+        FP16_YYY_mul(&t0,&t1,&t0);	// (xa+xc)(ya+yc)    always 11x11
+        FP16_YYY_add(&z2,&z2,&t0);	// (xb.yb) - (xa.ya) + (xa+xc)(ya+yc)
+
 #if SEXTIC_TWIST_ZZZ == D_TYPE
-		FP16_YYY_copy(&z3,&(w->b));
-		FP16_YYY_mul(&z0,&(w->a),&(y->a));
+        if (y->type==AMCL_FP_SPARSE || w->type==AMCL_FP_SPARSE)
+        {
+            FP8_YYY_mul(&t0.a,&(w->c).a,&(y->c).a);
+            FP8_YYY_zero(&t0.b);
+            if (y->type!=AMCL_FP_SPARSE)
+                FP8_YYY_mul(&t0.b,&(w->c).a,&(y->c).b);
+            if (w->type!=AMCL_FP_SPARSE)
+                FP8_YYY_mul(&t0.b,&(w->c).b,&(y->c).a);
+        }
+        else
+#endif
+            FP16_YYY_mul(&t0,&(w->c),&(y->c)); // (xc.yc)  could be anything
 
-		FP16_YYY_pmul(&z2,&(w->b),&(y->b).a);
-		FP16_YYY_add(&(w->b),&(w->a),&(w->b));
-		FP16_YYY_copy(&t1,&(y->a));
-		FP8_YYY_add(&t1.a,&t1.a,&(y->b).a);
+        FP16_YYY_neg(&t1,&t0);			  // -(xc.yc)
 
-		FP16_YYY_norm(&t1);
-		FP16_YYY_norm(&(w->b));
+        FP16_YYY_add(&(w->c),&z2,&t1);		// wc = (xb.yb) - (xa.ya) + (xa+xc)(ya+yc) - (xc.yc)	=  xb.yb + xc.ya + xa.yc
+        FP16_YYY_add(&z3,&z3,&t1);			// (xb+xc)(yb+yc) -(xb.yb) - (xc.yc)					=  xb.yc + xc.yb
+        FP16_YYY_times_i(&t0);				// i.(xc.yc)
+        FP16_YYY_add(&(w->b),&(w->b),&t0);   // wb = (xa+xb)(ya+yb) -(xa.ya) -(xb.yb) +i(xc.yc)
+        FP16_YYY_norm(&z3);
+        FP16_YYY_times_i(&z3);				// i[(xb+xc)(yb+yc) -(xb.yb) - (xc.yc)]					= i(xb.yc + xc.yb)
+        FP16_YYY_add(&(w->a),&z0,&z3);		// wa = xa.ya + i(xb.yc + xc.yb)
+    }
+    else
+    {
+        if (w->type==AMCL_AMCL_FP_SPARSER)
+        {
+            FP48_YYY_smul(w,y);
+            return;
+        }
+// dense by sparser - 13m
+#if SEXTIC_TWIST_ZZZ == D_TYPE
+        FP16_YYY_copy(&z3,&(w->b));
+        FP16_YYY_mul(&z0,&(w->a),&(y->a));
 
-		FP16_YYY_mul(&(w->b),&(w->b),&t1);
-		FP16_YYY_add(&z3,&z3,&(w->c));
-		FP16_YYY_norm(&z3);
-		FP16_YYY_pmul(&z3,&z3,&(y->b).a);
-		FP16_YYY_neg(&t0,&z0);
-		FP16_YYY_neg(&t1,&z2);
+        FP16_YYY_pmul(&z2,&(w->b),&(y->b).a);
+        FP16_YYY_add(&(w->b),&(w->a),&(w->b));
+        FP16_YYY_copy(&t1,&(y->a));
+        FP8_YYY_add(&t1.a,&t1.a,&(y->b).a);
 
-		FP16_YYY_add(&(w->b),&(w->b),&t0);   // z1=z1-z0
-		FP16_YYY_add(&(w->b),&(w->b),&t1);   // z1=z1-z2
+        FP16_YYY_norm(&t1);
+        FP16_YYY_norm(&(w->b));
 
-		FP16_YYY_add(&z3,&z3,&t1);        // z3=z3-z2
-		FP16_YYY_add(&z2,&z2,&t0);        // z2=z2-z0
+        FP16_YYY_mul(&(w->b),&(w->b),&t1);
+        FP16_YYY_add(&z3,&z3,&(w->c));
+        FP16_YYY_norm(&z3);
+        FP16_YYY_pmul(&z3,&z3,&(y->b).a);
+        FP16_YYY_neg(&t0,&z0);
+        FP16_YYY_neg(&t1,&z2);
 
-		FP16_YYY_add(&t0,&(w->a),&(w->c));
-		FP16_YYY_norm(&t0);
-		FP16_YYY_norm(&z3);
+        FP16_YYY_add(&(w->b),&(w->b),&t0);   // z1=z1-z0
+        FP16_YYY_add(&(w->b),&(w->b),&t1);   // z1=z1-z2
 
-		FP16_YYY_mul(&t0,&(y->a),&t0);
-		FP16_YYY_add(&(w->c),&z2,&t0);
+        FP16_YYY_add(&z3,&z3,&t1);        // z3=z3-z2
+        FP16_YYY_add(&z2,&z2,&t0);        // z2=z2-z0
 
-		FP16_YYY_times_i(&z3);
-		FP16_YYY_add(&(w->a),&z0,&z3);
+        FP16_YYY_add(&t0,&(w->a),&(w->c));
+        FP16_YYY_norm(&t0);
+        FP16_YYY_norm(&z3);
+
+        FP16_YYY_mul(&t0,&(y->a),&t0);
+        FP16_YYY_add(&(w->c),&z2,&t0);
+
+        FP16_YYY_times_i(&z3);
+        FP16_YYY_add(&(w->a),&z0,&z3);
 #endif
 #if SEXTIC_TWIST_ZZZ == M_TYPE
-		FP16_YYY_mul(&z0,&(w->a),&(y->a));
-		FP16_YYY_add(&t0,&(w->a),&(w->b));
-		FP16_YYY_norm(&t0);
+        FP16_YYY_mul(&z0,&(w->a),&(y->a));
+        FP16_YYY_add(&t0,&(w->a),&(w->b));
+        FP16_YYY_norm(&t0);
 
-		FP16_YYY_mul(&z1,&t0,&(y->a));
-		FP16_YYY_add(&t0,&(w->b),&(w->c));
-		FP16_YYY_norm(&t0);
+        FP16_YYY_mul(&z1,&t0,&(y->a));
+        FP16_YYY_add(&t0,&(w->b),&(w->c));
+        FP16_YYY_norm(&t0);
 
-		FP16_YYY_pmul(&z3,&t0,&(y->c).b);
-		FP16_YYY_times_i(&z3);
+        FP16_YYY_pmul(&z3,&t0,&(y->c).b);
+        FP16_YYY_times_i(&z3);
 
-		FP16_YYY_neg(&t0,&z0);
-		FP16_YYY_add(&z1,&z1,&t0);   // z1=z1-z0
+        FP16_YYY_neg(&t0,&z0);
+        FP16_YYY_add(&z1,&z1,&t0);   // z1=z1-z0
 
-		FP16_YYY_copy(&(w->b),&z1);
-		FP16_YYY_copy(&z2,&t0);
+        FP16_YYY_copy(&(w->b),&z1);
+        FP16_YYY_copy(&z2,&t0);
 
-		FP16_YYY_add(&t0,&(w->a),&(w->c));
-		FP16_YYY_add(&t1,&(y->a),&(y->c));
+        FP16_YYY_add(&t0,&(w->a),&(w->c));
+        FP16_YYY_add(&t1,&(y->a),&(y->c));
 
-		FP16_YYY_norm(&t0);
-		FP16_YYY_norm(&t1);
+        FP16_YYY_norm(&t0);
+        FP16_YYY_norm(&t1);
 
-		FP16_YYY_mul(&t0,&t1,&t0);
-		FP16_YYY_add(&z2,&z2,&t0);
+        FP16_YYY_mul(&t0,&t1,&t0);
+        FP16_YYY_add(&z2,&z2,&t0);
 
-		FP16_YYY_pmul(&t0,&(w->c),&(y->c).b);
-		FP16_YYY_times_i(&t0);
-		FP16_YYY_neg(&t1,&t0);
-		FP16_YYY_times_i(&t0);
+        FP16_YYY_pmul(&t0,&(w->c),&(y->c).b);
+        FP16_YYY_times_i(&t0);
+        FP16_YYY_neg(&t1,&t0);
+        FP16_YYY_times_i(&t0);
 
-		FP16_YYY_add(&(w->c),&z2,&t1);
-		FP16_YYY_add(&z3,&z3,&t1);
+        FP16_YYY_add(&(w->c),&z2,&t1);
+        FP16_YYY_add(&z3,&z3,&t1);
 
-		FP16_YYY_add(&(w->b),&(w->b),&t0);
-		FP16_YYY_norm(&z3);
-		FP16_YYY_times_i(&z3);
-		FP16_YYY_add(&(w->a),&z0,&z3);
+        FP16_YYY_add(&(w->b),&(w->b),&t0);
+        FP16_YYY_norm(&z3);
+        FP16_YYY_times_i(&z3);
+        FP16_YYY_add(&(w->a),&z0,&z3);
 #endif
-	}
-	w->type=FP_DENSE;
+    }
+    w->type=AMCL_FP_DENSE;
     FP48_YYY_norm(w);
 }
 
 /* FP48 multiplication w=w*y */
 /* catering for special case that arises from special form of ATE pairing line function */
-/* w and y are both sparser line functions - cost = 6m */ 
+/* w and y are both sparser line functions - cost = 6m */
 void FP48_YYY_smul(FP48_YYY *w,FP48_YYY *y)
 {
-	FP8_YYY w1,w2,w3,ta,tb,tc,td,te,t;
+    FP8_YYY w1,w2,w3,ta,tb,tc,td,te,t;
 
 
 #if SEXTIC_TWIST_ZZZ == D_TYPE
-	FP8_YYY_mul(&w1,&(w->a).a,&(y->a).a); // A1.A2
-	FP8_YYY_mul(&w2,&(w->a).b,&(y->a).b); // B1.B2
-	FP8_YYY_mul(&w3,&(w->b).a,&(y->b).a); // C1.C2
+    FP8_YYY_mul(&w1,&(w->a).a,&(y->a).a); // A1.A2
+    FP8_YYY_mul(&w2,&(w->a).b,&(y->a).b); // B1.B2
+    FP8_YYY_mul(&w3,&(w->b).a,&(y->b).a); // C1.C2
 
-	FP8_YYY_add(&ta,&(w->a).a,&(w->a).b); // A1+B1
-	FP8_YYY_add(&tb,&(y->a).a,&(y->a).b); // A2+B2
-	FP8_YYY_norm(&ta);
-	FP8_YYY_norm(&tb);
-	FP8_YYY_mul(&tc,&ta,&tb);			// (A1+B1)(A2+B2)
-	FP8_YYY_add(&t,&w1,&w2);
-	FP8_YYY_neg(&t,&t);
-	FP8_YYY_add(&tc,&tc,&t);			// (A1+B1)(A2+B2)-A1.A2-B1*B2 =  (A1.B2+A2.B1)		
-				
-	FP8_YYY_add(&ta,&(w->a).a,&(w->b).a); // A1+C1
-	FP8_YYY_add(&tb,&(y->a).a,&(y->b).a); // A2+C2
-	FP8_YYY_norm(&ta);
-	FP8_YYY_norm(&tb);
-	FP8_YYY_mul(&td,&ta,&tb);			// (A1+C1)(A2+C2)
-	FP8_YYY_add(&t,&w1,&w3);
-	FP8_YYY_neg(&t,&t);
-	FP8_YYY_add(&td,&td,&t);			// (A1+C1)(A2+C2)-A1.A2-C1*C2 =  (A1.C2+A2.C1)		
+    FP8_YYY_add(&ta,&(w->a).a,&(w->a).b); // A1+B1
+    FP8_YYY_add(&tb,&(y->a).a,&(y->a).b); // A2+B2
+    FP8_YYY_norm(&ta);
+    FP8_YYY_norm(&tb);
+    FP8_YYY_mul(&tc,&ta,&tb);			// (A1+B1)(A2+B2)
+    FP8_YYY_add(&t,&w1,&w2);
+    FP8_YYY_neg(&t,&t);
+    FP8_YYY_add(&tc,&tc,&t);			// (A1+B1)(A2+B2)-A1.A2-B1*B2 =  (A1.B2+A2.B1)
 
-	FP8_YYY_add(&ta,&(w->a).b,&(w->b).a); // B1+C1
-	FP8_YYY_add(&tb,&(y->a).b,&(y->b).a); // B2+C2
-	FP8_YYY_norm(&ta);
-	FP8_YYY_norm(&tb);
-	FP8_YYY_mul(&te,&ta,&tb);			// (B1+C1)(B2+C2)
-	FP8_YYY_add(&t,&w2,&w3);
-	FP8_YYY_neg(&t,&t);
-	FP8_YYY_add(&te,&te,&t);			// (B1+C1)(B2+C2)-B1.B2-C1*C2 =  (B1.C2+B2.C1)		
+    FP8_YYY_add(&ta,&(w->a).a,&(w->b).a); // A1+C1
+    FP8_YYY_add(&tb,&(y->a).a,&(y->b).a); // A2+C2
+    FP8_YYY_norm(&ta);
+    FP8_YYY_norm(&tb);
+    FP8_YYY_mul(&td,&ta,&tb);			// (A1+C1)(A2+C2)
+    FP8_YYY_add(&t,&w1,&w3);
+    FP8_YYY_neg(&t,&t);
+    FP8_YYY_add(&td,&td,&t);			// (A1+C1)(A2+C2)-A1.A2-C1*C2 =  (A1.C2+A2.C1)
 
-	FP8_YYY_times_i(&w2);
-	FP8_YYY_add(&w1,&w1,&w2);
-	FP16_YYY_from_FP8s(&(w->a),&w1,&tc);
-	FP16_YYY_from_FP8s(&(w->b),&td,&te); // only norm these 2
-	FP16_YYY_from_FP8(&(w->c),&w3);
+    FP8_YYY_add(&ta,&(w->a).b,&(w->b).a); // B1+C1
+    FP8_YYY_add(&tb,&(y->a).b,&(y->b).a); // B2+C2
+    FP8_YYY_norm(&ta);
+    FP8_YYY_norm(&tb);
+    FP8_YYY_mul(&te,&ta,&tb);			// (B1+C1)(B2+C2)
+    FP8_YYY_add(&t,&w2,&w3);
+    FP8_YYY_neg(&t,&t);
+    FP8_YYY_add(&te,&te,&t);			// (B1+C1)(B2+C2)-B1.B2-C1*C2 =  (B1.C2+B2.C1)
 
-	FP16_YYY_norm(&(w->a));
-	FP16_YYY_norm(&(w->b));
+    FP8_YYY_times_i(&w2);
+    FP8_YYY_add(&w1,&w1,&w2);
+    FP16_YYY_from_FP8s(&(w->a),&w1,&tc);
+    FP16_YYY_from_FP8s(&(w->b),&td,&te); // only norm these 2
+    FP16_YYY_from_FP8(&(w->c),&w3);
+
+    FP16_YYY_norm(&(w->a));
+    FP16_YYY_norm(&(w->b));
 #endif
 #if SEXTIC_TWIST_ZZZ == M_TYPE
-	FP8_YYY_mul(&w1,&(w->a).a,&(y->a).a); // A1.A2
-	FP8_YYY_mul(&w2,&(w->a).b,&(y->a).b); // B1.B2
-	FP8_YYY_mul(&w3,&(w->c).b,&(y->c).b); // F1.F2
+    FP8_YYY_mul(&w1,&(w->a).a,&(y->a).a); // A1.A2
+    FP8_YYY_mul(&w2,&(w->a).b,&(y->a).b); // B1.B2
+    FP8_YYY_mul(&w3,&(w->c).b,&(y->c).b); // F1.F2
 
-	FP8_YYY_add(&ta,&(w->a).a,&(w->a).b); // A1+B1
-	FP8_YYY_add(&tb,&(y->a).a,&(y->a).b); // A2+B2
-	FP8_YYY_norm(&ta);
-	FP8_YYY_norm(&tb);
-	FP8_YYY_mul(&tc,&ta,&tb);			// (A1+B1)(A2+B2)
-	FP8_YYY_add(&t,&w1,&w2);
-	FP8_YYY_neg(&t,&t);
-	FP8_YYY_add(&tc,&tc,&t);			// (A1+B1)(A2+B2)-A1.A2-B1*B2 =  (A1.B2+A2.B1)		
-				
-	FP8_YYY_add(&ta,&(w->a).a,&(w->c).b); // A1+F1
-	FP8_YYY_add(&tb,&(y->a).a,&(y->c).b); // A2+F2
-	FP8_YYY_norm(&ta);
-	FP8_YYY_norm(&tb);
-	FP8_YYY_mul(&td,&ta,&tb);			// (A1+F1)(A2+F2)
-	FP8_YYY_add(&t,&w1,&w3);
-	FP8_YYY_neg(&t,&t);
-	FP8_YYY_add(&td,&td,&t);			// (A1+F1)(A2+F2)-A1.A2-F1*F2 =  (A1.F2+A2.F1)		
+    FP8_YYY_add(&ta,&(w->a).a,&(w->a).b); // A1+B1
+    FP8_YYY_add(&tb,&(y->a).a,&(y->a).b); // A2+B2
+    FP8_YYY_norm(&ta);
+    FP8_YYY_norm(&tb);
+    FP8_YYY_mul(&tc,&ta,&tb);			// (A1+B1)(A2+B2)
+    FP8_YYY_add(&t,&w1,&w2);
+    FP8_YYY_neg(&t,&t);
+    FP8_YYY_add(&tc,&tc,&t);			// (A1+B1)(A2+B2)-A1.A2-B1*B2 =  (A1.B2+A2.B1)
 
-	FP8_YYY_add(&ta,&(w->a).b,&(w->c).b); // B1+F1
-	FP8_YYY_add(&tb,&(y->a).b,&(y->c).b); // B2+F2
-	FP8_YYY_norm(&ta);
-	FP8_YYY_norm(&tb);
-	FP8_YYY_mul(&te,&ta,&tb);			// (B1+F1)(B2+F2)
-	FP8_YYY_add(&t,&w2,&w3);
-	FP8_YYY_neg(&t,&t);
-	FP8_YYY_add(&te,&te,&t);			// (B1+F1)(B2+F2)-B1.B2-F1*F2 =  (B1.F2+B2.F1)	
+    FP8_YYY_add(&ta,&(w->a).a,&(w->c).b); // A1+F1
+    FP8_YYY_add(&tb,&(y->a).a,&(y->c).b); // A2+F2
+    FP8_YYY_norm(&ta);
+    FP8_YYY_norm(&tb);
+    FP8_YYY_mul(&td,&ta,&tb);			// (A1+F1)(A2+F2)
+    FP8_YYY_add(&t,&w1,&w3);
+    FP8_YYY_neg(&t,&t);
+    FP8_YYY_add(&td,&td,&t);			// (A1+F1)(A2+F2)-A1.A2-F1*F2 =  (A1.F2+A2.F1)
 
-	FP8_YYY_times_i(&w2);
-	FP8_YYY_add(&w1,&w1,&w2);
-	FP16_YYY_from_FP8s(&(w->a),&w1,&tc);
+    FP8_YYY_add(&ta,&(w->a).b,&(w->c).b); // B1+F1
+    FP8_YYY_add(&tb,&(y->a).b,&(y->c).b); // B2+F2
+    FP8_YYY_norm(&ta);
+    FP8_YYY_norm(&tb);
+    FP8_YYY_mul(&te,&ta,&tb);			// (B1+F1)(B2+F2)
+    FP8_YYY_add(&t,&w2,&w3);
+    FP8_YYY_neg(&t,&t);
+    FP8_YYY_add(&te,&te,&t);			// (B1+F1)(B2+F2)-B1.B2-F1*F2 =  (B1.F2+B2.F1)
 
-	FP8_YYY_times_i(&w3);
-	FP8_YYY_norm(&w3);
-	FP16_YYY_from_FP8H(&(w->b),&w3);
+    FP8_YYY_times_i(&w2);
+    FP8_YYY_add(&w1,&w1,&w2);
+    FP16_YYY_from_FP8s(&(w->a),&w1,&tc);
 
-	FP8_YYY_norm(&te);
-	FP8_YYY_times_i(&te);
-	FP16_YYY_from_FP8s(&(w->c),&te,&td);
+    FP8_YYY_times_i(&w3);
+    FP8_YYY_norm(&w3);
+    FP16_YYY_from_FP8H(&(w->b),&w3);
 
-	FP16_YYY_norm(&(w->a));
-	FP16_YYY_norm(&(w->c));
+    FP8_YYY_norm(&te);
+    FP8_YYY_times_i(&te);
+    FP16_YYY_from_FP8s(&(w->c),&te,&td);
+
+    FP16_YYY_norm(&(w->a));
+    FP16_YYY_norm(&(w->c));
 #endif
 
-	w->type=FP_SPARSE;
+    w->type=AMCL_FP_SPARSE;
 }
 
 
@@ -580,18 +582,18 @@ void FP48_YYY_inv(FP48_YYY *w,FP48_YYY *x)
     FP16_YYY_mul(&f1,&(x->b),&(x->c));
     FP16_YYY_times_i(&f1);
     FP16_YYY_sub(&f0,&f0,&f1);  /* y.a */
-	FP16_YYY_norm(&f0); 		
+    FP16_YYY_norm(&f0);
 
     FP16_YYY_sqr(&f1,&(x->c));
     FP16_YYY_times_i(&f1);
     FP16_YYY_mul(&f2,&(x->a),&(x->b));
     FP16_YYY_sub(&f1,&f1,&f2);  /* y.b */
-	FP16_YYY_norm(&f1); 
+    FP16_YYY_norm(&f1);
 
     FP16_YYY_sqr(&f2,&(x->b));
     FP16_YYY_mul(&f3,&(x->a),&(x->c));
     FP16_YYY_sub(&f2,&f2,&f3);  /* y.c */
-	FP16_YYY_norm(&f2); 
+    FP16_YYY_norm(&f2);
 
     FP16_YYY_mul(&f3,&(x->b),&f2);
     FP16_YYY_times_i(&f3);
@@ -601,13 +603,13 @@ void FP48_YYY_inv(FP48_YYY *w,FP48_YYY *x)
     FP16_YYY_times_i(&(w->c));
 
     FP16_YYY_add(&f3,&(w->c),&f3);
-	FP16_YYY_norm(&f3);
-	
+    FP16_YYY_norm(&f3);
+
     FP16_YYY_inv(&f3,&f3);
     FP16_YYY_mul(&(w->a),&f0,&f3);
     FP16_YYY_mul(&(w->b),&f1,&f3);
     FP16_YYY_mul(&(w->c),&f2,&f3);
-	w->type=FP_DENSE;
+    w->type=AMCL_FP_DENSE;
 }
 
 /* constant time powering by small integer of max length bts */
@@ -634,9 +636,9 @@ void FP48_YYY_pinpow(FP48_YYY *r,int e,int bts)
 void FP48_YYY_compow(FP16_YYY *c,FP48_YYY *x,BIG_XXX e,BIG_XXX r)
 {
     FP48_YYY g1,g2;
-	FP16_YYY cp,cpm1,cpm2;
+    FP16_YYY cp,cpm1,cpm2;
     FP2_YYY  f;
-	BIG_XXX q,a,b,m;
+    BIG_XXX q,a,b,m;
 
     BIG_XXX_rcopy(a,Fra_YYY);
     BIG_XXX_rcopy(b,Frb_YYY);
@@ -645,7 +647,7 @@ void FP48_YYY_compow(FP16_YYY *c,FP48_YYY *x,BIG_XXX e,BIG_XXX r)
     BIG_XXX_rcopy(q,Modulus_YYY);
 
     FP48_YYY_copy(&g1,x);
-	FP48_YYY_copy(&g2,x);
+    FP48_YYY_copy(&g2,x);
 
     BIG_XXX_copy(m,q);
     BIG_XXX_mod(m,r);
@@ -658,11 +660,11 @@ void FP48_YYY_compow(FP16_YYY *c,FP48_YYY *x,BIG_XXX e,BIG_XXX r)
 
     FP48_YYY_trace(c,&g1);
 
-	if (BIG_XXX_iszilch(b))
-	{
-		FP16_YYY_xtr_pow(c,c,e);
-		return;
-	}
+    if (BIG_XXX_iszilch(b))
+    {
+        FP16_YYY_xtr_pow(c,c,e);
+        return;
+    }
 
     FP48_YYY_frob(&g2,&f,1);
     FP48_YYY_trace(&cp,&g2);
@@ -684,32 +686,32 @@ void FP48_YYY_pow(FP48_YYY *r,FP48_YYY *a,BIG_XXX b)
     FP48_YYY w,sf;
     BIG_XXX b1,b3;
     int i,nb,bt;
-	BIG_XXX_copy(b1,b);
+    BIG_XXX_copy(b1,b);
     BIG_XXX_norm(b1);
-	BIG_XXX_pmul(b3,b1,3);
-	BIG_XXX_norm(b3);
+    BIG_XXX_pmul(b3,b1,3);
+    BIG_XXX_norm(b3);
 
-	FP48_YYY_copy(&sf,a);
-	FP48_YYY_norm(&sf);
+    FP48_YYY_copy(&sf,a);
+    FP48_YYY_norm(&sf);
     FP48_YYY_copy(&w,&sf);
 
-	nb=BIG_XXX_nbits(b3);
-	for (i=nb-2;i>=1;i--)
-	{
-		FP48_YYY_usqr(&w,&w);
-		bt=BIG_XXX_bit(b3,i)-BIG_XXX_bit(b1,i);
-		if (bt==1)
-			FP48_YYY_mul(&w,&sf);
-		if (bt==-1)
-		{
-			FP48_YYY_conj(&sf,&sf);
-			FP48_YYY_mul(&w,&sf);
-			FP48_YYY_conj(&sf,&sf);
-		}
-	}
+    nb=BIG_XXX_nbits(b3);
+    for (i=nb-2; i>=1; i--)
+    {
+        FP48_YYY_usqr(&w,&w);
+        bt=BIG_XXX_bit(b3,i)-BIG_XXX_bit(b1,i);
+        if (bt==1)
+            FP48_YYY_mul(&w,&sf);
+        if (bt==-1)
+        {
+            FP48_YYY_conj(&sf,&sf);
+            FP48_YYY_mul(&w,&sf);
+            FP48_YYY_conj(&sf,&sf);
+        }
+    }
 
-	FP48_YYY_copy(r,&w);
-	FP48_YYY_reduce(r);
+    FP48_YYY_copy(r,&w);
+    FP48_YYY_reduce(r);
 }
 
 /* p=q0^u0.q1^u1.q2^u2.q3^u3... */
@@ -720,8 +722,8 @@ void FP48_YYY_pow(FP48_YYY *r,FP48_YYY *a,BIG_XXX b)
 void FP48_YYY_pow16(FP48_YYY *p,FP48_YYY *q,BIG_XXX u[16])
 {
     int i,j,k,nb,pb1,pb2,pb3,pb4,bt;
-	FP48_YYY g1[8],g2[8],g3[8],g4[8],r;
-	BIG_XXX t[16],mt;
+    FP48_YYY g1[8],g2[8],g3[8],g4[8],r;
+    BIG_XXX t[16],mt;
     sign8 w1[NLEN_XXX*BASEBITS_XXX+1];
     sign8 s1[NLEN_XXX*BASEBITS_XXX+1];
     sign8 w2[NLEN_XXX*BASEBITS_XXX+1];
@@ -731,7 +733,7 @@ void FP48_YYY_pow16(FP48_YYY *p,FP48_YYY *q,BIG_XXX u[16])
     sign8 w4[NLEN_XXX*BASEBITS_XXX+1];
     sign8 s4[NLEN_XXX*BASEBITS_XXX+1];
     FP_YYY fx,fy;
-	FP2_YYY  X;
+    FP2_YYY  X;
 
     FP_YYY_rcopy(&fx,Fra_YYY);
     FP_YYY_rcopy(&fy,Frb_YYY);
@@ -743,50 +745,50 @@ void FP48_YYY_pow16(FP48_YYY *p,FP48_YYY *q,BIG_XXX u[16])
 // Precomputed table
     FP48_YYY_copy(&g1[0],&q[0]); // q[0]
     FP48_YYY_copy(&g1[1],&g1[0]);
-	FP48_YYY_mul(&g1[1],&q[1]);	// q[0].q[1]
+    FP48_YYY_mul(&g1[1],&q[1]);	// q[0].q[1]
     FP48_YYY_copy(&g1[2],&g1[0]);
-	FP48_YYY_mul(&g1[2],&q[2]);	// q[0].q[2]
-	FP48_YYY_copy(&g1[3],&g1[1]);
-	FP48_YYY_mul(&g1[3],&q[2]);	// q[0].q[1].q[2]
-	FP48_YYY_copy(&g1[4],&g1[0]);
-	FP48_YYY_mul(&g1[4],&q[3]);  // q[0].q[3]
-	FP48_YYY_copy(&g1[5],&g1[1]);
-	FP48_YYY_mul(&g1[5],&q[3]);	// q[0].q[1].q[3]
-	FP48_YYY_copy(&g1[6],&g1[2]);
-	FP48_YYY_mul(&g1[6],&q[3]);	// q[0].q[2].q[3]
-	FP48_YYY_copy(&g1[7],&g1[3]);
-	FP48_YYY_mul(&g1[7],&q[3]);	// q[0].q[1].q[2].q[3]
+    FP48_YYY_mul(&g1[2],&q[2]);	// q[0].q[2]
+    FP48_YYY_copy(&g1[3],&g1[1]);
+    FP48_YYY_mul(&g1[3],&q[2]);	// q[0].q[1].q[2]
+    FP48_YYY_copy(&g1[4],&g1[0]);
+    FP48_YYY_mul(&g1[4],&q[3]);  // q[0].q[3]
+    FP48_YYY_copy(&g1[5],&g1[1]);
+    FP48_YYY_mul(&g1[5],&q[3]);	// q[0].q[1].q[3]
+    FP48_YYY_copy(&g1[6],&g1[2]);
+    FP48_YYY_mul(&g1[6],&q[3]);	// q[0].q[2].q[3]
+    FP48_YYY_copy(&g1[7],&g1[3]);
+    FP48_YYY_mul(&g1[7],&q[3]);	// q[0].q[1].q[2].q[3]
 
 // Use Frobenius
 
-	for (i=0;i<8;i++)
-	{
-		FP48_YYY_copy(&g2[i],&g1[i]);
-		FP48_YYY_frob(&g2[i],&X,4);
+    for (i=0; i<8; i++)
+    {
+        FP48_YYY_copy(&g2[i],&g1[i]);
+        FP48_YYY_frob(&g2[i],&X,4);
 
-		FP48_YYY_copy(&g3[i],&g2[i]);
-		FP48_YYY_frob(&g3[i],&X,4);
+        FP48_YYY_copy(&g3[i],&g2[i]);
+        FP48_YYY_frob(&g3[i],&X,4);
 
-		FP48_YYY_copy(&g4[i],&g3[i]);
-		FP48_YYY_frob(&g4[i],&X,4);
-	}
+        FP48_YYY_copy(&g4[i],&g3[i]);
+        FP48_YYY_frob(&g4[i],&X,4);
+    }
 
 // Make them odd
-	pb1=1-BIG_XXX_parity(t[0]);
-	BIG_XXX_inc(t[0],pb1);
-	BIG_XXX_norm(t[0]);
+    pb1=1-BIG_XXX_parity(t[0]);
+    BIG_XXX_inc(t[0],pb1);
+    BIG_XXX_norm(t[0]);
 
-	pb2=1-BIG_XXX_parity(t[4]);
-	BIG_XXX_inc(t[4],pb2);
-	BIG_XXX_norm(t[4]);
+    pb2=1-BIG_XXX_parity(t[4]);
+    BIG_XXX_inc(t[4],pb2);
+    BIG_XXX_norm(t[4]);
 
-	pb3=1-BIG_XXX_parity(t[8]);
-	BIG_XXX_inc(t[8],pb3);
-	BIG_XXX_norm(t[8]);
+    pb3=1-BIG_XXX_parity(t[8]);
+    BIG_XXX_inc(t[8],pb3);
+    BIG_XXX_norm(t[8]);
 
-	pb4=1-BIG_XXX_parity(t[12]);
-	BIG_XXX_inc(t[12],pb4);
-	BIG_XXX_norm(t[12]);
+    pb4=1-BIG_XXX_parity(t[12]);
+    BIG_XXX_inc(t[12],pb4);
+    BIG_XXX_norm(t[12]);
 
 // Number of bits
     BIG_XXX_zero(mt);
@@ -796,90 +798,90 @@ void FP48_YYY_pow16(FP48_YYY *p,FP48_YYY *q,BIG_XXX u[16])
     }
     nb=1+BIG_XXX_nbits(mt);
 
-// Sign pivot 
-	s1[nb-1]=1;
-	s2[nb-1]=1;
-	s3[nb-1]=1;
-	s4[nb-1]=1;
-	for (i=0;i<nb-1;i++)
-	{
+// Sign pivot
+    s1[nb-1]=1;
+    s2[nb-1]=1;
+    s3[nb-1]=1;
+    s4[nb-1]=1;
+    for (i=0; i<nb-1; i++)
+    {
         BIG_XXX_fshr(t[0],1);
-		s1[i]=2*BIG_XXX_parity(t[0])-1;
+        s1[i]=2*BIG_XXX_parity(t[0])-1;
         BIG_XXX_fshr(t[4],1);
-		s2[i]=2*BIG_XXX_parity(t[4])-1;
+        s2[i]=2*BIG_XXX_parity(t[4])-1;
         BIG_XXX_fshr(t[8],1);
-		s3[i]=2*BIG_XXX_parity(t[8])-1;
+        s3[i]=2*BIG_XXX_parity(t[8])-1;
         BIG_XXX_fshr(t[12],1);
-		s4[i]=2*BIG_XXX_parity(t[12])-1;
-	}
+        s4[i]=2*BIG_XXX_parity(t[12])-1;
+    }
 
 // Recoded exponents
     for (i=0; i<nb; i++)
     {
-		w1[i]=0;
-		k=1;
-		for (j=1; j<4; j++)
-		{
-			bt=s1[i]*BIG_XXX_parity(t[j]);
-			BIG_XXX_fshr(t[j],1);
+        w1[i]=0;
+        k=1;
+        for (j=1; j<4; j++)
+        {
+            bt=s1[i]*BIG_XXX_parity(t[j]);
+            BIG_XXX_fshr(t[j],1);
 
-			BIG_XXX_dec(t[j],(bt>>1));
-			BIG_XXX_norm(t[j]);
-			w1[i]+=bt*k;
-			k*=2;
+            BIG_XXX_dec(t[j],(bt>>1));
+            BIG_XXX_norm(t[j]);
+            w1[i]+=bt*k;
+            k*=2;
         }
 
-		w2[i]=0;
-		k=1;
-		for (j=5; j<8; j++)
-		{
-			bt=s2[i]*BIG_XXX_parity(t[j]);
-			BIG_XXX_fshr(t[j],1);
+        w2[i]=0;
+        k=1;
+        for (j=5; j<8; j++)
+        {
+            bt=s2[i]*BIG_XXX_parity(t[j]);
+            BIG_XXX_fshr(t[j],1);
 
-			BIG_XXX_dec(t[j],(bt>>1));
-			BIG_XXX_norm(t[j]);
-			w2[i]+=bt*k;
-			k*=2;
+            BIG_XXX_dec(t[j],(bt>>1));
+            BIG_XXX_norm(t[j]);
+            w2[i]+=bt*k;
+            k*=2;
         }
 
-		w3[i]=0;
-		k=1;
-		for (j=9; j<12; j++)
-		{
-			bt=s3[i]*BIG_XXX_parity(t[j]);
-			BIG_XXX_fshr(t[j],1);
+        w3[i]=0;
+        k=1;
+        for (j=9; j<12; j++)
+        {
+            bt=s3[i]*BIG_XXX_parity(t[j]);
+            BIG_XXX_fshr(t[j],1);
 
-			BIG_XXX_dec(t[j],(bt>>1));
-			BIG_XXX_norm(t[j]);
-			w3[i]+=bt*k;
-			k*=2;
+            BIG_XXX_dec(t[j],(bt>>1));
+            BIG_XXX_norm(t[j]);
+            w3[i]+=bt*k;
+            k*=2;
         }
 
-		w4[i]=0;
-		k=1;
-		for (j=13; j<16; j++)
-		{
-			bt=s4[i]*BIG_XXX_parity(t[j]);
-			BIG_XXX_fshr(t[j],1);
+        w4[i]=0;
+        k=1;
+        for (j=13; j<16; j++)
+        {
+            bt=s4[i]*BIG_XXX_parity(t[j]);
+            BIG_XXX_fshr(t[j],1);
 
-			BIG_XXX_dec(t[j],(bt>>1));
-			BIG_XXX_norm(t[j]);
-			w4[i]+=bt*k;
-			k*=2;
+            BIG_XXX_dec(t[j],(bt>>1));
+            BIG_XXX_norm(t[j]);
+            w4[i]+=bt*k;
+            k*=2;
         }
-    }	
+    }
 
 // Main loop
-	FP48_YYY_select(p,g1,2*w1[nb-1]+1);
-	FP48_YYY_select(&r,g2,2*w2[nb-1]+1);
-	FP48_YYY_mul(p,&r);
-	FP48_YYY_select(&r,g3,2*w3[nb-1]+1);
-	FP48_YYY_mul(p,&r);
-	FP48_YYY_select(&r,g4,2*w4[nb-1]+1);
-	FP48_YYY_mul(p,&r);
+    FP48_YYY_select(p,g1,2*w1[nb-1]+1);
+    FP48_YYY_select(&r,g2,2*w2[nb-1]+1);
+    FP48_YYY_mul(p,&r);
+    FP48_YYY_select(&r,g3,2*w3[nb-1]+1);
+    FP48_YYY_mul(p,&r);
+    FP48_YYY_select(&r,g4,2*w4[nb-1]+1);
+    FP48_YYY_mul(p,&r);
     for (i=nb-2; i>=0; i--)
     {
-		FP48_YYY_usqr(p,p);
+        FP48_YYY_usqr(p,p);
         FP48_YYY_select(&r,g1,2*w1[i]+s1[i]);
         FP48_YYY_mul(p,&r);
         FP48_YYY_select(&r,g2,2*w2[i]+s2[i]);
@@ -891,49 +893,52 @@ void FP48_YYY_pow16(FP48_YYY *p,FP48_YYY *q,BIG_XXX u[16])
     }
 
 // apply correction
-	FP48_YYY_conj(&r,&q[0]);   
-	FP48_YYY_mul(&r,p);
-	FP48_YYY_cmove(p,&r,pb1);
-	FP48_YYY_conj(&r,&q[4]);   
-	FP48_YYY_mul(&r,p);
-	FP48_YYY_cmove(p,&r,pb2);
+    FP48_YYY_conj(&r,&q[0]);
+    FP48_YYY_mul(&r,p);
+    FP48_YYY_cmove(p,&r,pb1);
+    FP48_YYY_conj(&r,&q[4]);
+    FP48_YYY_mul(&r,p);
+    FP48_YYY_cmove(p,&r,pb2);
 
-	FP48_YYY_conj(&r,&q[8]);   
-	FP48_YYY_mul(&r,p);
-	FP48_YYY_cmove(p,&r,pb3);
-	FP48_YYY_conj(&r,&q[12]);   
-	FP48_YYY_mul(&r,p);
-	FP48_YYY_cmove(p,&r,pb4);
+    FP48_YYY_conj(&r,&q[8]);
+    FP48_YYY_mul(&r,p);
+    FP48_YYY_cmove(p,&r,pb3);
+    FP48_YYY_conj(&r,&q[12]);
+    FP48_YYY_mul(&r,p);
+    FP48_YYY_cmove(p,&r,pb4);
 
-	FP48_YYY_reduce(p);
+    FP48_YYY_reduce(p);
 }
 
 /* Set w=w^p using Frobenius */
 /* SU= 160 */
 void FP48_YYY_frob(FP48_YYY *w,FP2_YYY  *f,int n)
 {
-	int i;
-	FP8_YYY X2,X4;
-	FP4_YYY F;
+    int i;
     FP2_YYY  f3,f2;				// f=(1+i)^(p-19)/24
-    FP2_YYY_sqr(&f2,f);     // 
+    FP2_YYY_sqr(&f2,f);     //
     FP2_YYY_mul(&f3,&f2,f); // f3=f^3=(1+i)^(p-19)/8
 
-	FP2_YYY_mul_ip(&f3);
-	FP2_YYY_norm(&f3);
-	FP2_YYY_mul_ip(&f3);    // f3 = (1+i)^16/8.(1+i)^(p-19)/8 = (1+i)^(p-3)/8 
-	FP2_YYY_norm(&f3);
+    FP2_YYY_mul_ip(&f3);
+    FP2_YYY_norm(&f3);
+    FP2_YYY_mul_ip(&f3);    // f3 = (1+i)^16/8.(1+i)^(p-19)/8 = (1+i)^(p-3)/8
+    FP2_YYY_norm(&f3);
 
-	for (i=0;i<n;i++)
-	{
-		FP16_YYY_frob(&(w->a),&f3);   // a=a^p
-		FP16_YYY_frob(&(w->b),&f3);   // b=b^p
-		FP16_YYY_frob(&(w->c),&f3);   // c=c^p
-  
-		FP16_YYY_qmul(&(w->b),&(w->b),f); FP16_YYY_times_i4(&(w->b)); FP16_YYY_times_i2(&(w->b)); 
-		FP16_YYY_qmul(&(w->c),&(w->c),&f2); FP16_YYY_times_i4(&(w->c)); FP16_YYY_times_i4(&(w->c)); FP16_YYY_times_i4(&(w->c)); 
-	}
-	w->type=FP_DENSE;
+    for (i=0; i<n; i++)
+    {
+        FP16_YYY_frob(&(w->a),&f3);   // a=a^p
+        FP16_YYY_frob(&(w->b),&f3);   // b=b^p
+        FP16_YYY_frob(&(w->c),&f3);   // c=c^p
+
+        FP16_YYY_qmul(&(w->b),&(w->b),f);
+        FP16_YYY_times_i4(&(w->b));
+        FP16_YYY_times_i2(&(w->b));
+        FP16_YYY_qmul(&(w->c),&(w->c),&f2);
+        FP16_YYY_times_i4(&(w->c));
+        FP16_YYY_times_i4(&(w->c));
+        FP16_YYY_times_i4(&(w->c));
+    }
+    w->type=AMCL_FP_DENSE;
 }
 
 /* SU= 8 */
@@ -985,10 +990,10 @@ void FP48_YYY_toOctet(octet *W,FP48_YYY *g)
     BIG_XXX_toBytes(&(W->val[0]),a);
     FP_YYY_redc(a,&(g->a.a.a.a.b));
     BIG_XXX_toBytes(&(W->val[MODBYTES_XXX]),a);
-    
-	FP_YYY_redc(a,&(g->a.a.a.b.a));
+
+    FP_YYY_redc(a,&(g->a.a.a.b.a));
     BIG_XXX_toBytes(&(W->val[2*MODBYTES_XXX]),a);
-	FP_YYY_redc(a,&(g->a.a.a.b.b));
+    FP_YYY_redc(a,&(g->a.a.a.b.b));
     BIG_XXX_toBytes(&(W->val[3*MODBYTES_XXX]),a);
 
     FP_YYY_redc(a,&(g->a.a.b.a.a));
@@ -1106,7 +1111,7 @@ void FP48_YYY_toOctet(octet *W,FP48_YYY *g)
 /* Restore g from octet string w */
 void FP48_YYY_fromOctet(FP48_YYY *g,octet *W)
 {
-	BIG_XXX b;
+    BIG_XXX b;
 
     BIG_XXX_fromBytes(b,&W->val[0]);
     FP_YYY_nres(&(g->a.a.a.a.a),b);
@@ -1236,6 +1241,6 @@ void FP48_YYY_cmove(FP48_YYY *f,FP48_YYY *g,int d)
     FP16_YYY_cmove(&(f->a),&(g->a),d);
     FP16_YYY_cmove(&(f->b),&(g->b),d);
     FP16_YYY_cmove(&(f->c),&(g->c),d);
-	d=~(d-1);
-	f->type^=(f->type^g->type)&d;
+    d=~(d-1);
+    f->type^=(f->type^g->type)&d;
 }

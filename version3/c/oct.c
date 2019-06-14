@@ -93,7 +93,7 @@ int OCT_ncomp(octet *x,octet *y,int n)
         res|=(int)(x->val[i]^y->val[i]);
     }
     if (res==0) return 1;
-	return 0;
+    return 0;
 }
 
 /* Shift octet to the left by n bytes. Leftmost bytes disappear  */

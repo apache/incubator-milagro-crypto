@@ -18,7 +18,7 @@
 */
 
 /**
- * @file config_big.h
+ * @file config_big_XXX.h
  * @author Mike Scott
  * @brief Config BIG  Header File
  *

@@ -18,7 +18,7 @@
 */
 
 /**
- * @file ecp.h
+ * @file ecp_ZZZ.h
  * @author Mike Scott
  * @brief ECP Header File
  *

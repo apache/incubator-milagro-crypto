@@ -18,7 +18,7 @@ under the License.
 */
 
 /**
- * @file ecdh.h
+ * @file ecdh_ZZZ.h
  * @author Mike Scott
  * @brief ECDH Header file for implementation of standard EC protocols
  *

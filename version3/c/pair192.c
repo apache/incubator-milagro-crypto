@@ -27,124 +27,124 @@ under the License.
 /* Line function */
 static void PAIR_ZZZ_line(FP24_YYY *v,ECP4_ZZZ *A,ECP4_ZZZ *B,FP_YYY *Qx,FP_YYY *Qy)
 {
-	FP4_YYY X1,Y1,T1,T2;
-	FP4_YYY XX,YY,ZZ,YZ;
+    FP4_YYY X1,Y1,T1,T2;
+    FP4_YYY XX,YY,ZZ,YZ;
     FP8_YYY a,b,c;
 
-	if (A==B)
+    if (A==B)
     {
         /* doubling */
- 		FP4_YYY_copy(&XX,&(A->x));	//FP4_YYY XX=new FP4_YYY(A.getx());  //X
-		FP4_YYY_copy(&YY,&(A->y));	//FP4_YYY YY=new FP4_YYY(A.gety());  //Y
-		FP4_YYY_copy(&ZZ,&(A->z));	//FP4_YYY ZZ=new FP4_YYY(A.getz());  //Z
+        FP4_YYY_copy(&XX,&(A->x));	//FP4_YYY XX=new FP4_YYY(A.getx());  //X
+        FP4_YYY_copy(&YY,&(A->y));	//FP4_YYY YY=new FP4_YYY(A.gety());  //Y
+        FP4_YYY_copy(&ZZ,&(A->z));	//FP4_YYY ZZ=new FP4_YYY(A.getz());  //Z
 
 
-		FP4_YYY_copy(&YZ,&YY);		//FP4_YYY YZ=new FP4_YYY(YY);        //Y 
-		FP4_YYY_mul(&YZ,&YZ,&ZZ);		//YZ.mul(ZZ);                //YZ
-		FP4_YYY_sqr(&XX,&XX);		//XX.sqr();	               //X^2
-		FP4_YYY_sqr(&YY,&YY);		//YY.sqr();	               //Y^2
-		FP4_YYY_sqr(&ZZ,&ZZ);		//ZZ.sqr();			       //Z^2
-			
-		FP4_YYY_imul(&YZ,&YZ,4);	//YZ.imul(4);
-		FP4_YYY_neg(&YZ,&YZ);		//YZ.neg(); 
-		FP4_YYY_norm(&YZ);			//YZ.norm();       //-4YZ
+        FP4_YYY_copy(&YZ,&YY);		//FP4_YYY YZ=new FP4_YYY(YY);        //Y
+        FP4_YYY_mul(&YZ,&YZ,&ZZ);		//YZ.mul(ZZ);                //YZ
+        FP4_YYY_sqr(&XX,&XX);		//XX.sqr();	               //X^2
+        FP4_YYY_sqr(&YY,&YY);		//YY.sqr();	               //Y^2
+        FP4_YYY_sqr(&ZZ,&ZZ);		//ZZ.sqr();			       //Z^2
 
-		FP4_YYY_imul(&XX,&XX,6);					//6X^2
-		FP4_YYY_qmul(&XX,&XX,Qx);	               //6X^2.Xs
+        FP4_YYY_imul(&YZ,&YZ,4);	//YZ.imul(4);
+        FP4_YYY_neg(&YZ,&YZ);		//YZ.neg();
+        FP4_YYY_norm(&YZ);			//YZ.norm();       //-4YZ
 
-		FP4_YYY_imul(&ZZ,&ZZ,3*CURVE_B_I_ZZZ);	//3Bz^2 
+        FP4_YYY_imul(&XX,&XX,6);					//6X^2
+        FP4_YYY_qmul(&XX,&XX,Qx);	               //6X^2.Xs
 
-		FP4_YYY_qmul(&YZ,&YZ,Qy);	//-4YZ.Ys
+        FP4_YYY_imul(&ZZ,&ZZ,3*CURVE_B_I_ZZZ);	//3Bz^2
+
+        FP4_YYY_qmul(&YZ,&YZ,Qy);	//-4YZ.Ys
 
 #if SEXTIC_TWIST_ZZZ==D_TYPE
-		FP4_YYY_div_2i(&ZZ);		//6(b/i)z^2
+        FP4_YYY_div_2i(&ZZ);		//6(b/i)z^2
 #endif
 #if SEXTIC_TWIST_ZZZ==M_TYPE
-		FP4_YYY_times_i(&ZZ);
-		FP4_YYY_add(&ZZ,&ZZ,&ZZ);  // 6biz^2
-		FP4_YYY_times_i(&YZ);
-		FP4_YYY_norm(&YZ);	
+        FP4_YYY_times_i(&ZZ);
+        FP4_YYY_add(&ZZ,&ZZ,&ZZ);  // 6biz^2
+        FP4_YYY_times_i(&YZ);
+        FP4_YYY_norm(&YZ);
 #endif
-		FP4_YYY_norm(&ZZ);			// 6bi.Z^2 
+        FP4_YYY_norm(&ZZ);			// 6bi.Z^2
 
-		FP4_YYY_add(&YY,&YY,&YY);	// 2y^2
-		FP4_YYY_sub(&ZZ,&ZZ,&YY);	// 
-		FP4_YYY_norm(&ZZ);			// 6b.Z^2-2Y^2
+        FP4_YYY_add(&YY,&YY,&YY);	// 2y^2
+        FP4_YYY_sub(&ZZ,&ZZ,&YY);	//
+        FP4_YYY_norm(&ZZ);			// 6b.Z^2-2Y^2
 
-		FP8_YYY_from_FP4s(&a,&YZ,&ZZ); // -4YZ.Ys | 6b.Z^2-2Y^2 | 6X^2.Xs 
+        FP8_YYY_from_FP4s(&a,&YZ,&ZZ); // -4YZ.Ys | 6b.Z^2-2Y^2 | 6X^2.Xs
 #if SEXTIC_TWIST_ZZZ==D_TYPE
-		FP8_YYY_from_FP4(&b,&XX);	
-		FP8_YYY_zero(&c);
+        FP8_YYY_from_FP4(&b,&XX);
+        FP8_YYY_zero(&c);
 #endif
 #if SEXTIC_TWIST_ZZZ==M_TYPE
-		FP8_YYY_zero(&b);
-		FP8_YYY_from_FP4H(&c,&XX);
+        FP8_YYY_zero(&b);
+        FP8_YYY_from_FP4H(&c,&XX);
 #endif
 
-		ECP4_ZZZ_dbl(A);				//A.dbl();
+        ECP4_ZZZ_dbl(A);				//A.dbl();
     }
     else
     {
         /* addition */
 
-		FP4_YYY_copy(&X1,&(A->x));		//FP4_YYY X1=new FP4_YYY(A.getx());    // X1
-		FP4_YYY_copy(&Y1,&(A->y));		//FP4_YYY Y1=new FP4_YYY(A.gety());    // Y1
-		FP4_YYY_copy(&T1,&(A->z));		//FP4_YYY T1=new FP4_YYY(A.getz());    // Z1
-			
-		FP4_YYY_copy(&T2,&T1);		//FP4_YYY T2=new FP4_YYY(A.getz());    // Z1
+        FP4_YYY_copy(&X1,&(A->x));		//FP4_YYY X1=new FP4_YYY(A.getx());    // X1
+        FP4_YYY_copy(&Y1,&(A->y));		//FP4_YYY Y1=new FP4_YYY(A.gety());    // Y1
+        FP4_YYY_copy(&T1,&(A->z));		//FP4_YYY T1=new FP4_YYY(A.getz());    // Z1
 
-		FP4_YYY_mul(&T1,&T1,&(B->y));	//T1.mul(B.gety());    // T1=Z1.Y2 
-		FP4_YYY_mul(&T2,&T2,&(B->x));	//T2.mul(B.getx());    // T2=Z1.X2
+        FP4_YYY_copy(&T2,&T1);		//FP4_YYY T2=new FP4_YYY(A.getz());    // Z1
 
-		FP4_YYY_sub(&X1,&X1,&T2);		//X1.sub(T2); 
-		FP4_YYY_norm(&X1);				//X1.norm();  // X1=X1-Z1.X2
-		FP4_YYY_sub(&Y1,&Y1,&T1);		//Y1.sub(T1); 
-		FP4_YYY_norm(&Y1);				//Y1.norm();  // Y1=Y1-Z1.Y2
+        FP4_YYY_mul(&T1,&T1,&(B->y));	//T1.mul(B.gety());    // T1=Z1.Y2
+        FP4_YYY_mul(&T2,&T2,&(B->x));	//T2.mul(B.getx());    // T2=Z1.X2
 
-		FP4_YYY_copy(&T1,&X1);			//T1.copy(X1);            // T1=X1-Z1.X2
+        FP4_YYY_sub(&X1,&X1,&T2);		//X1.sub(T2);
+        FP4_YYY_norm(&X1);				//X1.norm();  // X1=X1-Z1.X2
+        FP4_YYY_sub(&Y1,&Y1,&T1);		//Y1.sub(T1);
+        FP4_YYY_norm(&Y1);				//Y1.norm();  // Y1=Y1-Z1.Y2
 
-		FP4_YYY_qmul(&X1,&X1,Qy);		//X1.pmul(Qy);            // X1=(X1-Z1.X2).Ys
+        FP4_YYY_copy(&T1,&X1);			//T1.copy(X1);            // T1=X1-Z1.X2
+
+        FP4_YYY_qmul(&X1,&X1,Qy);		//X1.pmul(Qy);            // X1=(X1-Z1.X2).Ys
 #if SEXTIC_TWIST_ZZZ==M_TYPE
-		FP4_YYY_times_i(&X1);
-		FP4_YYY_norm(&X1);
+        FP4_YYY_times_i(&X1);
+        FP4_YYY_norm(&X1);
 #endif
 
-		FP4_YYY_mul(&T1,&T1,&(B->y));	//T1.mul(B.gety());       // T1=(X1-Z1.X2).Y2
+        FP4_YYY_mul(&T1,&T1,&(B->y));	//T1.mul(B.gety());       // T1=(X1-Z1.X2).Y2
 
-		FP4_YYY_copy(&T2,&Y1);			//T2.copy(Y1);            // T2=Y1-Z1.Y2
-		FP4_YYY_mul(&T2,&T2,&(B->x));	//T2.mul(B.getx());       // T2=(Y1-Z1.Y2).X2
-		FP4_YYY_sub(&T2,&T2,&T1);		//T2.sub(T1); 
-		FP4_YYY_norm(&T2);				//T2.norm();          // T2=(Y1-Z1.Y2).X2 - (X1-Z1.X2).Y2
-		FP4_YYY_qmul(&Y1,&Y1,Qx);		//Y1.pmul(Qx);  
-		FP4_YYY_neg(&Y1,&Y1);			//Y1.neg(); 
-		FP4_YYY_norm(&Y1);				//Y1.norm(); // Y1=-(Y1-Z1.Y2).Xs
+        FP4_YYY_copy(&T2,&Y1);			//T2.copy(Y1);            // T2=Y1-Z1.Y2
+        FP4_YYY_mul(&T2,&T2,&(B->x));	//T2.mul(B.getx());       // T2=(Y1-Z1.Y2).X2
+        FP4_YYY_sub(&T2,&T2,&T1);		//T2.sub(T1);
+        FP4_YYY_norm(&T2);				//T2.norm();          // T2=(Y1-Z1.Y2).X2 - (X1-Z1.X2).Y2
+        FP4_YYY_qmul(&Y1,&Y1,Qx);		//Y1.pmul(Qx);
+        FP4_YYY_neg(&Y1,&Y1);			//Y1.neg();
+        FP4_YYY_norm(&Y1);				//Y1.norm(); // Y1=-(Y1-Z1.Y2).Xs
 
-		FP8_YYY_from_FP4s(&a,&X1,&T2);	// (X1-Z1.X2).Ys  |  (Y1-Z1.Y2).X2 - (X1-Z1.X2).Y2  | - (Y1-Z1.Y2).Xs
+        FP8_YYY_from_FP4s(&a,&X1,&T2);	// (X1-Z1.X2).Ys  |  (Y1-Z1.Y2).X2 - (X1-Z1.X2).Y2  | - (Y1-Z1.Y2).Xs
 #if SEXTIC_TWIST_ZZZ==D_TYPE
-		FP8_YYY_from_FP4(&b,&Y1);		//b=new FP4(Y1);
-		FP8_YYY_zero(&c);
+        FP8_YYY_from_FP4(&b,&Y1);		//b=new FP4(Y1);
+        FP8_YYY_zero(&c);
 #endif
 #if SEXTIC_TWIST_ZZZ==M_TYPE
-		FP8_YYY_zero(&b);
-		FP8_YYY_from_FP4H(&c,&Y1);		//b=new FP4(Y1);
+        FP8_YYY_zero(&b);
+        FP8_YYY_from_FP4H(&c,&Y1);		//b=new FP4(Y1);
 #endif
-		ECP4_ZZZ_add(A,B);			//A.add(B);
+        ECP4_ZZZ_add(A,B);			//A.add(B);
     }
 
     FP24_YYY_from_FP8s(v,&a,&b,&c);
-	v->type=FP_SPARSER;
+    v->type=AMCL_AMCL_FP_SPARSER;
 }
 
 /* prepare ate parameter, n=6u+2 (BN) or n=u (BLS), n3=3*n */
 int PAIR_ZZZ_nbits(BIG_XXX n3,BIG_XXX n)
 {
-	BIG_XXX x;
+    BIG_XXX x;
     BIG_XXX_rcopy(x,CURVE_Bnx_ZZZ);
 
     BIG_XXX_copy(n,x);
     BIG_XXX_norm(n);
-	BIG_XXX_pmul(n3,n,3);
-	BIG_XXX_norm(n3);
+    BIG_XXX_pmul(n3,n,3);
+    BIG_XXX_norm(n3);
 
     return BIG_XXX_nbits(n3);
 }
@@ -161,117 +161,119 @@ int PAIR_ZZZ_nbits(BIG_XXX n3,BIG_XXX n)
 /* prepare for multi-pairing */
 void PAIR_ZZZ_initmp(FP24_YYY r[])
 {
-	int i;
-	for (i=ATE_BITS_ZZZ-1; i>=0; i--)
-		FP24_YYY_one(&r[i]);
-	return;
+    int i;
+    for (i=ATE_BITS_ZZZ-1; i>=0; i--)
+        FP24_YYY_one(&r[i]);
+    return;
 }
 
 /* basic Miller loop */
 void PAIR_ZZZ_miller(FP24_YYY *res,FP24_YYY r[])
 {
-	int i;
+    int i;
     FP24_YYY_one(res);
-	for (i=ATE_BITS_ZZZ-1; i>=1; i--)
-	{
-		FP24_YYY_sqr(res,res);
-		FP24_YYY_ssmul(res,&r[i]);
-	}
+    for (i=ATE_BITS_ZZZ-1; i>=1; i--)
+    {
+        FP24_YYY_sqr(res,res);
+        FP24_YYY_ssmul(res,&r[i]);
+    }
 
 #if SIGN_OF_X_ZZZ==NEGATIVEX
     FP24_YYY_conj(res,res);
 #endif
-	FP24_YYY_ssmul(res,&r[0]);
-	return;
+    FP24_YYY_ssmul(res,&r[0]);
+    return;
 }
 
 /* Accumulate another set of line functions for n-pairing */
 void PAIR_ZZZ_another(FP24_YYY r[],ECP4_ZZZ* PV,ECP_ZZZ* QV)
 {
-    int i,j,nb,bt;
-	BIG_XXX x,n,n3;
+    int i,nb,bt;
+    BIG_XXX n,n3;
     FP24_YYY lv,lv2;
     ECP4_ZZZ A,NP,P;
-	ECP_ZZZ Q;
-	FP_YYY Qx,Qy;
+    ECP_ZZZ Q;
+    FP_YYY Qx,Qy;
 
-	nb=PAIR_ZZZ_nbits(n3,n);
+    nb=PAIR_ZZZ_nbits(n3,n);
 
-	ECP4_ZZZ_copy(&P,PV);
-	ECP_ZZZ_copy(&Q,QV);
+    ECP4_ZZZ_copy(&P,PV);
+    ECP_ZZZ_copy(&Q,QV);
 
-	ECP4_ZZZ_affine(&P);
-	ECP_ZZZ_affine(&Q);
+    ECP4_ZZZ_affine(&P);
+    ECP_ZZZ_affine(&Q);
 
-	FP_YYY_copy(&Qx,&(Q.x));
-	FP_YYY_copy(&Qy,&(Q.y));
+    FP_YYY_copy(&Qx,&(Q.x));
+    FP_YYY_copy(&Qy,&(Q.y));
 
-	ECP4_ZZZ_copy(&A,&P);
-	ECP4_ZZZ_copy(&NP,&P); ECP4_ZZZ_neg(&NP);
+    ECP4_ZZZ_copy(&A,&P);
+    ECP4_ZZZ_copy(&NP,&P);
+    ECP4_ZZZ_neg(&NP);
 
-	for (i=nb-2; i>=1; i--)
-	{
-		PAIR_ZZZ_line(&lv,&A,&A,&Qx,&Qy);
+    for (i=nb-2; i>=1; i--)
+    {
+        PAIR_ZZZ_line(&lv,&A,&A,&Qx,&Qy);
 
-		bt=BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i); // bt=BIG_bit(n,i);
-		if (bt==1)
-		{
-			PAIR_ZZZ_line(&lv2,&A,&P,&Qx,&Qy);
-			FP24_YYY_smul(&lv,&lv2);
-		}
-		if (bt==-1)
-		{
-			PAIR_ZZZ_line(&lv2,&A,&NP,&Qx,&Qy);
-			FP24_YYY_smul(&lv,&lv2);
-		}
-		FP24_YYY_ssmul(&r[i],&lv);
-	}
+        bt=BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i); // bt=BIG_bit(n,i);
+        if (bt==1)
+        {
+            PAIR_ZZZ_line(&lv2,&A,&P,&Qx,&Qy);
+            FP24_YYY_smul(&lv,&lv2);
+        }
+        if (bt==-1)
+        {
+            PAIR_ZZZ_line(&lv2,&A,&NP,&Qx,&Qy);
+            FP24_YYY_smul(&lv,&lv2);
+        }
+        FP24_YYY_ssmul(&r[i],&lv);
+    }
 }
 
 /* Optimal R-ate pairing r=e(P,Q) */
 void PAIR_ZZZ_ate(FP24_YYY *r,ECP4_ZZZ *P1,ECP_ZZZ *Q1)
 {
-    BIG_XXX x,n,n3;
-	FP_YYY Qx,Qy;
+    BIG_XXX n,n3;
+    FP_YYY Qx,Qy;
     int i,nb,bt;
     ECP4_ZZZ A,NP,P;
-	ECP_ZZZ Q;
+    ECP_ZZZ Q;
     FP24_YYY lv,lv2;
 
-	nb=PAIR_ZZZ_nbits(n3,n);
+    nb=PAIR_ZZZ_nbits(n3,n);
 
-	ECP4_ZZZ_copy(&P,P1);
-	ECP_ZZZ_copy(&Q,Q1);
+    ECP4_ZZZ_copy(&P,P1);
+    ECP_ZZZ_copy(&Q,Q1);
 
-	ECP4_ZZZ_affine(&P);
-	ECP_ZZZ_affine(&Q);
+    ECP4_ZZZ_affine(&P);
+    ECP_ZZZ_affine(&Q);
 
 
     FP_YYY_copy(&Qx,&(Q.x));
     FP_YYY_copy(&Qy,&(Q.y));
 
     ECP4_ZZZ_copy(&A,&P);
-	ECP4_ZZZ_copy(&NP,&P); ECP4_ZZZ_neg(&NP);
+    ECP4_ZZZ_copy(&NP,&P);
+    ECP4_ZZZ_neg(&NP);
 
     FP24_YYY_one(r);
 
     /* Main Miller Loop */
     for (i=nb-2; i>=1; i--)
     {
-		FP24_YYY_sqr(r,r);
+        FP24_YYY_sqr(r,r);
         PAIR_ZZZ_line(&lv,&A,&A,&Qx,&Qy);
 
-		bt= BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i);  // BIG_bit(n,i); 
+        bt= BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i);  // BIG_bit(n,i);
         if (bt==1)
         {
             PAIR_ZZZ_line(&lv2,&A,&P,&Qx,&Qy);
             FP24_YYY_smul(&lv,&lv2);
         }
-		if (bt==-1)
-		{
+        if (bt==-1)
+        {
             PAIR_ZZZ_line(&lv2,&A,&NP,&Qx,&Qy);
             FP24_YYY_smul(&lv,&lv2);
-		}
+        }
         FP24_YYY_ssmul(r,&lv);
     }
 
@@ -284,25 +286,25 @@ void PAIR_ZZZ_ate(FP24_YYY *r,ECP4_ZZZ *P1,ECP_ZZZ *Q1)
 /* Optimal R-ate double pairing e(P,Q).e(R,S) */
 void PAIR_ZZZ_double_ate(FP24_YYY *r,ECP4_ZZZ *P1,ECP_ZZZ *Q1,ECP4_ZZZ *R1,ECP_ZZZ *S1)
 {
-    BIG_XXX x,n,n3;
-	FP_YYY Qx,Qy,Sx,Sy;
+    BIG_XXX n,n3;
+    FP_YYY Qx,Qy,Sx,Sy;
     int i,nb,bt;
     ECP4_ZZZ A,B,NP,NR,P,R;
-	ECP_ZZZ Q,S;
+    ECP_ZZZ Q,S;
     FP24_YYY lv,lv2;
-	nb=PAIR_ZZZ_nbits(n3,n);
+    nb=PAIR_ZZZ_nbits(n3,n);
 
-	ECP4_ZZZ_copy(&P,P1);
-	ECP_ZZZ_copy(&Q,Q1);
+    ECP4_ZZZ_copy(&P,P1);
+    ECP_ZZZ_copy(&Q,Q1);
 
-	ECP4_ZZZ_affine(&P);
-	ECP_ZZZ_affine(&Q);
+    ECP4_ZZZ_affine(&P);
+    ECP_ZZZ_affine(&Q);
 
-	ECP4_ZZZ_copy(&R,R1);
-	ECP_ZZZ_copy(&S,S1);
+    ECP4_ZZZ_copy(&R,R1);
+    ECP_ZZZ_copy(&S,S1);
 
-	ECP4_ZZZ_affine(&R);
-	ECP_ZZZ_affine(&S);
+    ECP4_ZZZ_affine(&R);
+    ECP_ZZZ_affine(&S);
 
     FP_YYY_copy(&Qx,&(Q.x));
     FP_YYY_copy(&Qy,&(Q.y));
@@ -312,36 +314,38 @@ void PAIR_ZZZ_double_ate(FP24_YYY *r,ECP4_ZZZ *P1,ECP_ZZZ *Q1,ECP4_ZZZ *R1,ECP_Z
 
     ECP4_ZZZ_copy(&A,&P);
     ECP4_ZZZ_copy(&B,&R);
-	ECP4_ZZZ_copy(&NP,&P); ECP4_ZZZ_neg(&NP);
-	ECP4_ZZZ_copy(&NR,&R); ECP4_ZZZ_neg(&NR);
+    ECP4_ZZZ_copy(&NP,&P);
+    ECP4_ZZZ_neg(&NP);
+    ECP4_ZZZ_copy(&NR,&R);
+    ECP4_ZZZ_neg(&NR);
 
     FP24_YYY_one(r);
 
     /* Main Miller Loop */
     for (i=nb-2; i>=1; i--)
     {
-		FP24_YYY_sqr(r,r);
+        FP24_YYY_sqr(r,r);
         PAIR_ZZZ_line(&lv,&A,&A,&Qx,&Qy);
         PAIR_ZZZ_line(&lv2,&B,&B,&Sx,&Sy);
-		FP24_YYY_smul(&lv,&lv2);
+        FP24_YYY_smul(&lv,&lv2);
         FP24_YYY_ssmul(r,&lv);
 
-		bt=BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i); // bt=BIG_bit(n,i);
+        bt=BIG_XXX_bit(n3,i)-BIG_XXX_bit(n,i); // bt=BIG_bit(n,i);
         if (bt==1)
         {
             PAIR_ZZZ_line(&lv,&A,&P,&Qx,&Qy);
-			PAIR_ZZZ_line(&lv2,&B,&R,&Sx,&Sy);
+            PAIR_ZZZ_line(&lv2,&B,&R,&Sx,&Sy);
             FP24_YYY_smul(&lv,&lv2);
             FP24_YYY_ssmul(r,&lv);
         }
-		if (bt==-1)
-		{
+        if (bt==-1)
+        {
             PAIR_ZZZ_line(&lv,&A,&NP,&Qx,&Qy);
-			PAIR_ZZZ_line(&lv2,&B,&NR,&Sx,&Sy);
+            PAIR_ZZZ_line(&lv2,&B,&NR,&Sx,&Sy);
             FP24_YYY_smul(&lv,&lv2);
             FP24_YYY_ssmul(r,&lv);
-		}
-	}
+        }
+    }
 
 
 
@@ -357,7 +361,7 @@ void PAIR_ZZZ_fexp(FP24_YYY *r)
 {
     FP2_YYY X;
     BIG_XXX x;
-	FP_YYY a,b;
+    FP_YYY a,b;
     FP24_YYY t0,t1,t2,t3,t4,t5,t6,t7;  // could lose one of these - r=t3
 
     BIG_XXX_rcopy(x,CURVE_Bnx_ZZZ);
@@ -377,89 +381,89 @@ void PAIR_ZZZ_fexp(FP24_YYY *r)
 
     FP24_YYY_mul(r,&t0);
 
-	if (FP24_YYY_isunity(r))
-	{
-		FP24_YYY_zero(r);
-		return;
-	}
+    if (FP24_YYY_isunity(r))
+    {
+        FP24_YYY_zero(r);
+        return;
+    }
 // Ghamman & Fouotsa Method - (completely garbled in  https://eprint.iacr.org/2016/130)
 
-	FP24_YYY_usqr(&t7,r);			// t7=f^2
-	FP24_YYY_pow(&t1,&t7,x);		// t1=t7^u
+    FP24_YYY_usqr(&t7,r);			// t7=f^2
+    FP24_YYY_pow(&t1,&t7,x);		// t1=t7^u
 
-	BIG_XXX_fshr(x,1);
-	FP24_YYY_pow(&t2,&t1,x);		// t2=t1^(u/2)
-	BIG_XXX_fshl(x,1);  // x must be even
-
-#if SIGN_OF_X_ZZZ==NEGATIVEX
-	FP24_YYY_conj(&t1,&t1);
-#endif
-
-	FP24_YYY_conj(&t3,&t1);		// t3=1/t1
-	FP24_YYY_mul(&t2,&t3);		// t2=t1*t3
-	FP24_YYY_mul(&t2,r);		// t2=t2*f
-
-
-	FP24_YYY_pow(&t3,&t2,x);		// t3=t2^u
-	FP24_YYY_pow(&t4,&t3,x);		// t4=t3^u
-	FP24_YYY_pow(&t5,&t4,x);		// t5=t4^u
+    BIG_XXX_fshr(x,1);
+    FP24_YYY_pow(&t2,&t1,x);		// t2=t1^(u/2)
+    BIG_XXX_fshl(x,1);  // x must be even
 
 #if SIGN_OF_X_ZZZ==NEGATIVEX
-	FP24_YYY_conj(&t3,&t3);
-	FP24_YYY_conj(&t5,&t5);
+    FP24_YYY_conj(&t1,&t1);
 #endif
 
-	FP24_YYY_frob(&t3,&X,6);
-	FP24_YYY_frob(&t4,&X,5);
-
-	FP24_YYY_mul(&t3,&t4);		// t3=t3.t4
-
-
-	FP24_YYY_pow(&t6,&t5,x);		// t6=t5^u
-#if SIGN_OF_X_ZZZ==NEGATIVEX
-	FP24_YYY_conj(&t6,&t6);
-#endif
+    FP24_YYY_conj(&t3,&t1);		// t3=1/t1
+    FP24_YYY_mul(&t2,&t3);		// t2=t1*t3
+    FP24_YYY_mul(&t2,r);		// t2=t2*f
 
 
-	FP24_YYY_frob(&t5,&X,4); 
-	FP24_YYY_mul(&t3,&t5); // ??
-
-
-	FP24_YYY_conj(&t0,&t2);			// t0=1/t2
-	FP24_YYY_mul(&t6,&t0);		// t6=t6*t0
-
-	FP24_YYY_copy(&t5,&t6);
-	FP24_YYY_frob(&t5,&X,3); 
-
-	FP24_YYY_mul(&t3,&t5);		// t3=t3*t5
-	FP24_YYY_pow(&t5,&t6,x);	// t5=t6^x
-	FP24_YYY_pow(&t6,&t5,x);	// t6=t5^x
+    FP24_YYY_pow(&t3,&t2,x);		// t3=t2^u
+    FP24_YYY_pow(&t4,&t3,x);		// t4=t3^u
+    FP24_YYY_pow(&t5,&t4,x);		// t5=t4^u
 
 #if SIGN_OF_X_ZZZ==NEGATIVEX
-	FP24_YYY_conj(&t5,&t5);
+    FP24_YYY_conj(&t3,&t3);
+    FP24_YYY_conj(&t5,&t5);
 #endif
 
-	FP24_YYY_copy(&t0,&t5);	
-	FP24_YYY_frob(&t0,&X,2); 
-	FP24_YYY_mul(&t3,&t0);		// t3=t3*t0
-	FP24_YYY_copy(&t0,&t6);     // 
-	FP24_YYY_frob(&t0,&X,1);
+    FP24_YYY_frob(&t3,&X,6);
+    FP24_YYY_frob(&t4,&X,5);
 
-	FP24_YYY_mul(&t3,&t0);		// t3=t3*t0
-	FP24_YYY_pow(&t5,&t6,x);    // t5=t6*x
+    FP24_YYY_mul(&t3,&t4);		// t3=t3.t4
+
+
+    FP24_YYY_pow(&t6,&t5,x);		// t6=t5^u
+#if SIGN_OF_X_ZZZ==NEGATIVEX
+    FP24_YYY_conj(&t6,&t6);
+#endif
+
+
+    FP24_YYY_frob(&t5,&X,4);
+    FP24_YYY_mul(&t3,&t5); // ??
+
+
+    FP24_YYY_conj(&t0,&t2);			// t0=1/t2
+    FP24_YYY_mul(&t6,&t0);		// t6=t6*t0
+
+    FP24_YYY_copy(&t5,&t6);
+    FP24_YYY_frob(&t5,&X,3);
+
+    FP24_YYY_mul(&t3,&t5);		// t3=t3*t5
+    FP24_YYY_pow(&t5,&t6,x);	// t5=t6^x
+    FP24_YYY_pow(&t6,&t5,x);	// t6=t5^x
 
 #if SIGN_OF_X_ZZZ==NEGATIVEX
-	FP24_YYY_conj(&t5,&t5);
+    FP24_YYY_conj(&t5,&t5);
 #endif
 
-	FP24_YYY_frob(&t2,&X,7); 
+    FP24_YYY_copy(&t0,&t5);
+    FP24_YYY_frob(&t0,&X,2);
+    FP24_YYY_mul(&t3,&t0);		// t3=t3*t0
+    FP24_YYY_copy(&t0,&t6);     //
+    FP24_YYY_frob(&t0,&X,1);
 
-	FP24_YYY_mul(&t5,&t7);		// t5=t5*t7
-	FP24_YYY_mul(&t3,&t2);		// t3=t3*t2
-	FP24_YYY_mul(&t3,&t5);		// t3=t3*t5
+    FP24_YYY_mul(&t3,&t0);		// t3=t3*t0
+    FP24_YYY_pow(&t5,&t6,x);    // t5=t6*x
 
-	FP24_YYY_mul(r,&t3);
-	FP24_YYY_reduce(r);
+#if SIGN_OF_X_ZZZ==NEGATIVEX
+    FP24_YYY_conj(&t5,&t5);
+#endif
+
+    FP24_YYY_frob(&t2,&X,7);
+
+    FP24_YYY_mul(&t5,&t7);		// t5=t5*t7
+    FP24_YYY_mul(&t3,&t2);		// t3=t3*t2
+    FP24_YYY_mul(&t3,&t5);		// t3=t3*t5
+
+    FP24_YYY_mul(r,&t3);
+    FP24_YYY_reduce(r);
 
 }
 
@@ -473,7 +477,7 @@ static void glv(BIG_XXX u[2],BIG_XXX e)
     BIG_XXX x,x2,q;
     BIG_XXX_rcopy(x,CURVE_Bnx_ZZZ);
     BIG_XXX_smul(x2,x,x);
-	BIG_XXX_smul(x,x2,x2);
+    BIG_XXX_smul(x,x2,x2);
     BIG_XXX_copy(u[0],e);
     BIG_XXX_mod(u[0],x);
     BIG_XXX_copy(u[1],e);
@@ -493,7 +497,7 @@ static void gs(BIG_XXX u[8],BIG_XXX e)
     int i;
 
     BIG_XXX x,w,q;
-	BIG_XXX_rcopy(q,CURVE_Order_ZZZ);
+    BIG_XXX_rcopy(q,CURVE_Order_ZZZ);
     BIG_XXX_rcopy(x,CURVE_Bnx_ZZZ);
     BIG_XXX_copy(w,e);
 
@@ -503,14 +507,14 @@ static void gs(BIG_XXX u[8],BIG_XXX e)
         BIG_XXX_mod(u[i],x);
         BIG_XXX_sdiv(w,x);
     }
-	BIG_XXX_copy(u[7],w);
+    BIG_XXX_copy(u[7],w);
 
-/*  */
+    /*  */
 #if SIGN_OF_X_ZZZ==NEGATIVEX
-	BIG_XXX_modneg(u[1],u[1],q);
-	BIG_XXX_modneg(u[3],u[3],q);
-	BIG_XXX_modneg(u[5],u[5],q);
-	BIG_XXX_modneg(u[7],u[7],q);
+    BIG_XXX_modneg(u[1],u[1],q);
+    BIG_XXX_modneg(u[3],u[3],q);
+    BIG_XXX_modneg(u[5],u[5],q);
+    BIG_XXX_modneg(u[7],u[7],q);
 #endif
 
 
@@ -523,14 +527,15 @@ void PAIR_ZZZ_G1mul(ECP_ZZZ *P,BIG_XXX e)
 #ifdef USE_GLV_ZZZ   /* Note this method is patented */
     int np,nn;
     ECP_ZZZ Q;
-	FP_YYY cru;
+    FP_YYY cru;
     BIG_XXX t,q;
     BIG_XXX u[2];
 
     BIG_XXX_rcopy(q,CURVE_Order_ZZZ);
     glv(u,e);
 
-    ECP_ZZZ_copy(&Q,P); ECP_ZZZ_affine(&Q);
+    ECP_ZZZ_copy(&Q,P);
+    ECP_ZZZ_affine(&Q);
     FP_YYY_rcopy(&cru,CURVE_Cru_ZZZ);
     FP_YYY_mul(&(Q.x),&(Q.x),&cru);
 
@@ -554,7 +559,7 @@ void PAIR_ZZZ_G1mul(ECP_ZZZ *P,BIG_XXX e)
         ECP_ZZZ_neg(&Q);
     }
     BIG_XXX_norm(u[0]);
-    BIG_XXX_norm(u[1]);    
+    BIG_XXX_norm(u[1]);
     ECP_ZZZ_mul2(P,&Q,u[0],u[1]);
 
 #else
@@ -571,7 +576,7 @@ void PAIR_ZZZ_G2mul(ECP4_ZZZ *P,BIG_XXX e)
     FP2_YYY X[3];
     BIG_XXX x,y,u[8];
 
-	ECP4_ZZZ_frob_constants(X);
+    ECP4_ZZZ_frob_constants(X);
 
     BIG_XXX_rcopy(y,CURVE_Order_ZZZ);
     gs(u,e);
@@ -593,7 +598,7 @@ void PAIR_ZZZ_G2mul(ECP4_ZZZ *P,BIG_XXX e)
             BIG_XXX_copy(u[i],x);
             ECP4_ZZZ_neg(&Q[i]);
         }
-        BIG_XXX_norm(u[i]);   
+        BIG_XXX_norm(u[i]);
     }
 
     ECP4_ZZZ_mul8(P,Q,u);
@@ -611,7 +616,7 @@ void PAIR_ZZZ_GTpow(FP24_YYY *f,BIG_XXX e)
     FP24_YYY g[8];
     FP2_YYY X;
     BIG_XXX t,q;
-	FP_YYY fx,fy;
+    FP_YYY fx,fy;
     BIG_XXX u[8];
 
     FP_YYY_rcopy(&fx,Fra_YYY);
@@ -638,7 +643,7 @@ void PAIR_ZZZ_GTpow(FP24_YYY *f,BIG_XXX e)
             BIG_XXX_copy(u[i],t);
             FP24_YYY_conj(&g[i],&g[i]);
         }
-        BIG_XXX_norm(u[i]);        
+        BIG_XXX_norm(u[i]);
     }
     FP24_YYY_pow8(f,g,u);
 
@@ -666,16 +671,16 @@ int main()
     ECP_ZZZ Q,R;
     FP24 g,gp;
     FP8_YYY t,c,cp,cpm1,cpm2;
-	FP4_YYY X,Y;
+    FP4_YYY X,Y;
     FP2_YYY x,y,f,Aa,Bb;
-	FP_YYY cru;
+    FP_YYY cru;
 
-	for (i=0;i<32;i++)
-		byt[i]=i+9;
-	RAND_seed(&rng,32,byt);
+    for (i=0; i<32; i++)
+        byt[i]=i+9;
+    RAND_seed(&rng,32,byt);
 
-	BIG_XXX_rcopy(r,CURVE_Order);
-	BIG_XXX_rcopy(p,Modulus);
+    BIG_XXX_rcopy(r,CURVE_Order);
+    BIG_XXX_rcopy(p,Modulus);
 
 
     BIG_XXX_rcopy(xa,CURVE_Gx);
@@ -689,7 +694,7 @@ int main()
     ECP_output(&Q);
     printf("\n");
 
-	ECP4_ZZZ_generator(&P);
+    ECP4_ZZZ_generator(&P);
 
     if (P.inf) printf("Failed to set - point not on curve\n");
     else printf("G2 set success\n");
@@ -700,7 +705,7 @@ int main()
 
     PAIR_ate(&g,&P,&Q);
 
-	printf("gb= ");
+    printf("gb= ");
     FP24_output(&g);
     printf("\n");
     PAIR_fexp(&g);
@@ -709,12 +714,12 @@ int main()
     FP24_output(&g);
     printf("\n");
 
-	ECP_copy(&R,&Q);
-	ECP4_ZZZ_copy(&G,&P);
+    ECP_copy(&R,&Q);
+    ECP4_ZZZ_copy(&G,&P);
 
-	ECP4_ZZZ_dbl(&G);
-	ECP_dbl(&R);
-	ECP_affine(&R);
+    ECP4_ZZZ_dbl(&G);
+    ECP_dbl(&R);
+    ECP_affine(&R);
 
     PAIR_ate(&g,&G,&Q);
     PAIR_fexp(&g);
@@ -731,25 +736,33 @@ int main()
     printf("\n");
 
 
-	PAIR_G1mul(&Q,r);
-	printf("rQ= ");ECP_output(&Q); printf("\n");
+    PAIR_G1mul(&Q,r);
+    printf("rQ= ");
+    ECP_output(&Q);
+    printf("\n");
 
-	PAIR_G2mul(&P,r);
-	printf("rP= ");ECP4_ZZZ_output(&P); printf("\n");
+    PAIR_G2mul(&P,r);
+    printf("rP= ");
+    ECP4_ZZZ_output(&P);
+    printf("\n");
 
-	BIG_XXX_randomnum(w,r,&rng);
+    BIG_XXX_randomnum(w,r,&rng);
 
-	FP24_copy(&gp,&g);
+    FP24_copy(&gp,&g);
 
-	PAIR_GTpow(&g,w);
+    PAIR_GTpow(&g,w);
 
-	FP24_trace(&t,&g);
+    FP24_trace(&t,&g);
 
-	printf("g^r=  ");FP8_output(&t); printf("\n");
+    printf("g^r=  ");
+    FP8_output(&t);
+    printf("\n");
 
-	FP24_compow(&t,&gp,w,r);
+    FP24_compow(&t,&gp,w,r);
 
-	printf("t(g)= "); FP8_output(&t); printf("\n");
+    printf("t(g)= ");
+    FP8_output(&t);
+    printf("\n");
 
 }
 

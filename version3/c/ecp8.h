@@ -18,7 +18,7 @@ typedef struct
 //    int inf; /**< Infinity Flag */
     FP8_YYY x;   /**< x-coordinate of point */
     FP8_YYY y;   /**< y-coordinate of point */
-	FP8_YYY z;	/**< z-coordinate of point */
+    FP8_YYY z;	/**< z-coordinate of point */
 } ECP8_ZZZ;
 
 

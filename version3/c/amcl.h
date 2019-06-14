@@ -57,11 +57,11 @@
 #define D_TYPE 0
 #define M_TYPE 1
 
-#define FP_ZERO 0
-#define FP_UNITY 1
-#define FP_SPARSER 2
-#define FP_SPARSE 3
-#define FP_DENSE 4
+#define AMCL_FP_ZERO 0
+#define AMCL_FP_UNITY 1
+#define AMCL_AMCL_FP_SPARSER 2
+#define AMCL_FP_SPARSE 3
+#define AMCL_FP_DENSE 4
 
 
 /**

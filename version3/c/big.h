@@ -18,7 +18,7 @@
 */
 
 /**
- * @file big.h
+ * @file big_XXX.h
  * @author Mike Scott
  * @brief BIG Header File
  *

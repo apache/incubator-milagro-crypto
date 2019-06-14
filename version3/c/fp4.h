@@ -18,7 +18,7 @@
 */
 
 /**
- * @file fp4.h
+ * @file fp4_YYY.h
  * @author Mike Scott
  * @brief FP4 Header File
  *
